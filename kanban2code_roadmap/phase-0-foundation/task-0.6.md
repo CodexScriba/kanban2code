@@ -29,3 +29,15 @@ Ensure Kanban2Code activates at the right time and handles missing workspaces gr
 
 ## Notes
 Keep activation fast (<100ms). Defer heavy loading until actually needed.
+
+## Audit Instructions
+After completing this task, please update the [Phase 0 Audit](../phase#_audit.md) with:
+1. **Files Created**: List all files created in this task with their purpose
+2. **Files Modified**: List any existing files that were modified and why
+3. **Files Analyzed**: List any files that were examined for reference
+4. **Key Changes**: Briefly describe the main changes made to support this task
+
+Example format:
+- **Files Modified**:
+  - `package.json` - Added activation events and extension configuration
+  - `src/extension.ts` - Implemented activation lifecycle and workspace handling

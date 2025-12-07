@@ -36,3 +36,16 @@ Provide a one-shot command that generates the canonical `.kanban2code` folder wi
 
 ## Notes
 This is the "first run" experience: should only be called when workspace detection confirms `.kanban2code` is missing.
+
+## Audit Instructions
+After completing this task, please update the [Phase 0 Audit](../phase#_audit.md) with:
+1. **Files Created**: List all files created in this task with their purpose
+2. **Files Modified**: List any existing files that were modified and why
+3. **Files Analyzed**: List any files that were examined for reference
+4. **Key Changes**: Briefly describe the main changes made to support this task
+
+Example format:
+- **Files Created**:
+  - `src/workspace/scaffolder.ts` - Workspace scaffolding implementation
+  - `.kanban2code/` directory structure with all required subfolders
+  - Template files for tasks and stages

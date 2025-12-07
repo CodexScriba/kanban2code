@@ -34,3 +34,22 @@ Establish foundation for React webviews with proper state management and host co
 
 ## Notes
 This provides the foundation that both Phase 3 (sidebar) and Phase 4 (board) will build upon.
+
+## Audit Instructions
+After completing this task, please update the [Phase 1 Audit](../phase#_audit.md) with:
+1. **Files Created**: List all files created in this task with their purpose
+2. **Files Modified**: List any existing files that were modified and why
+3. **Files Analyzed**: List any files that were examined for reference
+4. **Key Changes**: Briefly describe the main changes made to support this task
+5. **Tests Created**: List all test files created with Vitest for the new/modified functionality
+
+Example format:
+- **Files Created**:
+  - `src/webview/messaging.ts` - Message protocol between host and webview
+  - `src/webview/stores/` - Zustand stores for state management
+  - `src/webview/components/` - Base component library
+- **Tests Created**:
+  - `tests/webview/messaging.test.ts` - Vitest tests for messaging protocol
+  - `tests/webview/stores/` - Vitest tests for state management
+
+**Testing Requirements**: All created/modified files that can be tested must have corresponding Vitest test files. Run `bun test` to verify all tests pass before completing this task.
