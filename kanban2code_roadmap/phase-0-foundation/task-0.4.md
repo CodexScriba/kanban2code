@@ -18,8 +18,9 @@ Create a shared type system and constants for tasks, stages, and copy modes used
 - In `types/task.ts`:
   - Define `Stage = 'inbox' | 'plan' | 'code' | 'audit' | 'completed'`.
   - Define `Task` interface with:
-    - `filePath`, `title`, `stage`, `project?`, `phase?`, `agent?`,
-      `tags?`, `contexts?`, `order?`, `created?`, `content`.
+    - `id` (stable identifier, e.g., derived from file path), `filePath`, `title`, `stage`, `project?`, `phase?`, `agent?`,
+      `parent?`, `tags?`, `contexts?`, `order?`, `created?`, `content`.
+    - `parent?`: Optional link to another task (used by follow-ups/dependencies).
     - `order?`: Optional floating-point for manual ordering within a stage (default: sort by created date)
 - In `core/constants.ts`:
   - `STAGES` array in order.

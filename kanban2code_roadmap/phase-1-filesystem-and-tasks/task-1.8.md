@@ -16,20 +16,21 @@ Keep UI in sync with filesystem changes and enable real-time updates.
 
 ## Scope
 - Implement FileSystemWatcher for `.kanban2code`:
-  - Watch for file creation, modification, deletion
-  - Watch for file moves and renames
+  - Watch for file creation, modification, deletion.
+  - Watch for file moves and renames.
+  - Ignore non-task paths: `_templates/`, `_agents/`, `_archive/`, any `_context.md`, and non-`.md` files.
 - Debounce rapid changes (300ms) to avoid excessive updates:
-  - Batch multiple rapid changes into single update
-  - Reset debounce timer on each change
+  - Batch multiple rapid changes into single update.
+  - Reset debounce timer on each change.
 - Emit events for:
-  - Task created (new .md file)
-  - Task updated (existing .md file modified)
-  - Task deleted ( .md file removed)
-  - Task moved (file renamed between folders)
+  - Task created (new .md file in task locations).
+  - Task updated (existing .md file modified).
+  - Task deleted ( .md file removed).
+  - Task moved (file renamed between folders).
 - Handle external edits:
-  - User edits in VS Code editor
-  - Git operations (checkout, merge, rebase)
-- Integrate with task loading service to refresh data
+  - User edits in VS Code editor.
+  - Git operations (checkout, merge, rebase).
+- Integrate with task loading service to refresh data.
 
 ## Notes
 File watching is critical for responsive UI; must handle edge cases like rapid saves and external tool modifications.

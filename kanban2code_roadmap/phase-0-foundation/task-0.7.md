@@ -1,6 +1,6 @@
 ---
 stage: plan
-title: Initialize project and build tooling
+title: Initialize project and build tooling (superseded by task-0.0)
 tags:
   - mvp
   - infra
@@ -8,21 +8,14 @@ tags:
 created: 2025-12-07T00:00:00Z
 ---
 
-# Initialize Project and Build Tooling
+# Initialize Project and Build Tooling (Superseded)
 
 ## Goal
-Create foundational project structure using Bun before building the extension.
+Avoid duplicate tracking of the project bootstrap work. Use `phase-0-foundation/task-0.0.md` as the single source of truth.
 
 ## Scope
-- Run `bun init` to create package.json
-- Configure TypeScript (`tsconfig.json`)
-- Set up esbuild for bundling
-- Create `.gitignore` (node_modules, dist, .vscode-test)
-- Set up ESLint + Prettier
-- Create initial folder structure:
-  - `src/`
-  - `tests/`
-  - `webview/`
+- Do not execute separately; reference and update `task-0.0` instead.
+- If new bootstrap requirements emerge, add them to `task-0.0` rather than reviving this card.
 
 ## Notes
-This is a prerequisite for all other Phase 0 tasks.
+Kept only as a pointer to prevent parallel/duplicate workstreams.

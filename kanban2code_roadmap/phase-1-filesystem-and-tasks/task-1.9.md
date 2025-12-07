@@ -17,19 +17,20 @@ Establish foundation for React webviews with proper state management and host co
 ## Scope
 - Define message types for host ↔ webview communication:
   - TaskUpdated, TaskSelected, FilterChanged, etc.
-  - Request types: CreateTask, MoveTask, CopyContext
+  - Request types: CreateTask, MoveTask, CopyContext.
+- Add a versioned envelope (e.g., `{version, type, payload}`) and runtime validation (zod/io-ts) for all messages to prevent silent schema drift.
 - Set up React state management with Zustand:
-  - Create stores for tasks, filters, UI state
-  - Define actions and selectors
+  - Create stores for tasks, filters, UI state.
+  - Define actions and selectors.
 - Create base component library:
-  - Button, Modal, Tree, Card components
-  - Use shadcn/ui for consistent styling
+  - Button, Modal, Tree, Card components.
+  - Use shadcn/ui for consistent styling.
 - Establish CSS/styling approach:
-  - Tailwind CSS for utility classes
-  - CSS-in-JS for component-specific styles
+  - Tailwind CSS for utility classes.
+  - CSS-in-JS for component-specific styles.
 - Define webview initialization pattern:
-  - Consistent setup for sidebar and board webviews
-  - Message handling registration
+  - Consistent setup for sidebar and board webviews.
+  - Message handling registration with validation.
 
 ## Notes
 This provides the foundation that both Phase 3 (sidebar) and Phase 4 (board) will build upon.

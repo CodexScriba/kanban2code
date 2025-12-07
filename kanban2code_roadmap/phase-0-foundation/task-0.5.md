@@ -22,4 +22,4 @@ Reliably locate `.kanban2code` and prevent unsafe file operations.
 - Show clear error messages when the workspace is invalid.
 
 ## Notes
-This keeps Kanban2Code from accidentally touching unrelated parts of the repo and provides foundation for scaffolder to check if workspace exists.
+This is the single owner for detection logic; Phase 1 task 1.1.5 only layers status plumbing—avoid parallel implementations. Keeps Kanban2Code from accidentally touching unrelated parts of the repo and provides foundation for scaffolder to check if workspace exists.

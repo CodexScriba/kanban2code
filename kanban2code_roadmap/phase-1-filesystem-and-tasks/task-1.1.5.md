@@ -1,6 +1,6 @@
 ---
 stage: plan
-title: Implement workspace detection and validation
+title: Implement workspace detection and validation (extends phase-0 task)
 tags:
   - mvp
   - infra
@@ -8,17 +8,16 @@ tags:
 created: 2025-12-07T00:00:00Z
 ---
 
-# Implement Workspace Detection and Validation
+# Implement Workspace Detection and Validation (Extension)
 
 ## Goal
-Reliably locate `.kanban2code` and prevent unsafe file operations.
+Reuse the phase-0 workspace detection while adding Phase 1-specific outputs (status codes and guardrails). Avoid duplicating the core implementation tracked in `phase-0-foundation/task-0.5.md`.
 
 ## Scope
-- Implement `workspace/validation.ts`:
-  - `findKanbanRoot(workspaceRoot)` to locate `.kanban2code`.
-  - Guard against operations outside the kanban root.
-- Return clear status indicators for workspace state (valid, invalid, missing).
-- Show clear error messages when the workspace is invalid.
+- Depend on the core detection from `task-0.5`; do not fork implementation.
+- Extend API to return explicit status enums (valid | missing | invalid | forbidden).
+- Provide helper guards used by filesystem services to block writes outside the kanban root.
+- Emit consistent error strings for UI surfaces (sidebar, board, commands) without reimplementing detection logic.
 
 ## Notes
-This keeps Kanban2Code from accidentally touching unrelated parts of the repo.
+Single-owner check: any detection fixes belong in `task-0.5`; this task only layers additional status plumbing for Phase 1 features.
