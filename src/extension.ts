@@ -12,7 +12,9 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider),
     vscode.commands.registerCommand('kanban2code.openBoard', () => openBoardCommand(context)),
     vscode.commands.registerCommand('kanban2code.newTask', () => newTaskCommand()),
-    vscode.commands.registerCommand('kanban2code.scaffoldWorkspace', () => scaffoldWorkspaceCommand()),
+    vscode.commands.registerCommand('kanban2code.scaffoldWorkspace', () =>
+      scaffoldWorkspaceCommand(),
+    ),
   );
 
   const root = await findKanbanRoot();

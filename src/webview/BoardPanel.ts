@@ -9,7 +9,11 @@ export class BoardPanel {
   private readonly extensionUri: vscode.Uri;
   private workspaceRoot: string | null;
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, workspaceRoot: string | null) {
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    workspaceRoot: string | null,
+  ) {
     this.panel = panel;
     this.extensionUri = extensionUri;
     this.workspaceRoot = workspaceRoot;
@@ -33,7 +37,10 @@ export class BoardPanel {
     this.update();
   }
 
-  public static async createOrShow(context: vscode.ExtensionContext, workspaceRoot?: string | null) {
+  public static async createOrShow(
+    context: vscode.ExtensionContext,
+    workspaceRoot?: string | null,
+  ) {
     const column = vscode.window.activeTextEditor?.viewColumn;
     const root = workspaceRoot ?? (await findKanbanRoot());
 
@@ -80,7 +87,7 @@ export class BoardPanel {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; script-src 'nonce-${nonce}'; style-src ${cspSource} 'unsafe-inline';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; script-src 'nonce-${nonce}' 'unsafe-eval' blob:; style-src ${cspSource} 'unsafe-inline'; worker-src blob:;" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kanban2Code</title>
 </head>

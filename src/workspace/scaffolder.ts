@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import vscode from 'vscode';
 import { FOLDERS, KANBAN_ROOT, STAGES } from '../core/constants';
 import { ensurePathInsideRoot, findKanbanRoot, pickDefaultWorkspaceFolder } from './validation';
 
