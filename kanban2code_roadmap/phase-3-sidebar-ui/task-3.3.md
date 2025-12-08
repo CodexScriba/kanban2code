@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement Inbox and project tree in sidebar
 tags:
   - mvp

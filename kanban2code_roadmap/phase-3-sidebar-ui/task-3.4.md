@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement New Task modal
 tags:
   - mvp

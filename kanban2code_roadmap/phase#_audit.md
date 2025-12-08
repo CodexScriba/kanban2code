@@ -197,3 +197,108 @@
 - Register and contribute the copy command in the manifest/activation, add command-level tests, and consider excluding `_contexts` from task watchers if needed.
 - Add a fallback stage template (or inline default) to ensure stage guidance is always present.
 - Wire XML escaping in prompt assembly and document the context system before moving to Phase 3 (sidebar UI).
+
+---
+
+## Phase 3 - Sidebar UI
+
+### Phase Information
+- **Phase Number:** 3
+- **Phase Name:** Sidebar UI
+- **Date Completed:** 2025-12-07
+- **Completed By:** Codex (assistant)
+
+### Task Summary
+- **Total Tasks:** 6
+- **Completed Tasks:** 6
+- **Completion Rate:** 100%
+
+### File Changes
+
+#### Files Created
+| File Path | Purpose/Function |
+|-----------|------------------|
+| src/webview/sidebarMain.tsx | Webview entry point for the sidebar bundle |
+| src/webview/Sidebar.tsx | React sidebar shell with header/actions and wiring |
+| src/webview/components/FilterPanel.tsx | Search, quick views, project/stage/tag filters |
+| src/webview/components/TaskTree.tsx | Inbox/projects/phases task tree with counts and selection |
+| src/webview/components/TaskModal.tsx | Task creation modal (location, stage, tags, agent, template) |
+| src/webview/components/ContextMenu.tsx | Task context menu (stage change, archive/delete, move) |
+| src/webview/components/KeyboardHelp.tsx | Keyboard shortcut help overlay |
+| src/webview/hooks/useKeyboardNavigation.ts | Keyboard navigation/shortcut handling for webviews |
+| src/webview/components/index.ts | Barrel exports for sidebar components |
+| src/webview/hooks/index.ts | Barrel exports for sidebar hooks |
+
+#### Files Modified
+| File Path | Purpose/Function | Changes Made |
+|-----------|------------------|--------------|
+| src/webview/stores/taskStore.ts | Sidebar task state/filtering | Added inbox-only and stage filters; default filters expanded; selectors updated |
+| src/webview/stores/uiStore.ts | UI state | Selection and modal state consumed by keyboard nav/tree (no API changes) |
+| src/webview/SidebarProvider.ts | Sidebar host provider | Uses taskService parsing, template-aware task creation, archive/delete refresh, move-to-project handler, no-op filter handler |
+| src/webview/messaging/types.ts | Message contracts | Added tags/agent/template to task:create, stage/tag filters to filters:changed, new task:moveLocation message |
+| src/webview/messaging/protocol.ts | Message builders/bridge | Added moveLocation/create filters builders, openBoard helper, extended task:create options |
+| src/webview/components/FilterPanel.tsx | Filters UI | Store-driven stage/inbox filters, quick views reset search, host sync for filters, search ref support |
+| src/webview/components/TaskTree.tsx | Task tree UI | Adds task data attributes for keyboard focus |
+| src/webview/components/TaskModal.tsx | Task creation UI | Sends tags/agent/template, agent suggestions, completed stage option |
+| src/webview/components/ContextMenu.tsx | Context menu | Adds “Move to Project/Phase…” action and forwards move requests |
+| src/webview/hooks/useKeyboardNavigation.ts | Keyboard nav | Used by sidebar for search focus, copy context, task navigation |
+| src/webview/Sidebar.tsx | Sidebar composition | Keyboard nav wiring, selection-aware actions, filter ref passing |
+| scripts/build.ts | Build tooling | Adds sidebar bundle output target |
+| tests/webview/messaging.test.ts | Messaging tests | Coverage for new payload fields and moveLocation message |
+| tests/webview/stores/taskStore.test.ts | Store tests | Updated defaults plus new stage/inbox filter cases |
+
+#### Files Analyzed
+| File Path | Purpose/Function | Analysis Notes |
+|-----------|------------------|----------------|
+| kanban2code_roadmap/phase-3-sidebar-ui/task-3.{1-6}.md | Phase requirements | Used as acceptance criteria for sidebar shell, filters, tree, modal, context menu, keyboard nav |
+| docs/architecture.md | Architecture overview | Verified current docs still reflect Phase 1–2; Phase 3 UI not yet documented |
+
+### Task Details
+
+#### Task 3.1: Implement Kanban2Code Sidebar Shell
+- **Status:** Completed
+- **Files:** src/webview/sidebarMain.tsx; src/webview/Sidebar.tsx; src/webview/SidebarProvider.ts
+- **Key Changes:** Sidebar webview entry/bundle, React shell with header actions, host wiring for refresh/scaffold/open board, and CSP-safe HTML render.
+
+#### Task 3.2: Implement Filters and Quick Views in Sidebar
+- **Status:** Completed
+- **Files:** src/webview/components/FilterPanel.tsx; src/webview/stores/taskStore.ts; src/webview/messaging/types.ts
+- **Key Changes:** Project/inbox toggle, stage toggles, tag chips, search, quick views, host filter sync, and store-backed filtering (including stages).
+
+#### Task 3.3: Implement Inbox and Project Tree in Sidebar
+- **Status:** Completed
+- **Files:** src/webview/components/TaskTree.tsx
+- **Key Changes:** Inbox/projects/phase tree with counts, task selection, context menu hook, and keyboard-focusable task rows.
+
+#### Task 3.4: Implement New Task Modal
+- **Status:** Completed
+- **Files:** src/webview/components/TaskModal.tsx; src/webview/SidebarProvider.ts
+- **Key Changes:** Task creation supports inbox/project/phase, stage selection (including completed), tags, agent, optional template; host writes via frontmatter-aware serializer and optional task template.
+
+#### Task 3.5: Implement Sidebar Task Context Menus
+- **Status:** Completed
+- **Files:** src/webview/components/ContextMenu.tsx; src/webview/SidebarProvider.ts
+- **Key Changes:** Context menu actions for copy XML, change stage, archive/delete, and new “Move to Project/Phase…” handler that repaths files via host prompts.
+
+#### Task 3.6: Implement Keyboard Navigation for Accessibility
+- **Status:** Completed
+- **Files:** src/webview/hooks/useKeyboardNavigation.ts; src/webview/components/KeyboardHelp.tsx; src/webview/Sidebar.tsx
+- **Key Changes:** Keyboard shortcuts for new task, search focus, help toggle, task navigation/select, copy context; help overlay documents shortcuts; Sidebar wires handlers to selection-aware actions.
+
+### Quality Assurance
+- **Code Review Status:** Self-reviewed
+- **Testing Status:** Completed (`bun test tests/webview/stores/taskStore.test.ts tests/webview/messaging.test.ts`)
+- **Documentation Status:** Pending (architecture.md not yet updated for Phase 3 UI)
+
+### Notes & Observations
+- Filters now drive stage and inbox-only slices; quick views reset search and tags.
+- Task creation uses frontmatter-aware serializer and optional task template but relies on user-provided template names; a richer template picker could be added later.
+- Move-to-project/phase leverages VS Code quick picks; overwrites are prevented.
+
+### Outstanding Issues
+- Architecture documentation still reflects only Phases 1–2; Phase 3 UI architecture is not described.
+- No dedicated UI tests for Sidebar/FilterPanel/TaskTree/TaskModal/ContextMenu; current coverage focuses on stores and messaging.
+
+### Next Phase Preparation
+- Expand UI test coverage (component rendering/interaction) and document Phase 3 architecture updates.
+- Consider surfacing template/agent lists from host services to the modal instead of free-text entry.

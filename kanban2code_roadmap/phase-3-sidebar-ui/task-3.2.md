@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement filters and quick views in sidebar
 tags:
   - mvp

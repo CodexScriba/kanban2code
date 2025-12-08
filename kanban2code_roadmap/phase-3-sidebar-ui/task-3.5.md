@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement sidebar task context menus
 tags:
   - mvp

@@ -5,10 +5,15 @@ import type { Task, Stage } from '../../types/task';
  * Filter options for tasks.
  */
 export interface TaskFilters {
+  /** Specific project; null means all projects. */
   project: string | null;
+  /** If true, restrict to inbox (tasks with no project). */
+  inboxOnly: boolean;
   phase: string | null;
   tags: string[];
   search: string;
+  /** Limit to these stages; empty or full set = all stages. */
+  stages: Stage[];
 }
 
 /**
@@ -39,9 +44,11 @@ export interface TaskStoreState {
  */
 const defaultFilters: TaskFilters = {
   project: null,
+  inboxOnly: false,
   phase: null,
   tags: [],
   search: '',
+  stages: ['inbox', 'plan', 'code', 'audit', 'completed'],
 };
 
 /**
@@ -101,7 +108,12 @@ export const useTaskStore = create<TaskStoreState>((set) => ({
  */
 export function selectFilteredTasks(state: TaskStoreState): Task[] {
   let filtered = state.tasks;
-  const { project, phase, tags, search } = state.filters;
+  const { project, phase, tags, search, stages, inboxOnly } = state.filters;
+
+  // Filter by inbox-only
+  if (inboxOnly) {
+    filtered = filtered.filter((t) => !t.project);
+  }
 
   // Filter by project
   if (project) {
@@ -118,6 +130,12 @@ export function selectFilteredTasks(state: TaskStoreState): Task[] {
     filtered = filtered.filter((t) =>
       t.tags?.some((tag) => tags.includes(tag)),
     );
+  }
+
+  // Filter by stage list (treat full list as "all")
+  const allStagesSelected = stages.length === defaultFilters.stages.length;
+  if (!allStagesSelected && stages.length > 0) {
+    filtered = filtered.filter((t) => stages.includes(t.stage));
   }
 
   // Filter by search term

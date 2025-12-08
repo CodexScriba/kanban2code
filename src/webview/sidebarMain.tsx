@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Board } from './Board';
+import { Sidebar } from './Sidebar';
 
 // VS Code exposes this to the webview runtime.
 declare const acquireVsCodeApi: <T>() => {
@@ -15,5 +15,5 @@ const kanbanRoot = container?.getAttribute('data-kanban-root') || null;
 
 if (container) {
   const root = createRoot(container);
-  root.render(<Board kanbanRoot={kanbanRoot} vscode={vscode} />);
+  root.render(<Sidebar kanbanRoot={kanbanRoot} vscode={vscode} />);
 }

@@ -37,16 +37,25 @@ kanban2code/
 │   └── webview/                  # React webview UI
 │       ├── BoardPanel.ts         # Board webview host
 │       ├── SidebarProvider.ts    # Sidebar webview host
+│       ├── Sidebar.tsx           # Main sidebar React component (Phase 3)
+│       ├── sidebarMain.tsx      # Sidebar entry point (Phase 3)
 │       ├── App.tsx               # React root component
 │       ├── main.tsx              # Webview entry point
+│       ├── theme.tsx             # Theme support (Phase 3)
 │       ├── messaging/            # Host-webview communication
 │       │   ├── types.ts          # Message type definitions
 │       │   └── protocol.ts       # Message handling
 │       ├── stores/               # Zustand state management
 │       │   ├── taskStore.ts      # Task state
 │       │   └── uiStore.ts        # UI state
-│       └── components/           # React components
-│           └── ...               # UI components
+│       ├── components/           # React components
+│       │   ├── FilterPanel.tsx   # Search, project/stage/tag filters (Phase 3)
+│       │   ├── TaskTree.tsx      # Inbox/project/phase tree with task items (Phase 3)
+│       │   ├── TaskModal.tsx     # Full task creation form (Phase 3)
+│       │   ├── ContextMenu.tsx   # Right-click menu (Phase 3)
+│       │   └── KeyboardHelp.tsx  # Shortcut help overlay (Phase 3)
+│       └── hooks/                # React hooks
+│           └── useKeyboardNavigation.ts # Keyboard shortcuts (Phase 3)
 ├── tests/                        # Test files (Vitest)
 │   ├── services/                 # Service unit tests
 │   │   ├── frontmatter.test.ts
@@ -61,7 +70,12 @@ kanban2code/
 │   ├── workspace/                # Workspace tests
 │   │   └── validation.test.ts
 │   ├── webview/                  # Webview tests
-│   │   └── messaging.test.ts
+│   │   ├── messaging.test.ts
+│   │   ├── hooks/                # Webview hook tests
+│   │   │   └── useKeyboardNavigation.test.ts # Phase 3
+│   │   └── stores/               # Webview store tests
+│   │       ├── taskStore.test.ts  # Phase 3
+│   │       └── uiStore.test.ts    # Phase 3
 │   └── fixtures/                 # Test fixtures
 │       └── ...                   # Sample task files
 ├── scripts/                      # Build tooling
@@ -264,7 +278,8 @@ type WebviewMessage =
   | { type: 'task:move'; payload: { id: string; stage: Stage } }
   | { type: 'task:create'; payload: { title: string; project?: string } }
   | { type: 'task:archive'; payload: { id: string } }
-  | { type: 'refresh'; payload: null };
+  | { type: 'refresh'; payload: null }
+  | { type: 'openBoard'; payload: null }; // Phase 3
 ```
 
 **State Stores (Zustand):**
@@ -284,6 +299,8 @@ interface UIStore {
   selectedTaskId: string | null;
   filterProject: string | null;
   filterTags: string[];
+  selectedQuickView: string | null; // Phase 3
+  searchQuery: string; // Phase 3
   setSelectedTask: (id: string | null) => void;
   setFilters: (filters: Partial<Filters>) => void;
 }
@@ -363,6 +380,41 @@ When copying a task for AI consumption, the prompt builder assembles content in 
 - `kanban2code.copyTaskOnly` - Copy task only
 - `kanban2code.copyContextOnly` - Copy context only
 
+## Sidebar UI (Phase 3)
+
+The sidebar provides a comprehensive task management interface with the following components:
+
+### Sidebar Shell
+- **Sidebar.tsx**: Main sidebar React component with theme support
+- **sidebarMain.tsx**: Sidebar entry point that initializes the React webview
+- **SidebarProvider.ts**: Updated to use React webview with message bridge
+
+### Filters & Quick Views
+- **FilterPanel.tsx**: Search bar, project dropdown, stage toggles, and tag chips
+- Quick view presets: "Today's Focus", "All In Development", "Bugs", "Ideas & Roadmaps"
+
+### Task Tree
+- **TaskTree.tsx**: Collapsible tree structure for Inbox/Projects/Phases with task counts
+- Hierarchical organization with expand/collapse functionality
+
+### Task Creation
+- **TaskModal.tsx**: Full task creation form with location, stage, tags, and content fields
+- Modal dialog with comprehensive form validation
+
+### Context Menu
+- **ContextMenu.tsx**: Right-click menu with stage change, archive, delete, and copy XML options
+- Context-sensitive actions based on task state
+
+### Keyboard Navigation
+- **useKeyboardNavigation.ts**: Keyboard shortcuts hook for accessibility
+- **KeyboardHelp.tsx**: Shortcut help overlay displaying all available shortcuts
+- Supported shortcuts: Ctrl+N (new), ?, Escape, arrow keys, Ctrl+C for copy
+
+### Message Bridge Updates
+- Added `openBoard` message type to types.ts
+- Added `createOpenBoardMessage` to protocol.ts
+- Enhanced communication between sidebar and board webviews
+
 ## Build System
 
 Uses esbuild via Bun for fast bundling:
@@ -378,13 +430,22 @@ bun run format         # Prettier format
 **Output:**
 - `dist/extension.js` - Node.js extension bundle
 - `dist/webview.js` - Browser webview bundle
+- `dist/sidebar.js` - Sidebar webview bundle (Phase 3)
 
 ## Testing Strategy
 
 - **Unit tests**: Services layer with mocked filesystem
 - **Integration tests**: Full task loading with temp directories
+- **Webview tests**: React components and stores (Phase 3)
 - **Framework**: Vitest for fast, ESM-native testing
 - **Fixtures**: Sample task files in `tests/fixtures/`
+
+**Phase 3 Test Coverage:**
+- `taskStore.test.ts`: 21 tests for task state management
+- `uiStore.test.ts`: 19 tests for UI state management
+- `useKeyboardNavigation.test.ts`: 7 tests for keyboard shortcuts
+- Total: 243 passing tests, 2 failing (pre-existing vscode mock issues)
+- 578 expect() calls across 15 test files
 
 ## Security
 

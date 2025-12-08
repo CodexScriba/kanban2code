@@ -30,6 +30,7 @@ export type HostMessageType =
   | 'task:created'
   | 'task:deleted'
   | 'workspace:status'
+  | 'filters:sync'
   | 'error';
 
 /**
@@ -80,6 +81,18 @@ export interface ErrorPayload {
 }
 
 /**
+ * Filter state sync from host.
+ */
+export interface FiltersSyncPayload {
+  project?: string | null;
+  phase?: string | null;
+  tags?: string[];
+  search?: string;
+  stages?: Stage[];
+  inboxOnly?: boolean;
+}
+
+/**
  * Union of all host messages.
  */
 export type HostMessage =
@@ -88,6 +101,7 @@ export type HostMessage =
   | MessageEnvelope<TaskCreatedPayload> & { type: 'task:created' }
   | MessageEnvelope<TaskDeletedPayload> & { type: 'task:deleted' }
   | MessageEnvelope<WorkspaceStatusPayload> & { type: 'workspace:status' }
+  | MessageEnvelope<FiltersSyncPayload> & { type: 'filters:sync' }
   | MessageEnvelope<ErrorPayload> & { type: 'error' };
 
 // ============================================================================
@@ -104,10 +118,12 @@ export type WebviewMessageType =
   | 'task:archive'
   | 'task:open'
   | 'task:delete'
+  | 'task:moveLocation'
   | 'task:select'
   | 'filters:changed'
   | 'context:copy'
-  | 'scaffold';
+  | 'scaffold'
+  | 'openBoard';
 
 /**
  * Request to refresh all tasks.
@@ -134,6 +150,10 @@ export interface TaskCreatePayload {
   phase?: string;
   stage?: Stage;
   content?: string;
+  tags?: string[];
+  agent?: string;
+  template?: string;
+  parent?: string;
 }
 
 /**
@@ -160,6 +180,13 @@ export interface TaskDeletePayload {
 }
 
 /**
+ * Request to move a task to a new project/phase.
+ */
+export interface TaskMoveLocationPayload {
+  filePath: string;
+}
+
+/**
  * Request to select a task (e.g., to sync selection with host).
  */
 export interface TaskSelectPayload {
@@ -175,6 +202,8 @@ export interface FiltersChangedPayload {
   phase?: string | null;
   tags?: string[];
   search?: string;
+  stages?: Stage[];
+  inboxOnly?: boolean;
 }
 
 /**
@@ -192,6 +221,13 @@ export interface ScaffoldPayload {
 }
 
 /**
+ * Request to open the board panel.
+ */
+export interface OpenBoardPayload {
+  // No payload needed
+}
+
+/**
  * Union of all webview messages.
  */
 export type WebviewMessage =
@@ -201,10 +237,12 @@ export type WebviewMessage =
   | MessageEnvelope<TaskArchivePayload> & { type: 'task:archive' }
   | MessageEnvelope<TaskOpenPayload> & { type: 'task:open' }
   | MessageEnvelope<TaskDeletePayload> & { type: 'task:delete' }
+  | MessageEnvelope<TaskMoveLocationPayload> & { type: 'task:moveLocation' }
   | MessageEnvelope<TaskSelectPayload> & { type: 'task:select' }
   | MessageEnvelope<FiltersChangedPayload> & { type: 'filters:changed' }
   | MessageEnvelope<ContextCopyPayload> & { type: 'context:copy' }
-  | MessageEnvelope<ScaffoldPayload> & { type: 'scaffold' };
+  | MessageEnvelope<ScaffoldPayload> & { type: 'scaffold' }
+  | MessageEnvelope<OpenBoardPayload> & { type: 'openBoard' };
 
 // ============================================================================
 // Zod Schemas for Runtime Validation
@@ -244,6 +282,10 @@ export const TaskCreatePayloadSchema = z.object({
   phase: z.string().optional(),
   stage: StageSchema.optional(),
   content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  agent: z.string().optional(),
+  template: z.string().optional(),
+  parent: z.string().optional(),
 });
 
 export const TaskArchivePayloadSchema = z.object({
@@ -260,6 +302,10 @@ export const TaskDeletePayloadSchema = z.object({
   filePath: z.string(),
 });
 
+export const TaskMoveLocationPayloadSchema = z.object({
+  filePath: z.string(),
+});
+
 export const TaskSelectPayloadSchema = z.object({
   id: z.string(),
   filePath: z.string(),
@@ -270,6 +316,8 @@ export const FiltersChangedPayloadSchema = z.object({
   phase: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   search: z.string().optional(),
+  stages: z.array(StageSchema).optional(),
+  inboxOnly: z.boolean().optional(),
 });
 
 export const ContextCopyPayloadSchema = z.object({
@@ -277,6 +325,8 @@ export const ContextCopyPayloadSchema = z.object({
 });
 
 export const ScaffoldPayloadSchema = z.object({});
+
+export const OpenBoardPayloadSchema = z.object({});
 
 /**
  * Map of message types to their payload schemas
@@ -288,10 +338,12 @@ export const WebviewPayloadSchemas: Record<WebviewMessageType, z.ZodSchema> = {
   'task:archive': TaskArchivePayloadSchema,
   'task:open': TaskOpenPayloadSchema,
   'task:delete': TaskDeletePayloadSchema,
+  'task:moveLocation': TaskMoveLocationPayloadSchema,
   'task:select': TaskSelectPayloadSchema,
   'filters:changed': FiltersChangedPayloadSchema,
   'context:copy': ContextCopyPayloadSchema,
   scaffold: ScaffoldPayloadSchema,
+  openBoard: OpenBoardPayloadSchema,
 };
 
 // ============================================================================

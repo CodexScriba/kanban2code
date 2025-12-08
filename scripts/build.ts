@@ -27,10 +27,8 @@ async function runBuild() {
     logLevel: 'info' as const,
   };
 
-  const webviewConfig = {
+  const webviewBaseConfig = {
     bundle: true,
-    entryPoints: ['src/webview/main.tsx'],
-    outfile: 'dist/webview.js',
     platform: 'browser',
     format: 'iife' as const,
     target: 'es2020',
@@ -45,15 +43,32 @@ async function runBuild() {
     },
   };
 
+  const webviewConfig = {
+    ...webviewBaseConfig,
+    entryPoints: ['src/webview/main.tsx'],
+    outfile: 'dist/webview.js',
+  };
+
+  const sidebarConfig = {
+    ...webviewBaseConfig,
+    entryPoints: ['src/webview/sidebarMain.tsx'],
+    outfile: 'dist/sidebar.js',
+  };
+
   if (watch) {
     const extensionCtx = await context(extensionConfig);
     const webviewCtx = await context(webviewConfig);
-    await Promise.all([extensionCtx.watch(), webviewCtx.watch()]);
+    const sidebarCtx = await context(sidebarConfig);
+    await Promise.all([extensionCtx.watch(), webviewCtx.watch(), sidebarCtx.watch()]);
     // Keep process alive
     // eslint-disable-next-line no-console
     console.log('Watching for changes...');
   } else {
-    await Promise.all([build(extensionConfig), build(webviewConfig)]);
+    await Promise.all([
+      build(extensionConfig),
+      build(webviewConfig),
+      build(sidebarConfig),
+    ]);
     // eslint-disable-next-line no-console
     console.log('Build complete');
   }

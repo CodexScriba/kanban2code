@@ -23,9 +23,11 @@ import {
   createTaskOpenMessage,
   createTaskDeleteMessage,
   createTaskSelectMessage,
+  createTaskMoveLocationMessage,
   createFiltersChangedMessage,
   createContextCopyMessage,
   createScaffoldMessage,
+  createOpenBoardMessage,
 } from '../../src/webview/messaging/protocol';
 import type { Task } from '../../src/types/task';
 
@@ -121,7 +123,7 @@ describe('webview messaging', () => {
 
   describe('FiltersChangedPayloadSchema', () => {
     it('should validate filters payload', () => {
-      const payload = { project: 'proj', phase: null, tags: ['a', 'b'], search: 'text' };
+      const payload = { project: 'proj', phase: null, tags: ['a', 'b'], search: 'text', stages: ['plan'], inboxOnly: false };
       expect(FiltersChangedPayloadSchema.safeParse(payload).success).toBe(true);
     });
   });
@@ -147,7 +149,7 @@ describe('webview messaging', () => {
     });
 
     it('should validate task:create message', () => {
-      const message = createTaskCreateMessage('New Task', { project: 'proj' });
+      const message = createTaskCreateMessage('New Task', { project: 'proj', tags: ['x'], agent: 'agent-1' });
       const result = validateWebviewMessage(message);
       expect(result.success).toBe(true);
     });
@@ -188,8 +190,20 @@ describe('webview messaging', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should validate task:moveLocation message', () => {
+      const message = createTaskMoveLocationMessage('/path/to/task.md');
+      const result = validateWebviewMessage(message);
+      expect(result.success).toBe(true);
+    });
+
     it('should validate scaffold message', () => {
       const message = createScaffoldMessage();
+      const result = validateWebviewMessage(message);
+      expect(result.success).toBe(true);
+    });
+
+    it('should validate openBoard message', () => {
+      const message = createOpenBoardMessage();
       const result = validateWebviewMessage(message);
       expect(result.success).toBe(true);
     });
@@ -291,12 +305,22 @@ describe('webview messaging', () => {
         phase: 'phase-1',
         stage: 'plan',
         content: '# New Task',
+        tags: ['bug'],
+        agent: 'agent-1',
       });
       expect(message.version).toBe(PROTOCOL_VERSION);
       expect(message.type).toBe('task:create');
       expect(message.payload.title).toBe('New Task');
       expect(message.payload.project).toBe('proj');
       expect(message.payload.phase).toBe('phase-1');
+      expect(message.payload.tags).toEqual(['bug']);
+      expect(message.payload.agent).toBe('agent-1');
+    });
+
+    it('should create task:moveLocation message', () => {
+      const message = createTaskMoveLocationMessage('/path/task.md');
+      expect(message.version).toBe(PROTOCOL_VERSION);
+      expect(message.type).toBe('task:moveLocation');
     });
 
     it('should create scaffold message', () => {

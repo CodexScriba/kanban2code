@@ -10,6 +10,7 @@ import {
   type TaskCreatedPayload,
   type TaskDeletedPayload,
   type WorkspaceStatusPayload,
+  type FiltersSyncPayload,
   type ErrorPayload,
   validateWebviewMessage,
 } from './types';
@@ -84,6 +85,20 @@ export function createErrorMessage(
   return createEnvelope<ErrorPayload>('error', { message, code, details }) as HostMessage;
 }
 
+/**
+ * Creates a filters:sync message to sync filter state to webviews.
+ */
+export function createFiltersSyncMessage(filters: {
+  project?: string | null;
+  phase?: string | null;
+  tags?: string[];
+  search?: string;
+  stages?: string[];
+  inboxOnly?: boolean;
+}): HostMessage {
+  return createEnvelope<FiltersSyncPayload>('filters:sync', filters) as HostMessage;
+}
+
 // ============================================================================
 // Webview → Host Message Builders (for webview side)
 // ============================================================================
@@ -116,6 +131,10 @@ export function createTaskCreateMessage(
     phase?: string;
     stage?: string;
     content?: string;
+    tags?: string[];
+    agent?: string;
+    template?: string;
+    parent?: string;
   },
 ): WebviewMessage {
   return createEnvelope('task:create', { title, ...options }) as WebviewMessage;
@@ -143,6 +162,13 @@ export function createTaskDeleteMessage(id: string, filePath: string): WebviewMe
 }
 
 /**
+ * Creates a task:moveLocation request message.
+ */
+export function createTaskMoveLocationMessage(filePath: string): WebviewMessage {
+  return createEnvelope('task:moveLocation', { filePath }) as WebviewMessage;
+}
+
+/** 
  * Creates a task:select notification from the webview.
  */
 export function createTaskSelectMessage(id: string, filePath: string): WebviewMessage {
@@ -173,6 +199,13 @@ export function createContextCopyMessage(filePath: string): WebviewMessage {
  */
 export function createScaffoldMessage(): WebviewMessage {
   return createEnvelope('scaffold', {}) as WebviewMessage;
+}
+
+/**
+ * Creates an openBoard request message.
+ */
+export function createOpenBoardMessage(): WebviewMessage {
+  return createEnvelope('openBoard', {}) as WebviewMessage;
 }
 
 // ============================================================================

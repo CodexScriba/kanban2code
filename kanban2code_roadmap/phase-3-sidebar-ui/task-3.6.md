@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement keyboard navigation for accessibility (webview focus)
 tags:
   - mvp

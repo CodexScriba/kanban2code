@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 title: Implement Kanban2Code sidebar shell
 tags:
   - mvp
