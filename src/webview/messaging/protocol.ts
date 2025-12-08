@@ -13,6 +13,7 @@ import {
   type FiltersSyncPayload,
   type ErrorPayload,
   validateWebviewMessage,
+  type TagFiltersPayload,
 } from './types';
 
 /**
@@ -91,7 +92,7 @@ export function createErrorMessage(
 export function createFiltersSyncMessage(filters: {
   project?: string | null;
   phase?: string | null;
-  tags?: string[];
+  tagFilters?: TagFiltersPayload;
   search?: string;
   stages?: string[];
   inboxOnly?: boolean;
@@ -181,7 +182,7 @@ export function createTaskSelectMessage(id: string, filePath: string): WebviewMe
 export function createFiltersChangedMessage(options: {
   project?: string | null;
   phase?: string | null;
-  tags?: string[];
+  tagFilters?: TagFiltersPayload;
   search?: string;
 }): WebviewMessage {
   return createEnvelope('filters:changed', { ...options }) as WebviewMessage;

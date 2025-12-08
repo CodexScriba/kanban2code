@@ -9,6 +9,7 @@ import {
 } from '../services/archiveService';
 import { loadAllTasks, listProjects } from '../services/taskService';
 import type { Task } from '../types/task';
+import { logError, logInfo, notifyError } from '../utils/logger';
 
 /**
  * Shows a quick pick to select a task from a list.
@@ -52,7 +53,7 @@ async function pickProject(root: string): Promise<string | undefined> {
 export async function archiveTaskCommand(): Promise<void> {
   const root = await findKanbanRoot();
   if (!root) {
-    vscode.window.showErrorMessage('No .kanban2code workspace found.');
+    notifyError('No .kanban2code workspace found.');
     return;
   }
 
@@ -70,13 +71,15 @@ export async function archiveTaskCommand(): Promise<void> {
   }
 
   try {
-    const archivePath = await archiveTask(task, root);
+    await archiveTask(task, root);
     vscode.window.showInformationMessage(`Archived: ${task.title}`);
+    logInfo(`Archived task ${task.title}`);
   } catch (error) {
     if (error instanceof NotCompletedError) {
-      vscode.window.showErrorMessage(`Cannot archive: task must be completed first.`);
+      notifyError('Cannot archive: task must be completed first.');
     } else {
-      vscode.window.showErrorMessage(`Failed to archive task: ${error}`);
+      notifyError('Failed to archive task', error);
+      logError('archiveTaskCommand failed', error);
     }
   }
 }
@@ -88,7 +91,7 @@ export async function archiveTaskCommand(): Promise<void> {
 export async function archiveCompletedInProjectCommand(): Promise<void> {
   const root = await findKanbanRoot();
   if (!root) {
-    vscode.window.showErrorMessage('No .kanban2code workspace found.');
+    notifyError('No .kanban2code workspace found.');
     return;
   }
 
@@ -106,9 +109,11 @@ export async function archiveCompletedInProjectCommand(): Promise<void> {
       vscode.window.showInformationMessage(
         `Archived ${archivedPaths.length} completed task(s) from "${project}".`,
       );
+      logInfo(`Archived ${archivedPaths.length} task(s) from project ${project}`);
     }
   } catch (error) {
-    vscode.window.showErrorMessage(`Failed to archive tasks: ${error}`);
+    notifyError('Failed to archive project tasks', error);
+    logError('archiveCompletedInProjectCommand failed', error);
   }
 }
 
@@ -119,7 +124,7 @@ export async function archiveCompletedInProjectCommand(): Promise<void> {
 export async function archiveProjectCommand(): Promise<void> {
   const root = await findKanbanRoot();
   if (!root) {
-    vscode.window.showErrorMessage('No .kanban2code workspace found.');
+    notifyError('No .kanban2code workspace found.');
     return;
   }
 
@@ -142,14 +147,16 @@ export async function archiveProjectCommand(): Promise<void> {
   try {
     await archiveProject(root, project);
     vscode.window.showInformationMessage(`Archived project: ${project}`);
+    logInfo(`Archived project ${project}`);
   } catch (error) {
     if (error instanceof ProjectNotCompletedError) {
       const incomplete = error.incompleteTasks;
-      vscode.window.showErrorMessage(
+      notifyError(
         `Cannot archive: ${incomplete.length} task(s) are not completed.`,
       );
     } else {
-      vscode.window.showErrorMessage(`Failed to archive project: ${error}`);
+      notifyError('Failed to archive project', error);
+      logError('archiveProjectCommand failed', error);
     }
   }
 }

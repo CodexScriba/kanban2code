@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTaskStore, selectProjects, selectAllTags } from '../stores/taskStore';
 import { postMessageToHost, createFiltersChangedMessage } from '../messaging/protocol';
 import type { Stage } from '../../types/task';
+import { TAG_TAXONOMY, type TagCategory, categorizeTag } from '../../core/tagTaxonomy';
+import type { TagFiltersState } from '../stores/taskStore';
 
 /**
  * Quick view presets for common task filters.
@@ -10,7 +12,7 @@ export interface QuickView {
   id: string;
   label: string;
   stages?: Stage[];
-  tags?: string[];
+  tagFilters?: Partial<TagFiltersState>;
   project?: string | null;
 }
 
@@ -28,12 +30,12 @@ const QUICK_VIEWS: QuickView[] = [
   {
     id: 'bugs',
     label: 'Bugs',
-    tags: ['bug'],
+    tagFilters: { type: ['bug'] },
   },
   {
     id: 'ideas',
     label: 'Ideas & Roadmaps',
-    tags: ['idea', 'roadmap'],
+    tagFilters: { type: ['idea', 'roadmap'] },
   },
 ];
 
@@ -61,6 +63,10 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
   // Get available projects and tags
   const projects = useMemo(() => selectProjects({ tasks, filters, loading: false, error: null } as never), [tasks, filters]);
   const allTags = useMemo(() => selectAllTags({ tasks, filters, loading: false, error: null } as never), [tasks, filters]);
+  const availableOtherTags = useMemo(
+    () => allTags.filter((tag) => categorizeTag(tag) === 'other'),
+    [allTags],
+  );
 
   const [activeQuickView, setActiveQuickView] = React.useState<string | null>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -71,7 +77,7 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
       createFiltersChangedMessage({
         project: filters.project,
         phase: filters.phase,
-        tags: filters.tags,
+        tagFilters: filters.tagFilters,
         search: filters.search,
         stages: filters.stages,
         inboxOnly: filters.inboxOnly,
@@ -94,16 +100,28 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
     [setFilters],
   );
 
-  const handleTagToggle = useCallback(
-    (tag: string) => {
-      const currentTags = filters.tags || [];
-      const newTags = currentTags.includes(tag)
-        ? currentTags.filter((t) => t !== tag)
-        : [...currentTags, tag];
-      setFilters({ tags: newTags });
+  const handleCategoryToggle = useCallback(
+    (category: TagCategory, tag: string) => {
+      const current = filters.tagFilters[category];
+      const updated = current.includes(tag)
+        ? current.filter((t) => t !== tag)
+        : [...current, tag];
+      setFilters({ tagFilters: { [category]: updated } as Partial<TagFiltersState> });
       setActiveQuickView(null);
     },
-    [filters.tags, setFilters],
+    [filters.tagFilters, setFilters],
+  );
+
+  const handleOtherTagToggle = useCallback(
+    (tag: string) => {
+      const current = filters.tagFilters.other;
+      const updated = current.includes(tag)
+        ? current.filter((t) => t !== tag)
+        : [...current, tag];
+      setFilters({ tagFilters: { other: updated } });
+      setActiveQuickView(null);
+    },
+    [filters.tagFilters.other, setFilters],
   );
 
   const handleStageToggle = useCallback(
@@ -123,10 +141,18 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
 
   const handleQuickView = useCallback(
     (quickView: QuickView) => {
+      const tagFilters = {
+        scope: [],
+        type: [],
+        domain: [],
+        priority: [],
+        other: [],
+        ...(quickView.tagFilters ?? {}),
+      };
       // Apply quick view filters
       setFilters({
         stages: quickView.stages ?? ALL_STAGE_KEYS,
-        tags: quickView.tags ?? [],
+        tagFilters,
         project: quickView.project ?? null,
         inboxOnly: quickView.project === null ? false : quickView.project === undefined ? filters.inboxOnly : false,
         search: '',
@@ -153,7 +179,11 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
   const hasActiveFilters =
     filters.project ||
     filters.inboxOnly ||
-    filters.tags.length > 0 ||
+    filters.tagFilters.scope.length > 0 ||
+    filters.tagFilters.type.length > 0 ||
+    filters.tagFilters.domain.length > 0 ||
+    filters.tagFilters.priority.length > 0 ||
+    filters.tagFilters.other.length > 0 ||
     filters.search ||
     hasActiveStageFilter;
 
@@ -252,21 +282,56 @@ export function FilterPanel({ className = '', searchInputRef }: FilterPanelProps
             </div>
           </div>
 
-          {/* Tag Chips */}
-          {allTags.length > 0 && (
-            <div className="filter-panel__group">
-              <label className="filter-panel__label">Tags</label>
+          {/* Taxonomy-backed tags */}
+          {Object.entries(TAG_TAXONOMY).map(([category, definitions]) => (
+            <div className="filter-panel__group" key={category}>
+              <label className="filter-panel__label">
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </label>
               <div className="filter-panel__tags">
-                {allTags.map((tag) => (
-                  <button
-                    key={tag}
-                    className={`filter-panel__tag ${filters.tags.includes(tag) ? 'filter-panel__tag--active' : ''}`}
-                    onClick={() => handleTagToggle(tag)}
-                    aria-pressed={filters.tags.includes(tag)}
-                  >
-                    {tag}
-                  </button>
-                ))}
+                {definitions.map((tag) => {
+                  const active = filters.tagFilters[category as TagCategory].includes(tag.value);
+                  return (
+                    <button
+                      key={tag.value}
+                      className={`filter-panel__tag ${active ? 'filter-panel__tag--active' : ''}`}
+                      style={
+                        {
+                          borderColor: tag.color,
+                          color: active ? '#0b0b0b' : tag.color,
+                          background: active ? tag.color : 'transparent',
+                        } as React.CSSProperties
+                      }
+                      onClick={() => handleCategoryToggle(category as TagCategory, tag.value)}
+                      aria-pressed={active}
+                      title={tag.description}
+                    >
+                      {tag.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Other tags */}
+          {availableOtherTags.length > 0 && (
+            <div className="filter-panel__group">
+              <label className="filter-panel__label">Other Tags</label>
+              <div className="filter-panel__tags">
+                {availableOtherTags.map((tag) => {
+                  const active = filters.tagFilters.other.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      className={`filter-panel__tag ${active ? 'filter-panel__tag--active' : ''}`}
+                      onClick={() => handleOtherTagToggle(tag)}
+                      aria-pressed={active}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

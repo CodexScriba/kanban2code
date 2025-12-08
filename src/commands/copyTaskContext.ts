@@ -4,6 +4,7 @@ import type { CopyMode } from '../types/copy';
 import { findKanbanRoot } from '../workspace/validation';
 import { loadTask } from '../services/taskService';
 import { buildCopyPayload } from '../services/copyService';
+import { logError, logInfo, notifyError } from '../utils/logger';
 
 /**
  * Command arguments for copyTaskContext.
@@ -28,7 +29,7 @@ export async function copyTaskContextCommand(args?: CopyTaskContextArgs): Promis
   const root = await findKanbanRoot();
 
   if (!root) {
-    vscode.window.showErrorMessage('No .kanban2code workspace found.');
+    notifyError('No .kanban2code workspace found.');
     return;
   }
 
@@ -42,27 +43,29 @@ export async function copyTaskContextCommand(args?: CopyTaskContextArgs): Promis
     try {
       task = await loadTask(args.taskFilePath, root);
     } catch (error) {
-      vscode.window.showErrorMessage(`Failed to load task: ${error}`);
+      notifyError('Failed to load task', error);
+      logError('copyTaskContextCommand failed to load task', error);
       return;
     }
   } else {
     // Try to use the active editor
     const activeEditor = vscode.window.activeTextEditor;
     if (!activeEditor) {
-      vscode.window.showErrorMessage('No task selected. Open a task file or provide a task identifier.');
+      notifyError('No task selected. Open a task file or provide a task identifier.');
       return;
     }
 
     const filePath = activeEditor.document.uri.fsPath;
     if (!filePath.endsWith('.md')) {
-      vscode.window.showErrorMessage('Active file is not a markdown task file.');
+      notifyError('Active file is not a markdown task file.');
       return;
     }
 
     try {
       task = await loadTask(filePath, root);
     } catch (error) {
-      vscode.window.showErrorMessage(`Failed to load task from active file: ${error}`);
+      notifyError('Failed to load task from active file', error);
+      logError('copyTaskContextCommand failed to load active file', error);
       return;
     }
   }
@@ -80,6 +83,7 @@ export async function copyTaskContextCommand(args?: CopyTaskContextArgs): Promis
       `Copied ${modeLabel} for "${result.taskTitle}".`,
     );
   } catch (error) {
-    vscode.window.showErrorMessage(`Failed to copy task context: ${error}`);
+    notifyError('Failed to copy task context', error);
+    logError('copyTaskContextCommand failed', error);
   }
 }

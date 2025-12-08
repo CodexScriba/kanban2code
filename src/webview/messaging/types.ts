@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import type { Task, Stage } from '../../types/task';
 
+export interface TagFiltersPayload {
+  scope?: string[];
+  type?: string[];
+  domain?: string[];
+  priority?: string[];
+  other?: string[];
+}
+
 /**
  * Current protocol version.
  * Increment when making breaking changes to the message format.
@@ -86,7 +94,7 @@ export interface ErrorPayload {
 export interface FiltersSyncPayload {
   project?: string | null;
   phase?: string | null;
-  tags?: string[];
+  tagFilters?: TagFiltersPayload;
   search?: string;
   stages?: Stage[];
   inboxOnly?: boolean;
@@ -200,7 +208,7 @@ export interface TaskSelectPayload {
 export interface FiltersChangedPayload {
   project?: string | null;
   phase?: string | null;
-  tags?: string[];
+  tagFilters?: TagFiltersPayload;
   search?: string;
   stages?: Stage[];
   inboxOnly?: boolean;
@@ -314,7 +322,15 @@ export const TaskSelectPayloadSchema = z.object({
 export const FiltersChangedPayloadSchema = z.object({
   project: z.string().nullable().optional(),
   phase: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
+  tagFilters: z
+    .object({
+      scope: z.array(z.string()).optional(),
+      type: z.array(z.string()).optional(),
+      domain: z.array(z.string()).optional(),
+      priority: z.array(z.string()).optional(),
+      other: z.array(z.string()).optional(),
+    })
+    .optional(),
   search: z.string().optional(),
   stages: z.array(StageSchema).optional(),
   inboxOnly: z.boolean().optional(),

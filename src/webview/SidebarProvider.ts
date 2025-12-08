@@ -9,6 +9,7 @@ import { archiveTask } from '../services/archiveService';
 import { copyTaskContextCommand } from '../commands/copyTaskContext';
 import { loadTaskTemplate } from '../services/templateService';
 import { stringifyTask } from '../services/frontmatter';
+import { logError, logInfo } from '../utils/logger';
 import {
   HostMessageBridge,
   createTasksLoadedMessage,
@@ -85,6 +86,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this.workspaceRoot = await findKanbanRoot();
       await this.sendWorkspaceStatus();
       await this.loadAndSendTasks();
+      logInfo('Sidebar refresh requested');
     });
 
     // Filters changed - broadcast to other webviews
@@ -121,6 +123,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         // Reload and send all tasks
         await this.loadAndSendTasks();
       } catch (error) {
+        logError('Sidebar failed to move task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to move task'),
         );
@@ -164,8 +167,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
           // Open the file in editor
           await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(task.filePath));
+          logInfo(`Sidebar created task ${task.title}`);
         }
       } catch (error) {
+        logError('Sidebar failed to create task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to create task'),
         );
@@ -189,6 +194,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         await this.loadAndSendTasks();
         vscode.window.showInformationMessage(`Archived: ${task.title}`);
       } catch (error) {
+        logError('Sidebar failed to archive task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to archive task'),
         );
@@ -205,6 +211,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         await this.loadAndSendTasks();
         vscode.window.showInformationMessage('Task deleted');
       } catch (error) {
+        logError('Sidebar failed to delete task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to delete task'),
         );
@@ -218,6 +225,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       try {
         await copyTaskContextCommand({ taskFilePath: filePath, mode: 'full_xml' });
       } catch (error) {
+        logError('Sidebar failed to copy context', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to copy context'),
         );
@@ -372,6 +380,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       const tasks = await loadAllTasks(this.workspaceRoot);
       await this.messageBridge.send(createTasksLoadedMessage(tasks));
     } catch (error) {
+      logError('Sidebar failed to load tasks', error);
       await this.messageBridge.send(
         createErrorMessage(error instanceof Error ? error.message : 'Failed to load tasks'),
       );

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore, selectFilteredTasks, selectTasksByStage, selectProjects, selectPhases, selectAllTags, selectTaskById, selectTaskCountByStage } from '../../../src/webview/stores/taskStore';
-import type { Task } from '../../../src/types/task';
+import type { Task, Stage } from '../../../src/types/task';
 
 // Sample tasks for testing
 const sampleTasks: Task[] = [
@@ -49,6 +49,34 @@ const sampleTasks: Task[] = [
   },
 ];
 
+const emptyTagFilters = {
+  scope: [] as string[],
+  type: [] as string[],
+  domain: [] as string[],
+  priority: [] as string[],
+  other: [] as string[],
+};
+
+const freshFilters = () => ({
+  project: null as string | null,
+  inboxOnly: false,
+  phase: null as string | null,
+  tagFilters: { ...emptyTagFilters },
+  search: '',
+  stages: ['inbox', 'plan', 'code', 'audit', 'completed'] as Stage[],
+});
+
+const baseState = (overrides: Partial<ReturnType<typeof freshFilters>> = {}) => ({
+  tasks: sampleTasks,
+  filters: {
+    ...freshFilters(),
+    ...overrides,
+    tagFilters: { ...freshFilters().tagFilters, ...(overrides.tagFilters ?? {}) },
+  },
+  loading: false,
+  error: null,
+});
+
 describe('taskStore', () => {
   beforeEach(() => {
     // Reset store state before each test
@@ -56,14 +84,7 @@ describe('taskStore', () => {
       tasks: [],
       loading: false,
       error: null,
-      filters: {
-        project: null,
-        inboxOnly: false,
-        phase: null,
-        tags: [],
-        search: '',
-        stages: ['inbox', 'plan', 'code', 'audit', 'completed'],
-      },
+      filters: freshFilters(),
     });
   });
 
@@ -133,23 +154,23 @@ describe('taskStore', () => {
     it('should set filters', () => {
       const { setFilters } = useTaskStore.getState();
 
-      setFilters({ project: 'projectA', tags: ['bug'] });
+      setFilters({ project: 'projectA', tagFilters: { type: ['bug'] } });
 
       const { filters } = useTaskStore.getState();
       expect(filters.project).toBe('projectA');
-      expect(filters.tags).toEqual(['bug']);
+      expect(filters.tagFilters.type).toEqual(['bug']);
       expect(filters.phase).toBeNull(); // Unchanged
     });
 
     it('should reset filters', () => {
       const { setFilters, resetFilters } = useTaskStore.getState();
 
-      setFilters({ project: 'projectA', tags: ['bug'], search: 'test' });
+      setFilters({ project: 'projectA', tagFilters: { type: ['bug'] }, search: 'test' });
       resetFilters();
 
       const { filters } = useTaskStore.getState();
       expect(filters.project).toBeNull();
-      expect(filters.tags).toEqual([]);
+      expect(filters.tagFilters.type).toEqual([]);
       expect(filters.search).toBe('');
     });
   });
@@ -157,103 +178,58 @@ describe('taskStore', () => {
   describe('selectors', () => {
     describe('selectFilteredTasks', () => {
       it('should return all tasks when no filters', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(5);
       });
 
       it('should filter by project', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: 'projectA', inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({ project: 'projectA' });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(2);
         expect(filtered.every(t => t.project === 'projectA')).toBe(true);
       });
 
       it('should filter by phase', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: 'phase1', tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({ phase: 'phase1' });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(1);
         expect(filtered[0].phase).toBe('phase1');
       });
 
-      it('should filter by tags (any match)', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: ['bug'], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+      it('should filter by taxonomy tags (type category)', () => {
+        const state = baseState({ tagFilters: { ...emptyTagFilters, type: ['bug'] } });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(2);
         expect(filtered.every(t => t.tags?.includes('bug'))).toBe(true);
       });
 
       it('should filter by search term', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: 'Project A', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({ search: 'Project A' });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(1);
         expect(filtered[0].title).toBe('Task in Project A');
       });
 
       it('should combine multiple filters', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: 'projectA', inboxOnly: false, phase: null, tags: ['bug'], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({
+          project: 'projectA',
+          tagFilters: { ...emptyTagFilters, type: ['bug'] },
+        });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(1);
         expect(filtered[0].id).toBe('task-3');
       });
 
       it('should filter by stages', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['plan'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({ stages: ['plan'] });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered).toHaveLength(1);
         expect(filtered[0].stage).toBe('plan');
       });
 
       it('should filter inbox only', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: true, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState({ inboxOnly: true });
         const filtered = selectFilteredTasks(state as never);
         expect(filtered.every((t) => !t.project)).toBe(true);
       });
@@ -261,13 +237,7 @@ describe('taskStore', () => {
 
     describe('selectTasksByStage', () => {
       it('should group tasks by stage', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const byStage = selectTasksByStage(state as never);
 
         expect(byStage.inbox).toHaveLength(1);
@@ -280,26 +250,14 @@ describe('taskStore', () => {
 
     describe('selectProjects', () => {
       it('should return unique projects sorted', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const projects = selectProjects(state as never);
 
         expect(projects).toEqual(['projectA', 'projectB']);
       });
 
       it('should return empty array when no projects', () => {
-        const state = {
-          tasks: sampleTasks.filter(t => !t.project),
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = { ...baseState(), tasks: sampleTasks.filter((t) => !t.project) };
         const projects = selectProjects(state as never);
         expect(projects).toEqual([]);
       });
@@ -307,25 +265,13 @@ describe('taskStore', () => {
 
     describe('selectPhases', () => {
       it('should return phases for a project', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const phases = selectPhases(state as never, 'projectA');
         expect(phases).toEqual(['phase1']);
       });
 
       it('should return empty array for project without phases', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const phases = selectPhases(state as never, 'projectB');
         expect(phases).toEqual([]);
       });
@@ -333,39 +279,21 @@ describe('taskStore', () => {
 
     describe('selectAllTags', () => {
       it('should return all unique tags sorted', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const tags = selectAllTags(state as never);
-        expect(tags).toEqual(['bug', 'idea', 'mvp', 'roadmap']);
+        expect(tags).toEqual(['mvp', 'bug', 'idea', 'roadmap']);
       });
     });
 
     describe('selectTaskById', () => {
       it('should return task by id', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const task = selectTaskById(state as never, 'task-2');
         expect(task?.title).toBe('Task in Project A');
       });
 
       it('should return undefined for non-existent id', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const task = selectTaskById(state as never, 'non-existent');
         expect(task).toBeUndefined();
       });
@@ -373,13 +301,7 @@ describe('taskStore', () => {
 
     describe('selectTaskCountByStage', () => {
       it('should count tasks per stage', () => {
-        const state = {
-          tasks: sampleTasks,
-          filters: { project: null, inboxOnly: false, phase: null, tags: [], search: '', stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
-          loading: false,
-          error: null,
-        };
-
+        const state = baseState();
         const counts = selectTaskCountByStage(state as never);
 
         expect(counts.inbox).toBe(1);

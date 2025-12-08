@@ -12,10 +12,17 @@
   },
   "activationEvents": [
     "workspaceContains:.kanban2code",
+    "onCommand:kanban2code.openBoard",
+    "onCommand:kanban2code.newTask",
     "onCommand:kanban2code.scaffoldWorkspace",
     "onCommand:kanban2code.archiveTask",
     "onCommand:kanban2code.archiveCompletedInProject",
     "onCommand:kanban2code.archiveProject",
+    "onCommand:kanban2code.copyTaskContext",
+    "onCommand:kanban2code.copyTaskOnly",
+    "onCommand:kanban2code.copyContextOnly",
+    "onCommand:kanban2code.focusSidebar",
+    "onCommand:kanban2code.markImplementationDone",
     "onView:kanban2code.sidebar"
   ],
   "contributes": {
@@ -55,6 +62,14 @@
       {
         "command": "kanban2code.copyContextOnly",
         "title": "Kanban2Code: Copy Context Only"
+      },
+      {
+        "command": "kanban2code.focusSidebar",
+        "title": "Kanban2Code: Focus Sidebar"
+      },
+      {
+        "command": "kanban2code.markImplementationDone",
+        "title": "Kanban2Code: Mark Implementation Done"
       }
     ],
     "viewsContainers": {
@@ -73,7 +88,34 @@
           "name": "Kanban2Code"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "kanban2code.openBoard",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k"
+      },
+      {
+        "command": "kanban2code.newTask",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      },
+      {
+        "command": "kanban2code.focusSidebar",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s"
+      },
+      {
+        "command": "kanban2code.markImplementationDone",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d"
+      },
+      {
+        "command": "kanban2code.copyTaskContext",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c"
+      }
+    ]
   },
   "scripts": {
     "build": "bun run scripts/build.ts",

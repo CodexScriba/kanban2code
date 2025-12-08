@@ -8,6 +8,7 @@ import {
   createTaskMoveMessage,
 } from '../messaging/protocol';
 import type { Task, Stage } from '../../types/task';
+import { categorizeTag, tagColor } from '../../core/tagTaxonomy';
 
 export interface TaskCardProps {
   task: Task;
@@ -171,7 +172,8 @@ export function TaskCard({
             {displayTags.map((tag) => (
               <span
                 key={tag}
-                className={`task-card__tag ${isTypeTag(tag) ? 'task-card__tag--type' : ''}`}
+                className={tagClassName(tag)}
+                style={tagStyle(tag)}
               >
                 {tag}
               </span>
@@ -231,10 +233,19 @@ export function TaskCard({
   );
 }
 
-// Helper to identify type-like tags
-function isTypeTag(tag: string): boolean {
-  const typeTags = ['bug', 'feature', 'enhancement', 'docs', 'refactor', 'test', 'mvp', 'urgent'];
-  return typeTags.includes(tag.toLowerCase());
+function tagClassName(tag: string): string {
+  const category = categorizeTag(tag);
+  const classes = ['task-card__tag'];
+  if (category !== 'other') classes.push('task-card__tag--tax');
+  if (category === 'priority') classes.push('task-card__tag--priority');
+  if (category === 'type') classes.push('task-card__tag--type');
+  return classes.join(' ');
+}
+
+function tagStyle(tag: string): React.CSSProperties | undefined {
+  const color = tagColor(tag);
+  if (!color) return undefined;
+  return { borderColor: color, color };
 }
 
 // Icons
@@ -348,15 +359,22 @@ const styles = `
 .task-card__tag {
   padding: 2px 6px;
   background: var(--colors-panel);
+  border: 1px solid var(--colors-border);
   border-radius: 4px;
   font-size: 10px;
   color: var(--colors-subtext);
 }
 
+.task-card__tag--tax {
+  font-weight: 600;
+}
+
 .task-card__tag--type {
-  background: color-mix(in srgb, var(--colors-accent) 20%, transparent);
-  color: var(--colors-accent);
-  font-weight: 500;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.task-card__tag--priority {
+  background: color-mix(in srgb, currentColor 20%, transparent);
 }
 
 .task-card__tag--more {

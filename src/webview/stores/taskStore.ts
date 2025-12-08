@@ -1,5 +1,14 @@
 import { create } from 'zustand';
 import type { Task, Stage } from '../../types/task';
+import { categorizeTag } from '../../core/tagTaxonomy';
+
+export interface TagFiltersState {
+  scope: string[];
+  type: string[];
+  domain: string[];
+  priority: string[];
+  other: string[];
+}
 
 /**
  * Filter options for tasks.
@@ -10,7 +19,7 @@ export interface TaskFilters {
   /** If true, restrict to inbox (tasks with no project). */
   inboxOnly: boolean;
   phase: string | null;
-  tags: string[];
+  tagFilters: TagFiltersState;
   search: string;
   /** Limit to these stages; empty or full set = all stages. */
   stages: Stage[];
@@ -42,14 +51,29 @@ export interface TaskStoreState {
 /**
  * Default filter state.
  */
+const defaultTagFilters: TagFiltersState = {
+  scope: [],
+  type: [],
+  domain: [],
+  priority: [],
+  other: [],
+};
+
 const defaultFilters: TaskFilters = {
   project: null,
   inboxOnly: false,
   phase: null,
-  tags: [],
+  tagFilters: defaultTagFilters,
   search: '',
   stages: ['inbox', 'plan', 'code', 'audit', 'completed'],
 };
+
+function createDefaultFilters(): TaskFilters {
+  return {
+    ...defaultFilters,
+    tagFilters: { ...defaultTagFilters },
+  };
+}
 
 /**
  * Task store for managing task state in the webview.
@@ -59,7 +83,7 @@ export const useTaskStore = create<TaskStoreState>((set) => ({
   tasks: [],
   loading: false,
   error: null,
-  filters: { ...defaultFilters },
+  filters: createDefaultFilters(),
 
   // Actions
   setTasks: (tasks) =>
@@ -90,12 +114,19 @@ export const useTaskStore = create<TaskStoreState>((set) => ({
 
   setFilters: (filters) =>
     set((state) => ({
-      filters: { ...state.filters, ...filters },
+      filters: {
+        ...state.filters,
+        ...filters,
+        tagFilters: {
+          ...state.filters.tagFilters,
+          ...(filters.tagFilters ?? {}),
+        },
+      },
     })),
 
   resetFilters: () =>
     set({
-      filters: { ...defaultFilters },
+      filters: createDefaultFilters(),
     }),
 }));
 
@@ -108,7 +139,12 @@ export const useTaskStore = create<TaskStoreState>((set) => ({
  */
 export function selectFilteredTasks(state: TaskStoreState): Task[] {
   let filtered = state.tasks;
-  const { project, phase, tags, search, stages, inboxOnly } = state.filters;
+  const { project, phase, tagFilters, search, stages, inboxOnly } = state.filters;
+
+  const matchesAnyTag = (task: Task, selections: string[]) => {
+    if (selections.length === 0) return true;
+    return Boolean(task.tags?.some((tag) => selections.includes(tag)));
+  };
 
   // Filter by inbox-only
   if (inboxOnly) {
@@ -125,12 +161,15 @@ export function selectFilteredTasks(state: TaskStoreState): Task[] {
     filtered = filtered.filter((t) => t.phase === phase);
   }
 
-  // Filter by tags (any match)
-  if (tags.length > 0) {
-    filtered = filtered.filter((t) =>
-      t.tags?.some((tag) => tags.includes(tag)),
-    );
-  }
+  // Filter by taxonomy-aligned tags (AND across categories, OR within category)
+  filtered = filtered.filter(
+    (task) =>
+      matchesAnyTag(task, tagFilters.scope) &&
+      matchesAnyTag(task, tagFilters.type) &&
+      matchesAnyTag(task, tagFilters.domain) &&
+      matchesAnyTag(task, tagFilters.priority) &&
+      matchesAnyTag(task, tagFilters.other),
+  );
 
   // Filter by stage list (treat full list as "all")
   const allStagesSelected = stages.length === defaultFilters.stages.length;
@@ -206,7 +245,14 @@ export function selectAllTags(state: TaskStoreState): string[] {
       }
     }
   }
-  return Array.from(tags).sort();
+  return Array.from(tags).sort((a, b) => {
+    const catA = categorizeTag(a);
+    const catB = categorizeTag(b);
+    if (catA === catB) {
+      return a.localeCompare(b);
+    }
+    return catA.localeCompare(catB);
+  });
 }
 
 /**

@@ -84,7 +84,13 @@ export function Sidebar({ kanbanRoot, vscode: _vscode }: SidebarProps) {
           setFilters({
             project: message.payload.project ?? null,
             phase: message.payload.phase ?? null,
-            tags: message.payload.tags ?? [],
+            tagFilters: {
+              scope: message.payload.tagFilters?.scope ?? [],
+              type: message.payload.tagFilters?.type ?? [],
+              domain: message.payload.tagFilters?.domain ?? [],
+              priority: message.payload.tagFilters?.priority ?? [],
+              other: message.payload.tagFilters?.other ?? [],
+            },
             search: message.payload.search ?? '',
             stages: message.payload.stages ?? ['inbox', 'plan', 'code', 'audit', 'completed'],
             inboxOnly: message.payload.inboxOnly ?? false,

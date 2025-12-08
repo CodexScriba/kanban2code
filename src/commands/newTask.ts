@@ -4,6 +4,7 @@ import vscode from 'vscode';
 import { FOLDERS } from '../core/constants';
 import { scaffoldWorkspace } from '../workspace/scaffolder';
 import { ensurePathInsideRoot, findKanbanRoot } from '../workspace/validation';
+import { logError, logInfo, notifyError } from '../utils/logger';
 
 export async function newTaskCommand(): Promise<void> {
   let root = await findKanbanRoot();
@@ -21,11 +22,18 @@ export async function newTaskCommand(): Promise<void> {
 
   const fileName = `task-${Date.now()}.md`;
   const filePath = path.join(root, FOLDERS.inbox, fileName);
-  ensurePathInsideRoot(filePath, root);
 
-  const content = `---\nstage: inbox\ntitle: New task\ntags: []\ncreated: ${new Date().toISOString()}\n---\n\nDescribe the task here.\n`;
-  await fs.writeFile(filePath, content, 'utf8');
+  try {
+    ensurePathInsideRoot(filePath, root);
 
-  const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
-  await vscode.window.showTextDocument(document);
+    const content = `---\nstage: inbox\ntitle: New task\ntags: []\ncreated: ${new Date().toISOString()}\n---\n\nDescribe the task here.\n`;
+    await fs.writeFile(filePath, content, 'utf8');
+
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+    await vscode.window.showTextDocument(document);
+    logInfo(`Created new task at ${filePath}`);
+  } catch (error) {
+    notifyError('Failed to create new task', error);
+    logError('newTaskCommand failed', error);
+  }
 }

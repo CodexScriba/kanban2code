@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useTaskStore, selectProjects, selectPhases } from '../stores/taskStore';
 import { postMessageToHost, createTaskCreateMessage } from '../messaging/protocol';
 import type { Stage, Task } from '../../types/task';
+import { TAG_TAXONOMY, type TagCategory } from '../../core/tagTaxonomy';
 
 export interface TaskModalProps {
   onClose: () => void;
@@ -65,6 +66,13 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
     return Array.from(set).sort();
   }, [tasks]);
 
+  const knownTags = useMemo(() => {
+    const set = new Set<string>();
+    tasks.forEach((task) => task.tags?.forEach((tag) => set.add(tag)));
+    Object.values(TAG_TAXONOMY).forEach((defs) => defs.forEach((def) => set.add(def.value)));
+    return Array.from(set).sort();
+  }, [tasks]);
+
   // Focus title input on mount
   useEffect(() => {
     titleInputRef.current?.focus();
@@ -115,6 +123,19 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
       setSelectedPhase('');
     },
     [],
+  );
+
+  const toggleTagValue = useCallback(
+    (tag: string) => {
+      const current = tagsInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const exists = current.includes(tag);
+      const next = exists ? current.filter((t) => t !== tag) : [...current, tag];
+      setTagsInput(next.join(', '));
+    },
+    [tagsInput],
   );
 
   const handleSubmit = useCallback(
@@ -326,8 +347,49 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
               placeholder="bug, mvp, idea (comma separated)"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
+              list="task-tag-suggestions"
             />
-            <span className="task-modal__hint">Separate tags with commas</span>
+            <datalist id="task-tag-suggestions">
+              {knownTags.map((tag) => (
+                <option key={tag} value={tag} />
+              ))}
+            </datalist>
+            <span className="task-modal__hint">Separate tags with commas or pick from the taxonomy below.</span>
+            <div className="task-modal__tag-suggestions">
+              {Object.entries(TAG_TAXONOMY).map(([category, defs]) => (
+                <div key={category} className="task-modal__tag-group">
+                  <span className="task-modal__tag-group-label">
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </span>
+                  <div className="task-modal__tag-pills">
+                    {defs.map((def) => {
+                      const tokens = tagsInput
+                        .split(',')
+                        .map((t) => t.trim())
+                        .filter(Boolean);
+                      const active = tokens.includes(def.value);
+                      return (
+                        <button
+                          type="button"
+                          key={def.value}
+                          className={`task-modal__tag-pill ${active ? 'task-modal__tag-pill--active' : ''}`}
+                          style={
+                            {
+                              borderColor: def.color,
+                              background: active ? def.color : 'transparent',
+                              color: active ? '#0b0b0b' : def.color,
+                            } as React.CSSProperties
+                          }
+                          onClick={() => toggleTagValue(def.value)}
+                        >
+                          {def.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Agent */}
@@ -583,6 +645,48 @@ const styles = `
   margin-top: 4px;
   font-size: 11px;
   color: var(--colors-subtext);
+}
+
+.task-modal__tag-suggestions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-modal__tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-modal__tag-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--colors-subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.task-modal__tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.task-modal__tag-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--colors-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--colors-subtext);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.task-modal__tag-pill--active {
+  font-weight: 600;
 }
 
 /* Location Toggle */

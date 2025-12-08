@@ -11,7 +11,10 @@ kanban2code/
 ├── src/                          # Extension source code
 │   ├── extension.ts              # Extension entry point
 │   ├── core/                     # Shared constants and utilities
-│   │   └── constants.ts          # Stage definitions, folder names
+│   │   ├── constants.ts          # Stage definitions, folder names
+│   │   └── tagTaxonomy.ts        # Tag taxonomy definitions + helpers
+│   ├── utils/                    # Cross-cutting helpers
+│   │   └── logger.ts             # Output-channel logging
 │   ├── types/                    # TypeScript type definitions
 │   │   ├── task.ts               # Task and Stage types
 │   │   └── copy.ts               # CopyMode type for context copying
@@ -30,8 +33,10 @@ kanban2code/
 │   │   └── scaffolder.ts         # Workspace initialization
 │   ├── commands/                 # VS Code command handlers
 │   │   ├── openBoard.ts          # Open board webview
+│   │   ├── focusSidebar.ts       # Focus sidebar view
 │   │   ├── newTask.ts            # Create new task
 │   │   ├── scaffoldWorkspace.ts  # Initialize workspace
+│   │   ├── markImplementationDone.ts # Advance active task
 │   │   ├── archiveCommands.ts    # Archive task/project commands
 │   │   └── copyTaskContext.ts    # Copy context to clipboard (Phase 2)
 │   └── webview/                  # React webview UI
@@ -60,6 +65,8 @@ kanban2code/
 │       └── hooks/                # React hooks
 │           └── useKeyboardNavigation.ts # Keyboard shortcuts (Phase 3)
 ├── tests/                        # Test files (Vitest)
+│   ├── commands/                 # Command handler tests
+│   │   └── markImplementationDone.test.ts
 │   ├── services/                 # Service unit tests
 │   │   ├── frontmatter.test.ts
 │   │   ├── taskService.test.ts
@@ -82,6 +89,7 @@ kanban2code/
 │   │   └── stores/               # Webview store tests
 │   │       ├── taskStore.test.ts  # Phase 3
 │   │       └── uiStore.test.ts    # Phase 3
+│   ├── e2e/                      # E2E scaffolding (test-electron)
 │   └── fixtures/                 # Test fixtures
 │       └── ...                   # Sample task files
 ├── scripts/                      # Build tooling
@@ -91,8 +99,13 @@ kanban2code/
 ├── dist/                         # Build output (generated)
 │   ├── extension.js              # Bundled extension
 │   └── webview.js                # Bundled webview
-└── docs/                         # Documentation
-    └── architecture.md           # This file
+├── docs/                         # Documentation
+│   ├── architecture.md           # This file
+│   ├── how-it-works.md           # Workflow + taxonomy
+│   └── project-details.md        # Problem/users/success
+└── projects/                     # Dogfooding contexts & backlog
+    ├── kanban2code/_context.md
+    └── kanban2code-post-v1/
 ```
 
 ## Core Concepts
@@ -314,18 +327,20 @@ interface UIStore {
 
 ## Stage Transition Rules
 
-Valid transitions are enforced by `taskMoveService`:
+Valid transitions are enforced by `taskMoveService` and are forward-only by default:
 
 ```
 inbox    → plan, code
-plan     → code, inbox
-code     → audit, plan
-audit    → completed, code
+plan     → code
+code     → audit
+audit    → completed
 completed → (archive only, not a stage transition)
 ```
 
-Backward transitions (e.g., audit → code) are allowed for rework.
-Direct jumps (e.g., inbox → completed) are blocked.
+Regressions (e.g., audit → code) are only allowed when a caller explicitly opts in with
+`allowRegressions: true` (used by the `markImplementationDone` command when a user overrides
+the default path). Direct jumps such as inbox → completed are blocked unless the caller
+handles the override and writes the stage manually.
 
 ## Context System (Phase 2)
 
@@ -510,9 +525,11 @@ bun run format         # Prettier format
 
 - **Unit tests**: Services layer with mocked filesystem
 - **Integration tests**: Full task loading with temp directories
-- **Webview tests**: React components and stores (Phase 3)
+- **Webview tests**: React components and stores (Phase 3–4)
 - **Framework**: Vitest for fast, ESM-native testing
 - **Fixtures**: Sample task files in `tests/fixtures/`
+- **E2E**: `tests/e2e/workflows.test.ts` is scaffolded and currently skipped; a real
+  `@vscode/test-electron` harness and CI workflow still need to be wired up.
 
 **Phase 4 Test Coverage:**
 
@@ -522,7 +539,7 @@ bun run format         # Prettier format
 - `taskStore.test.ts`: 25 tests for task state management
 - `uiStore.test.ts`: 19 tests for UI state management
 - `useKeyboardNavigation.test.ts`: 8 tests for keyboard shortcuts
-- Total: 313 passing tests across 18 test files
+- Totals fluctuate as coverage evolves; E2E is not yet implemented.
 
 ## Security
 

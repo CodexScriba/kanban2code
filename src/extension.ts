@@ -6,6 +6,8 @@ import { registerArchiveCommands } from './commands/archiveCommands';
 import { copyTaskContextCommand } from './commands/copyTaskContext';
 import { SidebarProvider } from './webview/SidebarProvider';
 import { findKanbanRoot } from './workspace/validation';
+import { markImplementationDoneCommand } from './commands/markImplementationDone';
+import { focusSidebarCommand } from './commands/focusSidebar';
 
 export async function activate(context: vscode.ExtensionContext) {
   const sidebarProvider = new SidebarProvider(context);
@@ -16,6 +18,10 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('kanban2code.newTask', () => newTaskCommand()),
     vscode.commands.registerCommand('kanban2code.scaffoldWorkspace', () =>
       scaffoldWorkspaceCommand(),
+    ),
+    vscode.commands.registerCommand('kanban2code.focusSidebar', () => focusSidebarCommand()),
+    vscode.commands.registerCommand('kanban2code.markImplementationDone', (args) =>
+      markImplementationDoneCommand(args),
     ),
     vscode.commands.registerCommand('kanban2code.copyTaskContext', (args) =>
       copyTaskContextCommand({ ...args, mode: 'full_xml' }),

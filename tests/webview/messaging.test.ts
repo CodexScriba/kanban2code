@@ -123,7 +123,14 @@ describe('webview messaging', () => {
 
   describe('FiltersChangedPayloadSchema', () => {
     it('should validate filters payload', () => {
-      const payload = { project: 'proj', phase: null, tags: ['a', 'b'], search: 'text', stages: ['plan'], inboxOnly: false };
+      const payload = {
+        project: 'proj',
+        phase: null,
+        tagFilters: { type: ['bug'] },
+        search: 'text',
+        stages: ['plan'],
+        inboxOnly: false,
+      };
       expect(FiltersChangedPayloadSchema.safeParse(payload).success).toBe(true);
     });
   });
@@ -161,7 +168,7 @@ describe('webview messaging', () => {
     });
 
     it('should validate filters:changed message', () => {
-      const message = createFiltersChangedMessage({ project: 'proj', tags: ['a'] });
+      const message = createFiltersChangedMessage({ project: 'proj', tagFilters: { scope: ['mvp'] } });
       const result = validateWebviewMessage(message);
       expect(result.success).toBe(true);
     });

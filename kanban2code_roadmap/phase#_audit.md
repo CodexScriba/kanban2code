@@ -200,6 +200,81 @@
 
 ---
 
+## Phase 5 - Polish and Docs
+
+### Phase Information
+- **Phase Number:** 5
+- **Phase Name:** Polish and Docs
+- **Date Completed:** 2025-12-07
+- **Completed By:** Codex (assistant)
+
+### Task Summary
+- **Total Tasks:** 8
+- **Completed Tasks:** 4 (5.1, 5.2, 5.4, 5.7)
+- **Completion Rate:** 50%
+
+### File Changes
+
+#### Files Created
+| File Path | Purpose/Function |
+|-----------|------------------|
+| src/utils/logger.ts | Output channel logging helpers with user-facing error notifications |
+| src/commands/focusSidebar.ts | Command to focus the Kanban2Code sidebar view |
+| src/commands/markImplementationDone.ts | Command to advance the active task to the next/target stage |
+| src/core/tagTaxonomy.ts | Formal tag taxonomy definitions and helpers for categories/colors |
+| docs/how-it-works.md | Inbox-first workflow, stage semantics, taxonomy, and context model |
+| docs/project-details.md | Problem statement, users, success criteria, and scope for v1/post-v1 |
+| projects/kanban2code/_context.md | Dogfooding context for the Kanban2Code project |
+| projects/kanban2code-post-v1/_context.md | Post-v1 backlog context holder |
+| projects/kanban2code-post-v1/roadmap.md | Notes for post-v1 roadmap themes |
+| tests/commands/markImplementationDone.test.ts | Vitest coverage for markImplementationDone command |
+| tests/utils/logger.test.ts | Vitest coverage for logger helpers |
+| tests/e2e/workflows.test.ts | Placeholder scaffold for @vscode/test-electron E2E flows (skipped) |
+
+#### Files Modified
+| File Path | Purpose/Function | Changes Made |
+|-----------|------------------|--------------|
+| package.json | Extension manifest | Added commands/keybindings for focus sidebar, mark implementation done, updated activation events |
+| src/extension.ts | Activation wiring | Registered new commands and logging-aware handlers |
+| src/commands/newTask.ts | Task creation | Wrapped filesystem writes with logging/error notifications |
+| src/commands/openBoard.ts | Board opening | Added logging/error handling around workspace checks |
+| src/commands/copyTaskContext.ts | Copy command | Added logging/error notifications and safer task loading |
+| src/webview/BoardPanel.ts | Host bridge | Logging on scaffold/move/create/archive/delete/copy and filter sync payload updates |
+| src/webview/messaging/types.ts | Protocol | Added tagFilters payload support for filters sync/change |
+| src/webview/messaging/protocol.ts | Message builders | Extended filters sync/change helpers with tagFilters |
+| src/webview/stores/taskStore.ts | State/selectors | Switched filters to taxonomy-aware tagFilters and updated selectors |
+| src/webview/components/FilterPanel.tsx | UI filters | Added category-based tag chips, quick views updated to use taxonomy filters |
+| src/webview/components/TaskModal.tsx | Task create | Tag autocomplete/suggestions from taxonomy and existing tags |
+| src/webview/components/TaskCard.tsx | Card rendering | Tag chips styled by taxonomy/color helpers |
+| src/webview/Board.tsx, src/webview/Sidebar.tsx | Filter sync | Handle tagFilters in host→webview sync |
+| docs/architecture.md | Architecture overview | Updated structure for logger/tag taxonomy/commands/docs/projects |
+| tests/webview/messaging.test.ts | Protocol tests | Validated tagFilters payloads and message builders |
+| tests/webview/stores/taskStore.test.ts | Store tests | Updated for tagFilters selectors and sorting |
+| tests/mocks/vscode.ts | VS Code stub | Added output channel/clipboard stubs for logger tests |
+
+#### Files Analyzed
+| File Path | Purpose/Function | Analysis Notes |
+|-----------|------------------|----------------|
+| kanban2code_roadmap/phase-5-polish-and-docs/task-5.{1,2,4,7}.md | Acceptance criteria | Drove keyboard shortcuts/commands, logging, taxonomy, and docs updates |
+| docs/architecture.md | Architecture doc | Revised to reflect new utilities, taxonomy, and docs locations |
+| src/webview components/stores | UI filter/tag behavior | Ensured taxonomy-backed filtering and suggestions |
+
+### Key Changes
+- Added output-channel logging with user notifications across commands and board host handlers.
+- Added global shortcuts/commands: focus sidebar and mark implementation done; updated manifest activation.
+- Implemented formal tag taxonomy with categorized filters, card styling, and task modal suggestions.
+- Documented workflow, architecture updates, and project details; added dogfooding and post-v1 backlog contexts.
+
+### Tests Created
+- `tests/commands/markImplementationDone.test.ts` – verifies advancing a task via command.
+- `tests/utils/logger.test.ts` – ensures logging and notifications write to the output channel.
+- `tests/e2e/workflows.test.ts` – placeholder for @vscode/test-electron flows (skipped).
+
+### Testing Status
+- `bun run test` (Vitest) passing after updates; E2E tests are placeholders and skipped.
+
+---
+
 ## Phase 3 - Sidebar UI
 
 ### Phase Information

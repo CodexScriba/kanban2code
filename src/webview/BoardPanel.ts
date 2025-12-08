@@ -8,6 +8,7 @@ import { archiveTask } from '../services/archiveService';
 import { copyTaskContextCommand } from '../commands/copyTaskContext';
 import { loadTaskTemplate } from '../services/templateService';
 import { stringifyTask } from '../services/frontmatter';
+import { logError, logInfo } from '../utils/logger';
 import {
   HostMessageBridge,
   createTasksLoadedMessage,
@@ -18,12 +19,13 @@ import {
   createFiltersSyncMessage,
 } from './messaging/protocol';
 import type { Task, Stage } from '../types/task';
+import type { TagFiltersPayload } from './messaging/types';
 
 // Shared filter state for syncing between sidebar and board
 let sharedFilters: {
   search?: string;
   project?: string | null;
-  tags?: string[];
+  tagFilters?: TagFiltersPayload;
   stages?: Stage[];
 } = {};
 
@@ -127,6 +129,7 @@ export class BoardPanel {
         vscode.window.showInformationMessage(`Scaffolded Kanban2Code workspace at ${root}`);
         await this.sendWorkspaceStatus();
         await this.loadAndSendTasks();
+        logInfo(`Scaffolded workspace at ${root}`);
       }
     });
 
@@ -166,6 +169,7 @@ export class BoardPanel {
         // Reload and send all tasks
         await this.loadAndSendTasks();
       } catch (error) {
+        logError('Failed to move task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to move task'),
         );
@@ -209,8 +213,10 @@ export class BoardPanel {
 
           // Open the file in editor
           await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(task.filePath));
+          logInfo(`Created task ${task.title}`);
         }
       } catch (error) {
+        logError('Failed to create task from webview message', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to create task'),
         );
@@ -234,6 +240,7 @@ export class BoardPanel {
         await this.loadAndSendTasks();
         vscode.window.showInformationMessage(`Archived: ${task.title}`);
       } catch (error) {
+        logError('Failed to archive task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to archive task'),
         );
@@ -250,6 +257,7 @@ export class BoardPanel {
         await this.loadAndSendTasks();
         vscode.window.showInformationMessage('Task deleted');
       } catch (error) {
+        logError('Failed to delete task', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to delete task'),
         );
@@ -263,6 +271,7 @@ export class BoardPanel {
       try {
         await copyTaskContextCommand({ taskFilePath: filePath, mode: 'full_xml' });
       } catch (error) {
+        logError('Failed to copy context from board', error);
         await this.messageBridge?.send(
           createErrorMessage(error instanceof Error ? error.message : 'Failed to copy context'),
         );
@@ -314,6 +323,7 @@ export class BoardPanel {
       const tasks = await loadAllTasks(this.workspaceRoot);
       await this.messageBridge.send(createTasksLoadedMessage(tasks));
     } catch (error) {
+      logError('Failed to load tasks in board', error);
       await this.messageBridge.send(
         createErrorMessage(error instanceof Error ? error.message : 'Failed to load tasks'),
       );
