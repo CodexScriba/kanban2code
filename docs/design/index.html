@@ -246,6 +246,10 @@
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287z"/></svg>
         Empty States
       </a>
+      <a href="forms/quick-task.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+        Forms
+      </a>
     </div>
 
     <!-- Main Views -->
@@ -327,6 +331,65 @@
           <div class="preview-content">
             <h3 class="preview-title">Empty States & Toasts</h3>
             <p class="preview-description">Empty board, empty inbox, no results, loading, and notification toasts.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Forms -->
+    <section class="section">
+      <h2 class="section-title">Forms & Creation Flows</h2>
+      <div class="card-grid">
+        <a href="forms/quick-task.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Quick Task</h3>
+            <p class="preview-description">Minimal task creation - just title and description. Goes to Inbox by default.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="forms/task.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <path d="M8 9h8M8 13h5"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Detailed Task</h3>
+            <p class="preview-description">Full task creation with project, phase, stage, context files, agent, and tags.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="forms/context.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Context Creation</h3>
+            <p class="preview-description">Create context files with metadata, file references, and content for AI agents.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="forms/agent.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Agent Creation</h3>
+            <p class="preview-description">Define AI agent behavior with templates for Ncoder, React Dev, API Builder, etc.</p>
             <span class="preview-badge">Ready for Review</span>
           </div>
         </a>
@@ -416,6 +479,11 @@ docs/design/
 ├── components/
 │   ├── modals.html         # Modal dialogs and context menus
 │   └── empty-states.html   # Empty states and toast notifications
+├── forms/
+│   ├── quick-task.html     # Quick task creation (minimal)
+│   ├── task.html           # Detailed task creation
+│   ├── context.html        # Context file creation
+│   └── agent.html          # AI agent creation
 └── styles/
     ├── variables.css       # VS Code theme tokens & design tokens
     ├── glassmorphic.css    # Glass effects & stage-specific styles
