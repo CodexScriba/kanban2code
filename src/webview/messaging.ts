@@ -12,7 +12,19 @@ export const HostToWebviewMessageTypes = [
 export const WebviewToHostMessageTypes = [
   'CreateTask',
   'MoveTask',
+  'ArchiveTask',
+  'DeleteTask',
   'CopyContext',
+  'OpenTask',
+  'OpenBoard',
+  'OpenSettings',
+  'CreateKanban',
+  'CreateProject',
+  'CreateContext',
+  'CreateAgent',
+  'CreateTemplate',
+  'TaskContextMenu',
+  'OpenMoveModal',
   // Basic demo/ping path used by the placeholder UI
   'ALERT',
 ] as const;

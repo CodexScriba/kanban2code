@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import './styles/main.css';
-import { WebviewMessage, createMessage } from '../messaging';
+import { Sidebar } from './components/Sidebar';
+import type { MessageEnvelope } from '../messaging';
 
-declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
-
-const vscode = (typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined);
+interface InitStatePayload {
+  hasKanban: boolean;
+  tasks?: unknown[];
+  workspaceRoot?: string;
+}
 
 export const App: React.FC = () => {
-  const [status, setStatus] = useState('Waiting for host...');
+  const [hasKanban, setHasKanban] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const handler = (event: MessageEvent<WebviewMessage>) => {
+    const handler = (event: MessageEvent<MessageEnvelope>) => {
       const message = event.data;
       if (!message?.type) return;
-      if (message.type === 'INIT') {
-        setStatus('Connected to extension host');
-      } else if (message.type === 'UPDATE_STATE') {
-        setStatus(`State updated: ${JSON.stringify(message.payload)}`);
+
+      if (message.type === 'InitState') {
+        const payload = message.payload as InitStatePayload;
+        setHasKanban(payload.hasKanban ?? false);
       }
     };
 
@@ -24,31 +27,20 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  const sendAlert = () => {
-    const msg = createMessage('ALERT', { text: 'Hello from Kanban2Code webview' });
-    vscode?.postMessage(msg);
-  };
+  // Initial loading state before we know if kanban exists
+  if (hasKanban === null) {
+    return (
+      <div className="sidebar glass-panel">
+        <div className="sidebar-toolbar">
+          <span className="sidebar-title">Kanban2Code</span>
+        </div>
+        <div className="sidebar-loading">
+          <div className="loading-spinner" />
+          <span>Initializing...</span>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <div className="container">
-      <div className="sidebar">
-        <h2>Sidebar</h2>
-        <div className="card">Inbox</div>
-        <div className="card">Projects</div>
-        <div className="card">
-          <p className="status-label">Status: {status}</p>
-          <button className="ghost-button" onClick={sendAlert}>
-            Ping Extension
-          </button>
-        </div>
-      </div>
-      <div className="board">
-        <h1>Kanban Board</h1>
-        <div className="card">
-          <h3>Welcome to Kanban2Code</h3>
-          <p>This is a placeholder for the board view.</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <Sidebar hasKanban={hasKanban} />;
 };
