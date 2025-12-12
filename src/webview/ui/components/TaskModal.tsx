@@ -23,6 +23,7 @@ interface TaskModalProps {
   templates?: Template[];
   onClose: () => void;
   defaultLocation?: 'inbox' | { project: string; phase?: string };
+  parentTaskId?: string;
 }
 
 interface TaskFormData {
@@ -48,6 +49,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   templates = [],
   onClose,
   defaultLocation = 'inbox',
+  parentTaskId,
 }) => {
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
@@ -108,6 +110,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       agent: formData.agent || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       template: formData.template || undefined,
+      parent: parentTaskId || undefined,
       content: formData.content || undefined,
     };
 
@@ -153,6 +156,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         </div>
 
         <div className="modal-body">
+          {parentTaskId && (
+            <div className="form-group">
+              <label className="form-label">Parent</label>
+              <div className="form-hint">Follow-up for {parentTaskId}</div>
+            </div>
+          )}
           {/* Title */}
           <div className="form-group">
             <label className="form-label" htmlFor="task-title">

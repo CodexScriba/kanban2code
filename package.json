@@ -14,7 +14,15 @@
     "onView:kanban2code.sidebar",
     "onCommand:kanban2code.openBoard",
     "onCommand:kanban2code.newTask",
-    "onCommand:kanban2code.scaffoldWorkspace"
+    "onCommand:kanban2code.scaffoldWorkspace",
+    "onCommand:kanban2code.copyTaskContext",
+    "onCommand:kanban2code.copyTaskOnly",
+    "onCommand:kanban2code.copyContextOnly",
+    "onCommand:kanban2code.toggleLayout",
+    "onCommand:kanban2code.showKeyboardShortcuts",
+    "onCommand:kanban2code.newProject",
+    "onCommand:kanban2code.newAgent",
+    "onCommand:kanban2code.openSettings"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -48,6 +56,58 @@
       {
         "command": "kanban2code.scaffoldWorkspace",
         "title": "Kanban2Code: Scaffold Workspace"
+      },
+      {
+        "command": "kanban2code.copyTaskContext",
+        "title": "Kanban2Code: Copy Task Context (Full XML)"
+      },
+      {
+        "command": "kanban2code.copyTaskOnly",
+        "title": "Kanban2Code: Copy Task Only"
+      },
+      {
+        "command": "kanban2code.copyContextOnly",
+        "title": "Kanban2Code: Copy Context Only"
+      },
+      {
+        "command": "kanban2code.toggleLayout",
+        "title": "Kanban2Code: Toggle Board Layout"
+      },
+      {
+        "command": "kanban2code.showKeyboardShortcuts",
+        "title": "Kanban2Code: Show Keyboard Shortcuts"
+      },
+      {
+        "command": "kanban2code.newProject",
+        "title": "Kanban2Code: New Project"
+      },
+      {
+        "command": "kanban2code.newAgent",
+        "title": "Kanban2Code: New Agent"
+      },
+      {
+        "command": "kanban2code.openSettings",
+        "title": "Kanban2Code: Open Settings"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "kanban2code.copyTaskContext",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "kanban2code:isActive && editorFocus"
+      },
+      {
+        "command": "kanban2code.newTask",
+        "key": "ctrl+shift+n",
+        "mac": "cmd+shift+n",
+        "when": "kanban2code:isActive"
+      },
+      {
+        "command": "kanban2code.openBoard",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "kanban2code:isActive"
       }
     ]
   },
@@ -57,10 +117,17 @@
     "watch": "bun run build.ts --watch",
     "package": "bun run build.ts --production",
     "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "lint": "eslint src",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bun": "latest",
     "@types/node": "^24.10.2",
     "@types/react": "^19.2.7",
@@ -68,9 +135,11 @@
     "@types/vscode": "^1.106.1",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
+    "@vitest/coverage-v8": "^4.0.15",
     "esbuild": "^0.27.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^27.3.0",
     "prettier": "^3.7.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",

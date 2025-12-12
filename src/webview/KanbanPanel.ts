@@ -1,28 +1,43 @@
 import * as vscode from 'vscode';
-import { WebviewMessage } from './messaging';
+import { createEnvelope, validateEnvelope, type MessageEnvelope } from './messaging';
+import { WorkspaceState } from '../workspace/state';
+import { findTaskById, loadAllTasks } from '../services/scanner';
+import { changeStageAndReload } from '../services/stage-manager';
+import { archiveTask } from '../services/archive';
+import { loadTaskTemplates } from '../services/template';
+import type { Task, Stage } from '../types/task';
+import type { FilterState } from '../types/filters';
 
 export class KanbanPanel {
   public static currentPanel: KanbanPanel | undefined;
   private readonly _panel: vscode.WebviewPanel;
+  private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
+  private _tasks: Task[] = [];
+  private _templates: unknown[] = [];
+  private _webviewReady = false;
+  private _pendingMessages: MessageEnvelope[] = [];
 
-  private constructor(panel: vscode.WebviewPanel) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
+    this._extensionUri = extensionUri;
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._extensionUri, 'dist'),
+        vscode.Uri.joinPath(this._extensionUri, 'docs', 'design', 'styles'),
+      ],
+    };
     this._panel.webview.html = this._getWebviewContent();
 
     this._panel.webview.onDidReceiveMessage(
-      (message: WebviewMessage) => {
-        if (message.type === 'ALERT') {
-          const text = message.payload?.text ?? 'Alert from Kanban2Code';
-          vscode.window.showInformationMessage(text);
-        }
+      async (data) => {
+        await this._handleWebviewMessage(data);
       },
       null,
       this._disposables,
     );
-
-    this._postMessage({ type: 'INIT', payload: { ready: true } });
   }
 
   public static createOrShow(extensionUri: vscode.Uri) {
@@ -47,7 +62,24 @@ export class KanbanPanel {
       },
     );
 
-    KanbanPanel.currentPanel = new KanbanPanel(panel);
+    KanbanPanel.currentPanel = new KanbanPanel(panel, extensionUri);
+  }
+
+  public updateTasks(tasks: Task[]) {
+    this._tasks = tasks;
+    this._postMessage(createEnvelope('TaskUpdated', { tasks }));
+  }
+
+  public postFilterState(filters: FilterState) {
+    this._postMessage(createEnvelope('FilterChanged', { filters }));
+  }
+
+  public toggleLayout() {
+    this._postMessage(createEnvelope('ToggleLayout', {}));
+  }
+
+  public showKeyboardShortcuts() {
+    this._postMessage(createEnvelope('ShowKeyboardShortcuts', {}));
   }
 
   public dispose() {
@@ -64,10 +96,10 @@ export class KanbanPanel {
   private _getWebviewContent() {
     const webview = this._panel.webview;
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._panel.extensionUri, 'dist', 'webview.js'),
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.js'),
     );
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._panel.extensionUri, 'dist', 'webview.css'),
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.css'),
     );
 
     const nonce = getNonce();
@@ -88,8 +120,127 @@ export class KanbanPanel {
 </html>`;
   }
 
-  private _postMessage(message: WebviewMessage) {
+  private _postMessage(message: MessageEnvelope) {
+    if (!this._webviewReady) {
+      this._pendingMessages.push(message);
+      return;
+    }
     this._panel.webview.postMessage(message);
+  }
+
+  private _flushPendingMessages() {
+    if (!this._webviewReady) return;
+    const pending = this._pendingMessages;
+    this._pendingMessages = [];
+    for (const message of pending) {
+      this._panel.webview.postMessage(message);
+    }
+  }
+
+  private async _handleWebviewMessage(data: unknown) {
+    try {
+      const envelope = validateEnvelope(data);
+      const { type, payload } = envelope;
+
+      switch (type) {
+        case 'RequestState':
+          this._webviewReady = true;
+          await this._sendInitialState();
+          this._flushPendingMessages();
+          break;
+
+        case 'MoveTask': {
+          const { taskId, toStage, newStage } = payload as { taskId: string; toStage?: Stage; newStage?: Stage };
+          const stage = toStage ?? newStage;
+          if (stage) {
+            await changeStageAndReload(taskId, stage);
+            await this._sendInitialState();
+          }
+          break;
+        }
+
+        case 'CreateTask':
+          await vscode.commands.executeCommand('kanban2code.newTask', payload);
+          await this._sendInitialState();
+          break;
+
+        case 'CopyContext': {
+          const { taskId, mode } = payload as { taskId: string; mode: string };
+          await vscode.commands.executeCommand('kanban2code.copyTaskContext', taskId, mode);
+          break;
+        }
+
+        case 'ArchiveTask': {
+          const { taskId } = payload as { taskId: string };
+          const root = WorkspaceState.kanbanRoot;
+          if (root && taskId) {
+            const task = await findTaskById(root, taskId);
+            if (task) {
+              await archiveTask(task, root);
+              await this._sendInitialState();
+            }
+          }
+          break;
+        }
+
+        case 'DeleteTask': {
+          const { taskId } = payload as { taskId: string };
+          const root = WorkspaceState.kanbanRoot;
+          if (root && taskId) {
+            const task = await findTaskById(root, taskId);
+            if (task) {
+              await vscode.workspace.fs.delete(vscode.Uri.file(task.filePath));
+              await this._sendInitialState();
+            }
+          }
+          break;
+        }
+
+        case 'OpenTask': {
+          const { filePath } = payload as { filePath: string };
+          if (filePath) {
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+            await vscode.window.showTextDocument(doc);
+          }
+          break;
+        }
+
+        case 'ALERT': {
+          const text = (payload as { text?: string })?.text ?? 'Alert from Kanban2Code';
+          vscode.window.showInformationMessage(text);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error('Error handling board webview message:', error);
+    }
+  }
+
+  private async _sendInitialState() {
+    const kanbanRoot = WorkspaceState.kanbanRoot;
+    const hasKanban = !!kanbanRoot;
+    if (hasKanban && kanbanRoot) {
+      try {
+        this._tasks = await loadAllTasks(kanbanRoot);
+        this._templates = await loadTaskTemplates(kanbanRoot);
+      } catch (error) {
+        console.error('Error loading tasks for board:', error);
+        this._tasks = [];
+        this._templates = [];
+      }
+    } else {
+      this._tasks = [];
+      this._templates = [];
+    }
+
+    this._postMessage(createEnvelope('InitState', {
+      context: 'board',
+      hasKanban,
+      tasks: this._tasks,
+      templates: this._templates,
+      workspaceRoot: kanbanRoot,
+      filterState: WorkspaceState.filterState as FilterState | null ?? undefined,
+    }));
   }
 }
 

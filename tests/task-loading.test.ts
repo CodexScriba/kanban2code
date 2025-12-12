@@ -1,4 +1,4 @@
-import { expect, test, afterEach, beforeEach } from 'vitest';
+import { expect, test, afterEach, beforeEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -60,13 +60,14 @@ test('loadAllTasks handles empty workspace', async () => {
 });
 
 test('loadAllTasks tolerates malformed frontmatter and applies defaults', async () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   const inbox = path.join(KANBAN_ROOT, INBOX_FOLDER);
   await fs.mkdir(inbox, { recursive: true });
   
   await fs.writeFile(path.join(inbox, 'valid.md'), '---\nstage: inbox\n---\n# Valid');
   await fs.writeFile(path.join(inbox, 'bad.md'), '---\nstage: [unclosed\n---\n# Bad');
 
-  const tasks = await loadAllTasks(KANBAN_ROOT);
+  const tasks = await loadAllTasks(KANBAN_ROOT).finally(() => warnSpy.mockRestore());
   
   expect(tasks.map((t) => t.id).sort()).toEqual(['bad', 'valid']);
   const bad = tasks.find((t) => t.id === 'bad');

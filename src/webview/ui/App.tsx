@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './styles/main.css';
 import { Sidebar } from './components/Sidebar';
+import { Board } from './components/Board';
 import { createMessage, type MessageEnvelope } from '../messaging';
 import { vscode } from './vscodeApi';
 
@@ -8,10 +9,14 @@ interface InitStatePayload {
   hasKanban: boolean;
   tasks?: unknown[];
   workspaceRoot?: string;
+  context?: 'sidebar' | 'board';
 }
 
 export const App: React.FC = () => {
   const [hasKanban, setHasKanban] = useState<boolean | null>(null);
+  const [context, setContext] = useState<'sidebar' | 'board'>('sidebar');
+  const [showKeyboardShortcutsNonce, setShowKeyboardShortcutsNonce] = useState(0);
+  const [toggleLayoutNonce, setToggleLayoutNonce] = useState(0);
 
   useEffect(() => {
     const handler = (event: MessageEvent<MessageEnvelope>) => {
@@ -21,6 +26,15 @@ export const App: React.FC = () => {
       if (message.type === 'InitState') {
         const payload = message.payload as InitStatePayload;
         setHasKanban(payload.hasKanban ?? false);
+        setContext(payload.context ?? 'sidebar');
+      }
+
+      if (message.type === 'ShowKeyboardShortcuts') {
+        setShowKeyboardShortcutsNonce((n) => n + 1);
+      }
+
+      if (message.type === 'ToggleLayout') {
+        setToggleLayoutNonce((n) => n + 1);
       }
     };
 
@@ -49,5 +63,18 @@ export const App: React.FC = () => {
     );
   }
 
-  return <Sidebar hasKanban={hasKanban} />;
+  return context === 'board'
+    ? (
+      <Board
+        hasKanban={hasKanban}
+        showKeyboardShortcutsNonce={showKeyboardShortcutsNonce}
+        toggleLayoutNonce={toggleLayoutNonce}
+      />
+    )
+    : (
+      <Sidebar
+        hasKanban={hasKanban}
+        showKeyboardShortcutsNonce={showKeyboardShortcutsNonce}
+      />
+    );
 };

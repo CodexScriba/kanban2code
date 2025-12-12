@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Task } from '../../../types/task';
+import type { Stage, Task } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { useTaskData } from '../hooks/useTaskData';
 import { useFilters } from '../hooks/useFilters';
@@ -16,6 +16,7 @@ import { TaskContextMenu } from './TaskContextMenu';
 import { KeyboardHelp } from './KeyboardHelp';
 import { MoveModal } from './MoveModal';
 import { vscode } from '../vscodeApi';
+import type { FilterState as ProtocolFilterState } from '../../../types/filters';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -25,9 +26,10 @@ function postMessage(type: string, payload: unknown) {
 
 interface SidebarProps {
   hasKanban: boolean;
+  showKeyboardShortcutsNonce?: number;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0 }) => {
   const { tasks, templates, isLoading } = useTaskData();
   const {
     filterState,
@@ -49,6 +51,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const filteredTasks = useMemo(() => filterTasks(tasks), [filterTasks, tasks]);
+  const selectedTask = useMemo(() => {
+    if (!filteredTasks.length) return null;
+    if (!selectedTaskId) return filteredTasks[0];
+    return filteredTasks.find((t) => t.id === selectedTaskId) ?? filteredTasks[0];
+  }, [filteredTasks, selectedTaskId]);
+
+  // Broadcast filter state to host so board can stay in sync
+  useEffect(() => {
+    const protocolState: ProtocolFilterState = {
+      project: filterState.selectedProject,
+      stages: filterState.activeStages,
+      tags: filterState.selectedTags,
+      quickView: filterState.quickView,
+    };
+    postMessage('FilterChanged', { filters: protocolState });
+  }, [filterState]);
+
+  useEffect(() => {
+    if (showKeyboardShortcutsNonce > 0) {
+      setShowKeyboardHelp(true);
+    }
+  }, [showKeyboardShortcutsNonce]);
 
   // Ensure we keep a selected task for keyboard-triggered context menu
   useEffect(() => {
@@ -140,6 +164,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
     handleTaskClick(task);
   };
 
+  const copySelected = (mode: 'full_xml' | 'task_only' | 'context_only') => {
+    if (!selectedTask) return;
+    postMessage('CopyContext', { taskId: selectedTask.id, mode });
+  };
+
+  const moveSelectedToStage = (stage: Stage) => {
+    if (!selectedTask) return;
+    postMessage('MoveTask', { taskId: selectedTask.id, toStage: stage });
+  };
+
+  const archiveSelected = () => {
+    if (!selectedTask) return;
+    if (selectedTask.stage !== 'completed') return;
+    postMessage('ArchiveTask', { taskId: selectedTask.id });
+  };
+
+  const deleteSelected = () => {
+    if (!selectedTask) return;
+    if (window.confirm(`Delete task "${selectedTask.title}"?`)) {
+      postMessage('DeleteTask', { taskId: selectedTask.id });
+    }
+  };
+
   // Keyboard shortcuts
   const { shortcuts } = useKeyboard({
     onFocusNext: () => focusTaskByOffset(1),
@@ -150,6 +197,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
     onOpenContextMenu: openContextMenuForSelected,
     onActivate: openSelectedTask,
     onToggle: openSelectedTask,
+    onCopyContext: () => copySelected('full_xml'),
+    onCopyTaskOnly: () => copySelected('task_only'),
+    onMoveToStage: moveSelectedToStage,
+    onArchive: archiveSelected,
+    onDelete: deleteSelected,
     onFocusFilter: () => {
       document.querySelector<HTMLButtonElement>('.filter-toggle-btn')?.focus();
     },

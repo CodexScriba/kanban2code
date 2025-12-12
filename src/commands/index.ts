@@ -4,14 +4,85 @@ import { scaffoldWorkspace } from '../services/scaffolder';
 import { WorkspaceState } from '../workspace/state';
 import { KANBAN_FOLDER } from '../core/constants';
 import { buildCopyPayload, copyToClipboard } from '../services/copy';
-import { findTaskById } from '../services/scanner';
+import { findTaskById, loadAllTasks } from '../services/scanner';
 import { CopyMode } from '../types/copy';
 import { SidebarProvider } from '../webview/SidebarProvider';
 import { restartFileWatcher } from '../extension';
 import * as path from 'path';
 import type { Stage } from '../types/task';
+import { parseTaskFile } from '../services/frontmatter';
+import type { Task } from '../types/task';
 
 export function registerCommands(context: vscode.ExtensionContext, sidebarProvider: SidebarProvider) {
+  async function resolveTaskForCommand(kanbanRoot: string, taskInput?: string | { id: string }): Promise<Task | null> {
+    const taskId = typeof taskInput === 'string' ? taskInput : taskInput?.id;
+    if (taskId) {
+      return (await findTaskById(kanbanRoot, taskId)) ?? null;
+    }
+
+    const activePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+    if (activePath && activePath.endsWith('.md')) {
+      const normalizedRoot = path.resolve(kanbanRoot) + path.sep;
+      const normalizedPath = path.resolve(activePath);
+
+      const isInKanbanRoot = normalizedPath.startsWith(normalizedRoot);
+      const isContextFile = path.basename(normalizedPath) === '_context.md';
+
+      if (isInKanbanRoot && !isContextFile) {
+        try {
+          return await parseTaskFile(normalizedPath);
+        } catch {
+          // fall through to picker
+        }
+      }
+    }
+
+    const tasks = await loadAllTasks(kanbanRoot);
+    if (!tasks.length) return null;
+
+    const pick = await vscode.window.showQuickPick(
+      tasks
+        .slice()
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map((task) => ({
+          label: task.title,
+          description: [task.stage, task.project, task.phase].filter(Boolean).join(' · '),
+          detail: task.filePath,
+          task,
+        })),
+      { placeHolder: 'Select a task' },
+    );
+
+    return pick?.task ?? null;
+  }
+
+  function parseCopyMode(input: unknown, fallback: CopyMode): CopyMode {
+    return input === 'full_xml' || input === 'task_only' || input === 'context_only' ? input : fallback;
+  }
+
+  async function copyForTask(
+    mode: CopyMode,
+    taskInput?: string | { id: string },
+  ): Promise<void> {
+    const kanbanRoot = WorkspaceState.kanbanRoot;
+    if (!kanbanRoot) {
+      vscode.window.showErrorMessage('Kanban workspace not detected.');
+      return;
+    }
+
+    const task = await resolveTaskForCommand(kanbanRoot, taskInput);
+    if (!task) {
+      vscode.window.showErrorMessage('No task selected.');
+      return;
+    }
+
+    const payload = await buildCopyPayload(task, mode, kanbanRoot);
+    await copyToClipboard(payload);
+
+    const label = mode === 'full_xml' ? 'Task context (full XML)' : mode === 'task_only' ? 'Task only' : 'Context only';
+    vscode.window.showInformationMessage(`${label} copied to clipboard.`);
+  }
+
   context.subscriptions.push(
     // Open Board command
     vscode.commands.registerCommand('kanban2code.openBoard', () => {
@@ -26,6 +97,7 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
       agent?: string;
       tags?: string[];
       template?: string;
+      parent?: string;
       content?: string;
     }) => {
       const kanbanRoot = WorkspaceState.kanbanRoot;
@@ -79,6 +151,10 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
 
       if (options?.template) {
         frontmatterLines.push(`template: ${options.template}`);
+      }
+
+      if (options?.parent) {
+        frontmatterLines.push(`parent: ${options.parent}`);
       }
 
       const content = `---
@@ -140,33 +216,44 @@ ${options?.content ?? ''}
     }),
 
     // Copy Task Context command
-    vscode.commands.registerCommand('kanban2code.copyTaskContext', async (taskInput: string | { id: string }, mode: CopyMode = 'full_xml') => {
-      const kanbanRoot = WorkspaceState.kanbanRoot;
-      if (!kanbanRoot) {
-        vscode.window.showErrorMessage('Kanban workspace not detected.');
-        return;
-      }
-
+    vscode.commands.registerCommand('kanban2code.copyTaskContext', async (taskInput?: string | { id: string }, modeInput?: unknown) => {
       try {
-        const taskId = typeof taskInput === 'string' ? taskInput : taskInput?.id;
-        if (!taskId) {
-          vscode.window.showErrorMessage('No task specified for copy.');
-          return;
-        }
-
-        const task = await findTaskById(kanbanRoot, taskId);
-        if (!task) {
-          vscode.window.showErrorMessage(`Task '${taskId}' not found.`);
-          return;
-        }
-
-        const payload = await buildCopyPayload(task, mode, kanbanRoot);
-        await copyToClipboard(payload);
-        vscode.window.showInformationMessage('Task context copied to clipboard.');
+        const mode = parseCopyMode(modeInput, 'full_xml');
+        await copyForTask(mode, taskInput);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        vscode.window.showErrorMessage(`Failed to copy context: ${message}`);
+        vscode.window.showErrorMessage(`Failed to copy: ${message}`);
       }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.copyTaskOnly', async (taskInput?: string | { id: string }) => {
+      try {
+        await copyForTask('task_only', taskInput);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to copy: ${message}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.copyContextOnly', async (taskInput?: string | { id: string }) => {
+      try {
+        await copyForTask('context_only', taskInput);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to copy: ${message}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.toggleLayout', () => {
+      KanbanPanel.createOrShow(context.extensionUri);
+      KanbanPanel.currentPanel?.toggleLayout();
+    }),
+
+    vscode.commands.registerCommand('kanban2code.showKeyboardShortcuts', () => {
+      // If a board is open, show shortcuts there; also attempt sidebar.
+      sidebarProvider.showKeyboardShortcuts();
+      KanbanPanel.createOrShow(context.extensionUri);
+      KanbanPanel.currentPanel?.showKeyboardShortcuts();
     }),
 
     // Open Settings command (placeholder)

@@ -3,14 +3,18 @@ import { z } from 'zod';
 export const MESSAGE_VERSION = 1 as const;
 
 export const HostToWebviewMessageTypes = [
+  'ShowKeyboardShortcuts',
   'TaskUpdated',
   'TaskSelected',
+  'ToggleLayout',
   'FilterChanged',
   'InitState',
   'TemplatesLoaded',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
+  // Filter changes can originate from sidebar or board
+  'FilterChanged',
   'CreateTask',
   'MoveTask',
   'MoveTaskToLocation',

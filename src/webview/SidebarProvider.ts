@@ -5,15 +5,18 @@ import { loadAllTasks, findTaskById } from '../services/scanner';
 import { createEnvelope, validateEnvelope, type MessageEnvelope } from './messaging';
 import type { Task } from '../types/task';
 import type { Stage } from '../types/task';
+import type { FilterState } from '../types/filters';
 import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
 import { loadTaskTemplates, type TaskTemplate } from '../services/template';
+import { KanbanPanel } from './KanbanPanel';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
   private _view?: vscode.WebviewView;
   private _tasks: Task[] = [];
   private _templates: TaskTemplate[] = [];
+  private _filterState: FilterState | null = null;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -58,6 +61,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       const { type, payload } = envelope;
 
       switch (type) {
+        case 'FilterChanged': {
+          const { filters } = payload as { filters: FilterState };
+          if (filters) {
+            this._filterState = filters;
+            WorkspaceState.setFilterState(filters);
+            KanbanPanel.currentPanel?.postFilterState(filters);
+          }
+          break;
+        }
+
         case 'CreateKanban':
           await vscode.commands.executeCommand('kanban2code.scaffoldWorkspace');
           await this._refreshStateAndView();
@@ -108,8 +121,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
 
         case 'MoveTask': {
-          const { taskId, toStage } = payload as { taskId: string; toStage: Stage };
-          await changeStageAndReload(taskId, toStage);
+          const { taskId, toStage, newStage } = payload as { taskId: string; toStage?: Stage; newStage?: Stage };
+          const stage = toStage ?? newStage;
+          if (stage) {
+            await changeStageAndReload(taskId, stage);
+          }
           await this._sendInitialState();
           break;
         }
@@ -187,10 +203,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     this._postMessage(createEnvelope('InitState', {
+      context: 'sidebar',
       hasKanban,
       tasks: this._tasks,
       templates: this._templates,
       workspaceRoot: kanbanRoot,
+      filterState: this._filterState ?? (WorkspaceState.filterState as FilterState | null) ?? undefined,
     }));
   }
 
@@ -201,6 +219,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   public updateTasks(tasks: Task[]) {
     this._tasks = tasks;
     this._postMessage(createEnvelope('TaskUpdated', { tasks }));
+  }
+
+  public showKeyboardShortcuts() {
+    this._postMessage(createEnvelope('ShowKeyboardShortcuts', {}));
   }
 
   private _getWebviewContent(webview: vscode.Webview) {

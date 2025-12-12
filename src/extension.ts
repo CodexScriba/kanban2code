@@ -3,6 +3,7 @@ import { registerCommands } from './commands';
 import { findKanbanRoot } from './workspace/validation';
 import { WorkspaceState } from './workspace/state';
 import { SidebarProvider } from './webview/SidebarProvider';
+import { KanbanPanel } from './webview/KanbanPanel';
 import { TaskWatcher } from './services/task-watcher';
 import { loadAllTasks } from './services/scanner';
 
@@ -68,6 +69,7 @@ function startFileWatcher(kanbanRoot: string) {
     try {
       const tasks = await loadAllTasks(kanbanRoot);
       sidebarProvider?.updateTasks(tasks);
+      KanbanPanel.currentPanel?.updateTasks(tasks);
     } catch (error) {
       console.error('Error reloading tasks after file change:', error);
     }

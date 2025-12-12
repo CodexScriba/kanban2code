@@ -76,6 +76,22 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
 
     items.push({ id: 'div2', label: '', divider: true });
 
+    // Follow-up task in inbox
+    items.push({
+      id: 'follow-up',
+      label: 'Add Follow-up in Inbox…',
+      action: () => {
+        const title = window.prompt('Follow-up task title', `Follow-up: ${task.title}`)?.trim();
+        if (!title) return;
+        postMessage('CreateTask', {
+          title,
+          stage: 'inbox',
+          location: 'inbox',
+          parent: task.id,
+        });
+      },
+    });
+
     // Move to project/phase
     items.push({
       id: 'move-to',

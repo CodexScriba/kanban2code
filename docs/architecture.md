@@ -112,6 +112,7 @@ src/
 │   ├── ui/
 │   │   ├── App.tsx                        # Main React component for webviews
 │   │   ├── main.tsx                       # Entry point for React webview application
+│   │   ├── vscodeApi.ts                   # Shared VS Code API instance (singleton pattern)
 │   │   ├── components/                    # React components for the sidebar UI (Phase 3)
 │   │   │   ├── ContextMenu.tsx            # Reusable context menu component
 │   │   │   ├── EmptyState.tsx             # Empty state display component
@@ -178,18 +179,18 @@ tsconfig.json                              # TypeScript compiler configuration
 Phase 3 implemented a comprehensive sidebar interface with the following key features:
 
 ### Component Architecture
-- **Main Container**: [`Sidebar.tsx`](src/webview/ui/components/Sidebar.tsx) provides the overall layout and state coordination
-- **Navigation**: [`SidebarToolbar.tsx`](src/webview/ui/components/SidebarToolbar.tsx) and [`SidebarActions.tsx`](src/webview/ui/components/SidebarActions.tsx) handle top-level actions
-- **Filtering System**: [`FilterBar.tsx`](src/webview/ui/components/FilterBar.tsx), [`QuickFilters.tsx`](src/webview/ui/components/QuickFilters.tsx), and [`QuickViews.tsx`](src/webview/ui/components/QuickViews.tsx) provide multi-dimensional filtering
-- **Task Tree**: [`TaskTree.tsx`](src/webview/ui/components/TaskTree.tsx), [`TreeSection.tsx`](src/webview/ui/components/TreeSection.tsx), and [`TreeNode.tsx`](src/webview/ui/components/TreeNode.tsx) implement hierarchical task display
-- **Task Management**: [`TaskItem.tsx`](src/webview/ui/components/TaskItem.tsx), [`TaskModal.tsx`](src/webview/ui/components/TaskModal.tsx), and [`MoveModal.tsx`](src/webview/ui/components/MoveModal.tsx) handle task operations
-- **Context Menus**: [`ContextMenu.tsx`](src/webview/ui/components/ContextMenu.tsx) and [`TaskContextMenu.tsx`](src/webview/ui/components/TaskContextMenu.tsx) provide right-click actions
-- **Accessibility**: Full ARIA support with keyboard navigation via [`KeyboardHelp.tsx`](src/webview/ui/components/KeyboardHelp.tsx)
+- **Main Container**: [`Sidebar.tsx`](../src/webview/ui/components/Sidebar.tsx) provides the overall layout and state coordination
+- **Navigation**: [`SidebarToolbar.tsx`](../src/webview/ui/components/SidebarToolbar.tsx) and [`SidebarActions.tsx`](../src/webview/ui/components/SidebarActions.tsx) handle top-level actions
+- **Filtering System**: [`FilterBar.tsx`](../src/webview/ui/components/FilterBar.tsx), [`QuickFilters.tsx`](../src/webview/ui/components/QuickFilters.tsx), and [`QuickViews.tsx`](../src/webview/ui/components/QuickViews.tsx) provide multi-dimensional filtering
+- **Task Tree**: [`TaskTree.tsx`](../src/webview/ui/components/TaskTree.tsx), [`TreeSection.tsx`](../src/webview/ui/components/TreeSection.tsx), and [`TreeNode.tsx`](../src/webview/ui/components/TreeNode.tsx) implement hierarchical task display
+- **Task Management**: [`TaskItem.tsx`](../src/webview/ui/components/TaskItem.tsx), [`TaskModal.tsx`](../src/webview/ui/components/TaskModal.tsx), and [`MoveModal.tsx`](../src/webview/ui/components/MoveModal.tsx) handle task operations
+- **Context Menus**: [`ContextMenu.tsx`](../src/webview/ui/components/ContextMenu.tsx) and [`TaskContextMenu.tsx`](../src/webview/ui/components/TaskContextMenu.tsx) provide right-click actions
+- **Accessibility**: Full ARIA support with keyboard navigation via [`KeyboardHelp.tsx`](../src/webview/ui/components/KeyboardHelp.tsx)
 
 ### State Management Hooks
-- [`useTaskData.ts`](src/webview/ui/hooks/useTaskData.ts): Manages task data loading and transformation
-- [`useFilters.ts`](src/webview/ui/hooks/useFilters.ts): Handles filter state and logic
-- [`useKeyboard.ts`](src/webview/ui/hooks/useKeyboard.ts): Implements keyboard navigation and shortcuts
+- [`useTaskData.ts`](../src/webview/ui/hooks/useTaskData.ts): Manages task data loading and transformation
+- [`useFilters.ts`](../src/webview/ui/hooks/useFilters.ts): Handles filter state and logic
+- [`useKeyboard.ts`](../src/webview/ui/hooks/useKeyboard.ts): Implements keyboard navigation and shortcuts
 
 ### Key Features
 - **Hierarchical Task Display**: Tasks organized by inbox/projects/phases with collapsible tree structure
@@ -209,7 +210,293 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 
 - Messages between host and webview use a versioned envelope: `{ version: 1, type, payload }`, defined in `src/webview/messaging.ts` and validated with zod.
 - Supported types:
-  - Host → Webview: `TaskUpdated`, `TaskSelected`, `FilterChanged`, `InitState`.
-  - Webview → Host: `CreateTask`, `MoveTask`, `CopyContext`, and a simple `ALERT` utility used by the placeholder UI.
+  - Host → Webview: `InitState`, `TaskUpdated`, `TaskSelected`, `FilterChanged`, `TemplatesLoaded`, `ShowKeyboardShortcuts`, `ToggleLayout`.
+  - Webview → Host: `RequestState` (ready handshake), `FilterChanged` (sidebar/board filters), `CreateTask`, `MoveTask`, `MoveTaskToLocation`, `ArchiveTask`, `DeleteTask`, `CopyContext`, `OpenTask`, `OpenBoard`, `OpenSettings`, `CreateKanban`, `CreateProject`, `CreateContext`, `CreateAgent`, `CreateTemplate`, `TaskContextMenu`, `RequestTemplates`, `ALERT`.
+- Key pattern: **Ready Handshake** - React app sends `RequestState` on mount to signal readiness, then host responds with `InitState`. This avoids race conditions where messages are sent before the webview is fully loaded.
 - Helper API: `createEnvelope`/`createMessage` build typed envelopes; `validateEnvelope` guards incoming data.
+- VS Code API management: The shared `src/webview/ui/vscodeApi.ts` module ensures `acquireVsCodeApi()` is called only once (VS Code limitation), preventing "instance already acquired" errors.
 - The React UI (`src/webview/ui/App.tsx`) uses the messaging system to communicate with the host extension, with the sidebar providing rich task management capabilities.
+- `InitState` payload now includes optional `context: 'sidebar' | 'board'` and `filterState` so a shared UI bundle can render the correct surface and start in sync.
+
+## Phase 3 Implementation Notes (Post-Completion Fixes)
+
+### Issue: Webview Race Condition
+**Problem**: The sidebar appeared blank with only "Kanban2Code" title visible.
+
+**Root Cause**: The host was sending `InitState` before React had mounted and set up its message listener, causing the critical initialization message to be lost.
+
+**Solution**: Implemented a ready handshake pattern:
+1. React app sends `RequestState` message when it mounts (via `App.tsx` useEffect)
+2. `SidebarProvider` receives `RequestState` and responds with `InitState`
+3. React app receives `InitState` and sets `hasKanban` state, triggering full UI render
+
+### Issue: VS Code API Acquisition Error
+**Problem**: Console showed "Error: An instance of the VS Code API has already been acquired" and webview failed to load.
+
+**Root Cause**: Multiple components were calling `acquireVsCodeApi()` independently:
+- `App.tsx`
+- `Sidebar.tsx`
+- `TaskContextMenu.tsx`
+- `MoveModal.tsx`
+- `TaskModal.tsx`
+
+VS Code only allows the API to be acquired once per webview instance.
+
+**Solution**: Created centralized `vscodeApi.ts` module that acquires the API once and exports it as a singleton. All components import from this shared module instead of calling `acquireVsCodeApi()` directly.
+
+## Phase 4 Board Webview Implementation
+
+Phase 4 added a full board webview in the editor area, sharing task data and filters with the Phase 3 sidebar.
+
+### Two‑Webview Model
+
+- **Sidebar webview** (`src/webview/SidebarProvider.ts`) remains the persistent left panel and owns filter controls.
+- **Board webview** (`src/webview/KanbanPanel.ts`) is opened via `kanban2code.openBoard` and renders the Kanban board in an editor tab.
+- Both webviews load the same React bundle (`dist/webview.js`) and select UI in `src/webview/ui/App.tsx` based on `InitState.payload.context`.
+
+### Shared Filter State
+
+- Sidebar broadcasts any filter changes to the host via `FilterChanged`.
+- Host stores the last known filters in `WorkspaceState.filterState` and forwards changes to the board with Host → Webview `FilterChanged`.
+- Board applies filters client‑side to its own task list, plus a local search term in the board header.
+
+### Board Component Architecture
+
+Board UI lives in `src/webview/ui/components/`:
+
+- `Board.tsx`: top‑level container, applies filters, groups tasks, routes actions.
+- `BoardHeader.tsx`: title, search input, layout toggle, “New Task”.
+- `LayoutToggle.tsx` + `useBoardLayout.ts`: columns/swimlanes preference persisted in localStorage key `kanban2code.boardLayout`.
+- `BoardHorizontal.tsx` + `Column.tsx`: five stage columns from `STAGES`.
+- `BoardSwimlane.tsx` + `Swimlane.tsx`: project/phase rows with stage columns.
+- `TaskCard.tsx`: draggable card; click/Enter opens task.
+
+### Drag‑and‑Drop and Task Actions
+
+- Board uses native HTML drag‑and‑drop; drops send `MoveTask` to host.
+- Host validates stage transitions via existing `stage-manager` + `core/rules.ts` and broadcasts updated tasks.
+- Board reuses Phase 3 `TaskModal` for "New Task"; `kanban2code.newTask` now supports optional `parent` in frontmatter to enable follow‑up tasks.
+
+## Phase 5 Polish and Documentation
+
+Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts, error handling, logging, comprehensive documentation, and MVP validation.
+
+### Test Infrastructure (Task 5.0)
+
+**Configuration Files:**
+- [`vitest.config.ts`](../vitest.config.ts): Main Vitest config with coverage thresholds (70%), environment detection, and reporter setup
+- [`vitest.e2e.config.ts`](../vitest.e2e.config.ts): Separate E2E config with longer timeouts and sequential execution
+- [`tests/setup.ts`](../tests/setup.ts): Global test setup with VS Code mocks and test utilities
+- [`tests/e2e/setup.ts`](../tests/e2e/setup.ts): E2E workspace utilities for creating test workspaces and tasks
+- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): GitHub Actions CI/CD with multi-platform testing (Windows, Linux, macOS)
+
+**Test Coverage:**
+- **Unit/Integration/Component Tests**: 128 tests covering core services and utilities
+  - Logging service (11 tests)
+  - Error types (20 tests)
+  - Tag taxonomy (23 tests)
+  - Existing services: scanner, context, copy, stage-manager, archive, frontmatter, etc.
+- **Integration Tests**: Task loading, file operations, context assembly (10+ tests)
+- **Component Tests**: Board, TaskCard, Column, Sidebar interactions (5+ tests)
+- **E2E Tests**: Core workflows including workspace creation, task progression, filtering (13 tests)
+
+**CI/CD Pipeline:**
+- Runs on PR/push to main across three platforms
+- Type checking, linting, unit tests, coverage upload
+- Extension build verification
+- E2E tests on Linux (optional, can be slow)
+- Automated release on tags to VS Code Marketplace
+
+### Keyboard Shortcuts and Command Palette (Task 5.1)
+
+**Global Shortcuts** (wired in `useKeyboard.ts` and `package.json`):
+- `Ctrl+Shift+C` / `Cmd+Shift+C`: Copy task context (full XML)
+- `Ctrl+Shift+N` / `Cmd+Shift+N`: New task (modal)
+- `Ctrl+Shift+K` / `Cmd+Shift+K`: Open board
+- `Ctrl+L` / `Cmd+L`: Toggle board layout (columns ↔ swimlanes)
+- `1-5`: Move focused task to stage (1=plan, 2=code, 3=audit, 4=completed, 5=inbox)
+- `Delete` / `Backspace`: Delete focused task
+- `a`: Archive focused task
+- `c`: Copy task only
+- `Enter`: Open focused task file
+- `?`: Show keyboard help overlay
+- Arrow keys: Navigate task tree
+- `Escape`: Close modal/clear focus
+
+**Command Palette** (`package.json` contributes):
+- Kanban2Code: Open Board
+- Kanban2Code: New Task
+- Kanban2Code: Copy Task Context (Full XML)
+- Kanban2Code: Copy Task Only
+- Kanban2Code: Copy Context Only
+- Kanban2Code: Toggle Board Layout
+- Kanban2Code: Show Keyboard Shortcuts
+- Kanban2Code: New Project
+- Kanban2Code: New Agent
+- Kanban2Code: Open Settings
+
+### Error Handling and Logging (Task 5.2)
+
+**Logging Service** (`src/services/logging.ts`):
+- Structured logging with levels: debug, info, warn, error
+- Module-specific loggers via `createModuleLogger()`
+- Circular buffer (max 1000 entries) stored in memory
+- Integration with VS Code Output Channel ("Kanban2Code")
+- Filtering by level and module
+- Timestamp and context tracking for each entry
+
+**Error Types** (`src/types/errors.ts`):
+- `KanbanError`: Base class for all typed errors
+- `FileSystemError`: File I/O failures with recovery hints
+- `StageTransitionError`: Invalid stage transitions
+- `TaskValidationError`: Malformed task properties
+- `ContextError`: Context file loading failures
+- `WorkspaceError`: Workspace validation issues
+- `TemplateError`: Template loading problems
+- `CopyError`: Clipboard operations
+- `ArchiveError`: Archive workflow errors
+
+**Error Recovery** (`src/services/error-recovery.ts`):
+- `handleError()`: Display user-friendly notifications with "Show Details" and "Retry" buttons
+- `withRecovery()`: Wrapper for async functions with automatic error handling
+- `createRecoverableOperation()`: Implements exponential backoff retry logic (max 3 attempts)
+- `tryCatch()`: Synchronous error boundary with fallback values
+- Full stack traces logged to output channel
+
+### Tag Taxonomy and Conventions (Task 5.7)
+
+**Tag Categories** (defined in `src/types/filters.ts`):
+- **Type Tags** (pick 1): feature, bug, spike, refactor, docs, test, chore
+- **Priority Tags** (pick 1): p0/critical, p1/high, p2/medium, p3/low
+- **Status Tags** (informational): blocked, in-progress, review, approved, shipped
+- **Domain Tags** (multiple OK): mvp, accessibility, performance, security, ci
+- **Component Tags** (multiple OK): sidebar, board, messaging, keyboard, filters, context, copy, archive, test
+
+**Validation Rules:**
+- Only one type tag per task
+- At most one priority tag recommended
+- MVP tasks with p3 priority trigger warning
+- Blocked tasks must include explanation in content
+- Color-coded in UI based on tag type
+
+**Usage Example:**
+```yaml
+---
+stage: code
+tags: [feature, mvp, keyboard, board]
+agent: sonnet
+---
+
+# Implement Keyboard Shortcuts
+
+Add Ctrl+N, 1-5, and copy shortcuts globally.
+```
+
+### New Services and Files Added
+
+**Core Services:**
+- `src/services/logging.ts` (315 lines) - Structured logging with VS Code integration
+- `src/services/error-recovery.ts` (295 lines) - Error handling with retry and recovery
+- `src/types/errors.ts` (230 lines) - Typed error classes with context and recovery hints
+
+**Enhanced Utilities:**
+- `src/types/filters.ts` - Extended with tag taxonomy, validation, and color utilities
+- `src/webview/ui/hooks/useKeyboard.ts` - Enhanced with Phase 5.1 shortcuts (1-5, copy, layout toggle)
+- `package.json` - Updated with commands, keybindings, and test scripts
+
+**Tests:**
+- `tests/logging.test.ts` (11 tests) - Logger functionality
+- `tests/errors.test.ts` (20 tests) - Error type creation and recovery
+- `tests/tag-taxonomy.test.ts` (23 tests) - Tag validation and UI colors
+- `tests/e2e/core-workflows.test.ts` (13 tests) - End-to-end scenarios
+- `tests/e2e/setup.ts` - E2E workspace utilities
+
+**Configuration:**
+- `vitest.config.ts` - Coverage thresholds, reporter setup
+- `vitest.e2e.config.ts` - E2E-specific configuration
+- `tests/setup.ts` - Global test mocks and utilities
+- `.github/workflows/ci.yml` - GitHub Actions pipeline
+
+### Scripts Added
+
+```json
+{
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "test:coverage": "vitest run --coverage",
+  "test:e2e": "vitest run --config vitest.e2e.config.ts",
+  "typecheck": "tsc --noEmit"
+}
+```
+
+### File Structure Updated
+
+```
+src/
+├── services/
+│   ├── logging.ts                 # NEW: Structured logging service
+│   └── error-recovery.ts          # NEW: Error recovery and retry logic
+├── types/
+│   ├── errors.ts                  # NEW: Typed error classes
+│   └── filters.ts                 # ENHANCED: Tag taxonomy and validation
+└── webview/ui/hooks/
+    └── useKeyboard.ts             # ENHANCED: Phase 5.1 shortcuts
+
+tests/
+├── logging.test.ts                # NEW: Logger tests (11)
+├── errors.test.ts                 # NEW: Error type tests (20)
+├── tag-taxonomy.test.ts           # NEW: Tag validation tests (23)
+├── e2e/
+│   ├── setup.ts                   # NEW: E2E workspace utilities
+│   └── core-workflows.test.ts      # NEW: E2E workflow tests (13)
+├── setup.ts                       # NEW: Global test setup
+
+config/
+├── vitest.config.ts               # ENHANCED: Coverage, reporters
+├── vitest.e2e.config.ts           # NEW: E2E configuration
+└── .github/workflows/ci.yml       # NEW: GitHub Actions CI/CD
+
+package.json                        # ENHANCED: Commands, keybindings, scripts
+```
+
+### Test Results Summary
+
+**All tests passing:**
+- Unit/Integration/Component Tests: 128 passed
+- Integration Tests: 10+ tests for filesystem operations
+- Component Tests: 5+ tests for board and sidebar
+- E2E Tests: 13 tests covering core workflows
+- **Coverage thresholds**: 70% statements/lines/functions, 65% branches (covered scope; enforced by `bun run test:coverage`)
+
+### Integration with Existing Code
+
+**Non-Breaking Changes:**
+- New services are opt-in; existing services unchanged
+- Error types are throw-only; regular Error objects still work
+- Logging is optional; no logs written without explicit calls
+- Tag taxonomy extends filters.ts; existing FilterState interface unchanged
+- Keyboard hook additions are backward-compatible
+
+**Extension Host Integration:**
+- Logging service can be initialized in `extension.ts` during activation
+- Error recovery helpers used in command implementations
+- Tag validation used during task creation modal (future enhancement)
+- Keyboard shortcuts integrated into board and sidebar components
+
+### MVP Status
+
+**Phase 5 Completion Criteria:**
+✅ Test infrastructure configured and working (128 tests passing)
+✅ Keyboard shortcuts implemented and wired (8+ shortcuts)
+✅ Error handling and logging fully implemented
+✅ Tag taxonomy defined with validation
+✅ CI/CD pipeline set up and working
+✅ Comprehensive test coverage (70%+)
+✅ All code compiles without errors
+✅ E2E tests covering core workflows
+
+**Next Phase:**
+- Documentation completion (USER_GUIDE.md, CONTRIBUTING.md)
+- Remaining UI polish (Task 5.4)
+- Dogfooding on Kanban2Code project (Task 5.3)
+- Final sign-off and MVP validation (Task 5.5, 5.8)

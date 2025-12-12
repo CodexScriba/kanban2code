@@ -12,6 +12,13 @@ Phase 4 delivers a fully functional Kanban board webview that provides visual ta
 - ✅ Phase 2: Context System (9-layer context, XML prompt builder, copy system)
 - ✅ Phase 3: Sidebar UI (sidebar webview, task data wiring, filters, tree navigation)
 
+**Phase 3 Completion Notes** (Dec 2025):
+
+- Ready handshake pattern implemented: webview sends `RequestState` on mount, host responds with `InitState`
+- VS Code API singleton pattern established in `src/webview/ui/vscodeApi.ts` (prevents "already acquired" errors)
+- All Phase 3 components updated to use shared API singleton
+- See `docs/architecture.md` for detailed post-completion fixes
+
 **Key Deliverables**:
 1. Board webview shell with two layout modes (columns and swimlanes)
 2. Real task data wired to board columns
@@ -890,8 +897,9 @@ case 'CreateTask':
 src/webview/ui/
 ├── App.tsx                          # Entry point - detects sidebar vs board
 ├── main.tsx                         # React root (keep as-is)
+├── vscodeApi.ts                     # ✅ ALREADY EXISTS - shared VS Code API singleton
 ├── components/
-│   ├── Sidebar.tsx                  # Main sidebar container (Phase 3)
+│   ├── Sidebar.tsx                  # ✅ ALREADY EXISTS - Main sidebar container (Phase 3)
 │   ├── Board.tsx                    # Main board container (Phase 4)
 │   ├── BoardHeader.tsx              # Top bar
 │   ├── BoardFilters.tsx             # Filter controls
@@ -899,13 +907,13 @@ src/webview/ui/
 │   ├── BoardSwimlane.tsx            # Swimlane view
 │   ├── Column.tsx                   # Stage column
 │   ├── Swimlane.tsx                 # Project/phase swimlane
-│   ├── TaskCard.tsx                 # Task card
+│   ├── TaskCard.tsx                 # ✅ ALREADY EXISTS - Task card component (Phase 3)
 │   ├── TaskDetailPanel.tsx          # Task detail view
-│   ├── TaskModal.tsx                # Create/edit modal (reuse Phase 3)
-│   └── ContextMenu.tsx              # Context menu (reuse Phase 3)
+│   ├── TaskModal.tsx                # ✅ ALREADY EXISTS - Create/edit modal (Phase 3)
+│   └── ContextMenu.tsx              # ✅ ALREADY EXISTS - Context menu (Phase 3)
 ├── hooks/
-│   ├── useTaskData.ts               # Task data management
-│   ├── useFilters.ts                # Filter state (shared)
+│   ├── useTaskData.ts               # ✅ ALREADY EXISTS - Task data management (Phase 3)
+│   ├── useFilters.ts                # ✅ ALREADY EXISTS - Filter state (Phase 3)
 │   ├── useBoardLayout.ts            # Layout preference
 │   └── useMessaging.ts              # Message protocol wiring
 └── styles/
@@ -914,6 +922,8 @@ src/webview/ui/
 
 **App.tsx Context Detection**:
 ```typescript
+import { vscode } from './vscodeApi';  // ✅ Use shared singleton, NOT acquireVsCodeApi()
+
 export const App: React.FC = () => {
   const [context, setContext] = useState<'sidebar' | 'board'>('sidebar');
 
@@ -925,12 +935,38 @@ export const App: React.FC = () => {
       }
     };
     window.addEventListener('message', handleMessage);
+
+    // Request initial state on mount (ready handshake pattern)
+    if (vscode) {
+      vscode.postMessage(createMessage('RequestState', {}));
+    }
+
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   return context === 'sidebar' ? <Sidebar /> : <Board />;
 };
 ```
+
+### ⚠️ CRITICAL: VS Code API Management
+
+Do NOT call `acquireVsCodeApi()` directly in any component. This will cause:
+
+```
+Error: An instance of the VS Code API has already been acquired
+```
+
+**Always import from shared module**:
+
+```typescript
+// ✅ CORRECT
+import { vscode } from '../vscodeApi';
+
+// ❌ WRONG - DO NOT DO THIS
+const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+```
+
+The singleton is acquired once in `vscodeApi.ts` and exported. All components import from this module.
 
 ### Import Design System Styles
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Task } from '../../../types/task';
+import type { FilterState } from '../../../types/filters';
 import type { MessageEnvelope } from '../../messaging';
 
 export interface TaskTemplate {
@@ -13,10 +14,16 @@ interface InitStatePayload {
   tasks: Task[];
   templates?: TaskTemplate[];
   workspaceRoot: string;
+  context?: 'sidebar' | 'board';
+  filterState?: FilterState;
 }
 
 interface TaskUpdatedPayload {
   tasks: Task[];
+}
+
+interface FilterChangedPayload {
+  filters: FilterState;
 }
 
 interface UseTaskDataResult {
@@ -25,6 +32,8 @@ interface UseTaskDataResult {
   workspaceRoot: string | null;
   isLoading: boolean;
   error: string | null;
+  context: 'sidebar' | 'board' | null;
+  filterState: FilterState | null;
 }
 
 export function useTaskData(): UseTaskDataResult {
@@ -33,6 +42,8 @@ export function useTaskData(): UseTaskDataResult {
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [context, setContext] = useState<'sidebar' | 'board' | null>(null);
+  const [filterState, setFilterState] = useState<FilterState | null>(null);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<MessageEnvelope>) => {
@@ -45,6 +56,8 @@ export function useTaskData(): UseTaskDataResult {
           setTasks(payload.tasks || []);
           setTemplates(payload.templates || []);
           setWorkspaceRoot(payload.workspaceRoot || null);
+          if (payload.context) setContext(payload.context);
+          if (payload.filterState) setFilterState(payload.filterState);
           setIsLoading(false);
           setError(null);
           break;
@@ -54,6 +67,11 @@ export function useTaskData(): UseTaskDataResult {
           if (payload.tasks) {
             setTasks(payload.tasks);
           }
+          break;
+        }
+        case 'FilterChanged': {
+          const payload = message.payload as FilterChangedPayload;
+          if (payload.filters) setFilterState(payload.filters);
           break;
         }
       }
@@ -81,5 +99,7 @@ export function useTaskData(): UseTaskDataResult {
     workspaceRoot,
     isLoading,
     error,
+    context,
+    filterState,
   };
 }

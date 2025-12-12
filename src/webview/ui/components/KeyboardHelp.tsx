@@ -14,7 +14,8 @@ interface ShortcutCategory {
 const CATEGORIES: ShortcutCategory[] = [
   { title: 'Navigation', category: 'navigation' },
   { title: 'Actions', category: 'actions' },
-  { title: 'Context Menu', category: 'context' },
+  { title: 'Stages', category: 'stages' },
+  { title: 'Context', category: 'context' },
   { title: 'Help', category: 'help' },
 ];
 
