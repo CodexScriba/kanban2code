@@ -5,13 +5,15 @@ import { loadAllTasks, findTaskById } from '../services/scanner';
 import { createEnvelope, validateEnvelope, type MessageEnvelope } from './messaging';
 import type { Task } from '../types/task';
 import type { Stage } from '../types/task';
-import { changeStageAndReload } from '../services/stage-manager';
+import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
+import { loadTaskTemplates, type TaskTemplate } from '../services/template';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
   private _view?: vscode.WebviewView;
   private _tasks: Task[] = [];
+  private _templates: TaskTemplate[] = [];
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -138,15 +140,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
-        case 'OpenMoveModal': {
-          vscode.window.showInformationMessage('Move modal not implemented yet.');
-          break;
-        }
-
-        case 'TaskContextMenu': {
-          // Context menu will be handled in Task 3.5
-          const { taskId } = payload as { taskId: string };
-          vscode.window.showInformationMessage(`Context menu for task: ${taskId}`);
+        case 'MoveTaskToLocation': {
+          const { taskId, location } = payload as { taskId: string; location: TaskLocation };
+          try {
+            await moveTaskToLocation(taskId, location);
+            await this._sendInitialState();
+          } catch (error) {
+            vscode.window.showErrorMessage(`Failed to move task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
           break;
         }
 
@@ -168,17 +169,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     if (hasKanban && kanbanRoot) {
       try {
         this._tasks = await loadAllTasks(kanbanRoot);
+        this._templates = await loadTaskTemplates(kanbanRoot);
       } catch (error) {
         console.error('Error loading tasks:', error);
         this._tasks = [];
+        this._templates = [];
       }
     } else {
       this._tasks = [];
+      this._templates = [];
     }
 
     this._postMessage(createEnvelope('InitState', {
       hasKanban,
       tasks: this._tasks,
+      templates: this._templates,
       workspaceRoot: kanbanRoot,
     }));
   }
@@ -196,6 +201,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.js'),
     );
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.css'),
+    );
 
     const nonce = getNonce();
 
@@ -203,8 +211,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="${styleUri}">
     <title>Kanban2Code</title>
 </head>
 <body>

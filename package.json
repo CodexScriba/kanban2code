@@ -23,13 +23,14 @@
         {
           "id": "kanban2code-sidebar",
           "title": "Kanban2Code",
-          "icon": "$(layout-sidebar-left)"
+          "icon": "media/kanban2code.svg"
         }
       ]
     },
     "views": {
       "kanban2code-sidebar": [
         {
+          "type": "webview",
           "id": "kanban2code.sidebar",
           "name": "Kanban"
         }

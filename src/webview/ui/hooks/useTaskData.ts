@@ -2,8 +2,16 @@ import { useState, useEffect } from 'react';
 import type { Task } from '../../../types/task';
 import type { MessageEnvelope } from '../../messaging';
 
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+}
+
 interface InitStatePayload {
   tasks: Task[];
+  templates?: TaskTemplate[];
   workspaceRoot: string;
 }
 
@@ -13,6 +21,7 @@ interface TaskUpdatedPayload {
 
 interface UseTaskDataResult {
   tasks: Task[];
+  templates: TaskTemplate[];
   workspaceRoot: string | null;
   isLoading: boolean;
   error: string | null;
@@ -20,6 +29,7 @@ interface UseTaskDataResult {
 
 export function useTaskData(): UseTaskDataResult {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +43,7 @@ export function useTaskData(): UseTaskDataResult {
         case 'InitState': {
           const payload = message.payload as InitStatePayload;
           setTasks(payload.tasks || []);
+          setTemplates(payload.templates || []);
           setWorkspaceRoot(payload.workspaceRoot || null);
           setIsLoading(false);
           setError(null);
@@ -66,6 +77,7 @@ export function useTaskData(): UseTaskDataResult {
 
   return {
     tasks,
+    templates,
     workspaceRoot,
     isLoading,
     error,

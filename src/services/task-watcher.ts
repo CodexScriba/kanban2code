@@ -30,7 +30,7 @@ function isTaskFile(filePath: string): boolean {
 
 function createVsCodeWatcher(root: string): FileSystemWatcherLike {
   // Lazily require vscode so tests don't need it
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const vscode = require('vscode') as typeof import('vscode');
   const pattern = new vscode.RelativePattern(root, '**/*.md');
   const watcher = vscode.workspace.createFileSystemWatcher(pattern);

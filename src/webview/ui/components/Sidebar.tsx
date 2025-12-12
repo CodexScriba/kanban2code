@@ -14,6 +14,7 @@ import { EmptyState } from './EmptyState';
 import { TaskModal } from './TaskModal';
 import { TaskContextMenu } from './TaskContextMenu';
 import { KeyboardHelp } from './KeyboardHelp';
+import { MoveModal } from './MoveModal';
 
 declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
 
@@ -30,7 +31,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
-  const { tasks, isLoading } = useTaskData();
+  const { tasks, templates, isLoading } = useTaskData();
   const {
     filterState,
     toggleStage,
@@ -46,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
   const [contextMenuState, setContextMenuState] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -104,6 +106,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
 
   const handleCloseContextMenu = () => setContextMenuState(null);
 
+  const handleOpenMoveModal = (task: Task) => {
+    setContextMenuState(null);
+    setMoveModalTask(task);
+  };
+
   const openContextMenuForSelected = () => {
     if (!filteredTasks.length) return;
     const task = filteredTasks.find((t) => t.id === selectedTaskId) ?? filteredTasks[0];
@@ -152,6 +159,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
     onEscape: () => {
       if (contextMenuState) {
         handleCloseContextMenu();
+        return;
+      }
+      if (moveModalTask) {
+        setMoveModalTask(null);
         return;
       }
       if (showKeyboardHelp) {
@@ -226,6 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
         <TaskModal
           isOpen={showTaskModal}
           tasks={tasks}
+          templates={templates}
           onClose={() => setShowTaskModal(false)}
         />
       )}
@@ -235,6 +247,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban }) => {
           task={contextMenuState.task}
           position={contextMenuState.position}
           onClose={handleCloseContextMenu}
+          onOpenMoveModal={handleOpenMoveModal}
+        />
+      )}
+
+      {moveModalTask && (
+        <MoveModal
+          isOpen={!!moveModalTask}
+          task={moveModalTask}
+          allTasks={tasks}
+          onClose={() => setMoveModalTask(null)}
         />
       )}
 

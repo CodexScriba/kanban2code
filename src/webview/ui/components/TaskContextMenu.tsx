@@ -17,6 +17,7 @@ interface TaskContextMenuProps {
   task: Task;
   position: { x: number; y: number };
   onClose: () => void;
+  onOpenMoveModal?: (task: Task) => void;
 }
 
 const STAGES: Stage[] = ['inbox', 'plan', 'code', 'audit', 'completed'];
@@ -33,6 +34,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   task,
   position,
   onClose,
+  onOpenMoveModal,
 }) => {
   const menuItems: ContextMenuItem[] = useMemo(() => {
     const items: ContextMenuItem[] = [
@@ -81,7 +83,11 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     items.push({
       id: 'move-to',
       label: 'Move to Project/Phase…',
-      action: () => postMessage('OpenMoveModal', { taskId: task.id }),
+      action: () => {
+        if (onOpenMoveModal) {
+          onOpenMoveModal(task);
+        }
+      },
     });
 
     // Archive (only for completed tasks)
@@ -104,7 +110,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     });
 
     return items;
-  }, [task]);
+  }, [task, onOpenMoveModal]);
 
   return (
     <ContextMenu

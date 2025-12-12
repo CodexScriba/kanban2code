@@ -1,9 +1,11 @@
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { Task, Stage } from '../types/task';
 import { parseTaskFile, stringifyTaskFile } from './frontmatter';
 import { isTransitionAllowed } from '../core/rules';
 import { findTaskById } from './scanner';
 import { WorkspaceState } from '../workspace/state';
+import { INBOX_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 
 export class StageUpdateError extends Error {
   constructor(message: string) {
@@ -49,4 +51,49 @@ export async function changeStageAndReload(taskId: string, newStage: Stage): Pro
   }
 
   return updateTaskStage(task, newStage);
+}
+
+export type TaskLocation = { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
+
+/**
+ * Move a task to a new location (inbox or project/phase).
+ * This physically moves the file to the new directory.
+ */
+export async function moveTaskToLocation(taskId: string, location: TaskLocation): Promise<string> {
+  const root = WorkspaceState.kanbanRoot;
+  if (!root) {
+    throw new Error('Kanban root not found in state.');
+  }
+
+  const task = await findTaskById(root, taskId);
+  if (!task) {
+    throw new Error(`Task not found: ${taskId}`);
+  }
+
+  const fileName = path.basename(task.filePath);
+  let targetDir: string;
+
+  if (location.type === 'inbox') {
+    targetDir = path.join(root, INBOX_FOLDER);
+  } else {
+    targetDir = path.join(root, PROJECTS_FOLDER, location.project);
+    if (location.phase) {
+      targetDir = path.join(targetDir, location.phase);
+    }
+  }
+
+  // Ensure target directory exists
+  await fs.mkdir(targetDir, { recursive: true });
+
+  const targetPath = path.join(targetDir, fileName);
+
+  // Don't move if already at target location
+  if (task.filePath === targetPath) {
+    return targetPath;
+  }
+
+  // Move the file
+  await fs.rename(task.filePath, targetPath);
+
+  return targetPath;
 }

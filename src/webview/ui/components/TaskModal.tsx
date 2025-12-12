@@ -14,9 +14,16 @@ function postMessage(type: string, payload: unknown) {
   }
 }
 
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+}
+
 interface TaskModalProps {
   isOpen: boolean;
   tasks: Task[];
+  templates?: Template[];
   onClose: () => void;
   defaultLocation?: 'inbox' | { project: string; phase?: string };
 }
@@ -41,6 +48,7 @@ const STAGES: { value: Stage; label: string }[] = [
 export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   tasks,
+  templates = [],
   onClose,
   defaultLocation = 'inbox',
 }) => {
@@ -188,7 +196,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Template */}
           <TemplatePicker
-            templates={[]}
+            templates={templates}
             value={formData.template}
             onChange={(template) => setFormData((prev) => ({ ...prev, template }))}
           />

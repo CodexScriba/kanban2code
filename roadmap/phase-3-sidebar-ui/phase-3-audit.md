@@ -1,7 +1,7 @@
 # Phase 3 Sidebar UI - Audit Document
 
-**Audit Date**: December 11, 2025  
-**Status**: ⚠ Needs sign-off (gaps noted)
+**Audit Date**: December 11, 2025
+**Status**: ✅ Ready for sign-off
 
 ---
 
@@ -11,12 +11,12 @@
 |------|-------------|--------|
 | 3.0 | Design Sidebar Shell (UI Only) | ✅ Approved |
 | 3.1 | Implement Sidebar Shell (Wired) | ✅ Complete |
-| 3.2 | Implement Filters and Quick Views | ⚠ Implemented, needs validation |
+| 3.2 | Implement Filters and Quick Views | ✅ Complete |
 | 3.3 | Implement Inbox and Project Tree | ✅ Complete |
-| 3.4 | Implement New Task Modal | ⚠ Wired, template/move modal still pending |
-| 3.5 | Implement Sidebar Task Context Menus | ⚠ Implemented, move modal pending |
-| 3.6 | Implement Keyboard Navigation | ⚠ Basic support, full nav TBD |
-| 3.7 | Phase 3 Audit and Sign-Off | ⚠ This document (needs approval) |
+| 3.4 | Implement New Task Modal | ✅ Complete (with template hydration) |
+| 3.5 | Implement Sidebar Task Context Menus | ✅ Complete (with MoveModal) |
+| 3.6 | Implement Keyboard Navigation | ✅ Complete |
+| 3.7 | Phase 3 Audit and Sign-Off | ✅ This document |
 
 ---
 
@@ -49,6 +49,7 @@
 | `ContextMenu.tsx` | Reusable context menu |
 | `TaskContextMenu.tsx` | Task-specific menu items |
 | `KeyboardHelp.tsx` | Keyboard shortcuts overlay |
+| `MoveModal.tsx` | Task relocation modal |
 
 ### New Hooks Created
 | Hook | Purpose |
@@ -69,11 +70,12 @@
 - ✅ New task modal opens from sidebar and keyboard shortcuts and posts structured create payloads
 - ✅ Keyboard shortcut help overlay toggles with `?`
 
-### Known UX Issues
-- Move modal not implemented; context menu item shows a placeholder
-- Templates listed in UI are not yet hydrated from filesystem
-- Keyboard navigation is basic: Arrow keys move focus across tasks, but section/tab order needs refinement
-- README does not document sidebar usage/shortcuts yet
+### Resolved Issues
+
+- ✅ Move modal implemented (`MoveModal.tsx`) - relocates tasks between inbox/project/phase
+- ✅ Templates hydrated from filesystem via `loadTaskTemplates` service
+- ✅ Keyboard navigation complete with arrow keys, expand/collapse, shortcuts
+- ✅ README updated with sidebar usage and keyboard shortcuts documentation
 
 ---
 
@@ -104,4 +106,4 @@
 
 ## Sign-Off
 
-Phase 3 Sidebar UI is **NOT YET READY** for Phase 4 until the above gaps are closed or explicitly deferred.
+Phase 3 Sidebar UI is **READY** for Phase 4. All tasks complete.

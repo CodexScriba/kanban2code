@@ -4,6 +4,7 @@ export { FilterBar } from './FilterBar';
 export { Icons } from './Icons';
 export { KeyboardHelp } from './KeyboardHelp';
 export { LocationPicker } from './LocationPicker';
+export { MoveModal } from './MoveModal';
 export { QuickFilters } from './QuickFilters';
 export { QuickViews } from './QuickViews';
 export { Sidebar } from './Sidebar';
