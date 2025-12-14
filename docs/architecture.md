@@ -161,6 +161,8 @@ tests/
 ├── validation.test.ts                     # Unit tests for workspace validation
 └── webview.test.ts                        # Unit tests for webview components
 
+media/                                     # Extension assets (e.g. activity bar icon in package.json)
+
 webview/                                   # Build output directory for webview assets
 
 .gitignore                                 # Git ignore configuration
