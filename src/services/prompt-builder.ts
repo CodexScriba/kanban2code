@@ -20,6 +20,8 @@ function buildMetadata(task: Task): string {
 
   parts.push(`<id>${xmlEscape(task.id)}</id>`);
   parts.push(`<filePath>${xmlEscape(task.filePath)}</filePath>`);
+  // Convenience for agents that expect a context-request style target file.
+  parts.push(`<target-file>${xmlEscape(task.filePath)}</target-file>`);
   parts.push(`<title>${xmlEscape(task.title)}</title>`);
   parts.push(`<stage>${xmlEscape(task.stage)}</stage>`);
 

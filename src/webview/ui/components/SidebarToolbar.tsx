@@ -15,15 +15,17 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
       <span className="sidebar-title">Kanban2Code</span>
       <div className="toolbar-actions">
         <button
-          className="btn btn-icon btn-ghost tooltip"
-          data-tooltip="Open Board"
+          className="btn btn-primary btn-board"
+          aria-label="Open Board"
           onClick={onOpenBoard}
         >
           <BoardIcon />
+          <span className="btn-board-label">Open Board</span>
         </button>
         <button
           className="btn btn-icon btn-ghost tooltip"
           data-tooltip="Settings"
+          aria-label="Settings"
           onClick={onOpenSettings}
         >
           <SettingsIcon />

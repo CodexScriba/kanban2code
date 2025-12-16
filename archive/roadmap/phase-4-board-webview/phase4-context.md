@@ -527,7 +527,7 @@ interface TaskCardProps {
 4. **Visual Feedback**:
    - Column hover: Background highlight `.column.drop-active`
    - Card being dragged: `.task-card.dragging`
-   - Cursor: `copy` or `not-allowed` based on `isTransitionAllowed()`
+   - Pointer icon: `copy` or `not-allowed` based on `isTransitionAllowed()`
 
 5. **Stage Transition Rules** ([`src/core/rules.ts`](../../src/core/rules.ts)):
    - Forward-only: inbox → plan → code → audit → completed
