@@ -11,7 +11,6 @@ import {
   TaskValidationError,
   ContextError,
   WorkspaceError,
-  TemplateError,
   CopyError,
   ArchiveError,
   isKanbanError,
@@ -130,15 +129,6 @@ describe('Error Types', () => {
       const error = new WorkspaceError('Invalid structure', '/workspace/path');
 
       expect(error.context.path).toBe('/workspace/path');
-    });
-  });
-
-  describe('TemplateError', () => {
-    it('should create with template name', () => {
-      const error = new TemplateError('inbox', 'Template not found');
-
-      expect(error.name).toBe('TemplateError');
-      expect(error.context.templateName).toBe('inbox');
     });
   });
 

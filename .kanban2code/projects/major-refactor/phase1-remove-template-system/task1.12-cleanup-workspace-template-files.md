@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags:
   - chore
   - p2

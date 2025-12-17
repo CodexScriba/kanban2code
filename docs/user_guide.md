@@ -46,22 +46,6 @@ When you first create a Kanban workspace, Kanban2Code generates the following fo
 └── project-details.md  # Project details context
 ```
 
-### Legacy `_templates/` folder (migration)
-
-Older Kanban2Code workspaces may include `.kanban2code/_templates/` (task/stage/context templates). Newer versions no longer create or use this folder; it is safe to keep for reference or delete.
-
-What you might see:
-- `.kanban2code/_templates/tasks/*.md`: legacy task templates (e.g. bug report, feature, spike)
-- `.kanban2code/_templates/stages/*`: legacy stage templates (may be empty)
-- `.kanban2code/_templates/context/*.md`: legacy context templates (e.g. phase context, audit phase)
-
-Migration guidance:
-1. If you never customized these templates: delete `.kanban2code/_templates/` or move it under `.kanban2code/_archive/` to reduce clutter.
-2. If you customized task templates: copy the relevant sections into new tasks created under `.kanban2code/inbox/` or `.kanban2code/projects/<project>/...` (the extension only scans tasks in those locations).
-3. If you customized stage/context templates: move the guidance into either:
-   - `.kanban2code/_context/*.md` (shared prompt context), and/or
-   - `.kanban2code/_agents/*.md` (agent-specific instructions).
-
 ### Creating Your First Workspace
 
 1. Open VS Code with a workspace folder
@@ -85,11 +69,11 @@ Tasks progress through five stages:
 
 Each task is a markdown file with frontmatter:
 
+Project/phase are inferred from the file path (e.g. `.kanban2code/projects/<project>/<phase>/...`), not from frontmatter.
+
 ```yaml
 ---
 stage: code
-project: my-project
-phase: implementation
 agent: frontend-dev
 tags: [feature, ui, mvp]
 contexts: [component-guide, api-docs]

@@ -126,21 +126,6 @@ export class WorkspaceError extends KanbanError {
 }
 
 /**
- * Template errors (missing template, invalid template format)
- */
-export class TemplateError extends KanbanError {
-  constructor(templateName: string, issue: string, cause?: Error) {
-    super('Template', `Template "${templateName}" error: ${issue}`, {
-      context: { templateName, issue },
-      recoverable: true,
-      userMessage: `Template "${templateName}" could not be loaded. ${issue}`,
-      cause,
-    });
-    this.name = 'TemplateError';
-  }
-}
-
-/**
  * Copy/clipboard errors
  */
 export class CopyError extends KanbanError {

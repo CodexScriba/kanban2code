@@ -1,4 +1,4 @@
-import { Task, Stage } from './task';
+import { Task } from './task';
 
 export interface ContextService {
   loadGlobalContext(root: string): Promise<string>;
@@ -6,7 +6,6 @@ export interface ContextService {
   loadProjectContext(root: string, projectName?: string | null): Promise<string>;
   loadPhaseContext(root: string, projectName?: string | null, phaseName?: string | null): Promise<string>;
   loadCustomContexts(root: string, contextNames?: string[] | null): Promise<string>;
-  loadStageTemplate(root: string, stage: Stage): Promise<string>;
 }
 
 export interface PromptBuilder {

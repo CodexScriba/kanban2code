@@ -49,7 +49,6 @@ test('Board renders columns layout by default', async () => {
             context: 'board',
             hasKanban: true,
             tasks: mockTasks,
-            templates: [],
             workspaceRoot: '/tmp',
             filterState: { stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
           },

@@ -4,16 +4,6 @@ import type { FilterState } from '../../../types/filters';
 import { createMessage, type MessageEnvelope } from '../../messaging';
 import { vscode } from '../vscodeApi';
 
-export interface TaskTemplate {
-  id: string;
-  name: string;
-  description: string;
-  content: string;
-  icon?: string;
-  defaultStage?: string;
-  defaultTags?: string[];
-}
-
 export interface ContextFile {
   id: string;
   name: string;
@@ -31,7 +21,6 @@ export interface Agent {
 
 interface InitStatePayload {
   tasks: Task[];
-  templates?: TaskTemplate[];
   contexts?: ContextFile[];
   agents?: Agent[];
   projects?: string[];
@@ -51,7 +40,6 @@ interface FilterChangedPayload {
 
 interface UseTaskDataResult {
   tasks: Task[];
-  templates: TaskTemplate[];
   contexts: ContextFile[];
   agents: Agent[];
   projects: string[];
@@ -65,7 +53,6 @@ interface UseTaskDataResult {
 
 export function useTaskData(): UseTaskDataResult {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [contexts, setContexts] = useState<ContextFile[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
@@ -88,7 +75,6 @@ export function useTaskData(): UseTaskDataResult {
         case 'InitState': {
           const payload = message.payload as InitStatePayload;
           setTasks(payload.tasks || []);
-          setTemplates(payload.templates || []);
           setContexts(payload.contexts || []);
           setAgents(payload.agents || []);
           setProjects(payload.projects || []);
@@ -142,7 +128,6 @@ export function useTaskData(): UseTaskDataResult {
 
   return {
     tasks,
-    templates,
     contexts,
     agents,
     projects,

@@ -81,7 +81,7 @@ prompts/                                   # Prompt material used during develop
 src/
 ├── extension.ts                            # Main extension entry point handling activation and command registration
 ├── assets/
-│   └── templates.ts                       # Template definitions for workspace scaffolding (agents, tasks, stages)
+│   └── seed-content.ts                    # Seed file contents for workspace scaffolding
 ├── commands/
 │   └── index.ts                           # Command registration and implementation for VS Code commands
 ├── core/
@@ -96,14 +96,14 @@ src/
 │   ├── error-recovery.ts                  # Error handling + retry/recovery helpers
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
 │   ├── logging.ts                         # Structured logging + Output Channel integration
-│   ├── prompt-builder.ts                  # Service for building XML prompts with 9-layer context
+│   ├── prompt-builder.ts                  # Service for building XML prompts
 │   ├── projects.ts                        # Service for listing/creating projects and phases
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces
 │   ├── scanner.ts                         # Service for scanning and loading task files
 │   ├── stage-manager.ts                   # Service for managing task stage transitions
 │   ├── task-content.ts                    # Service for loading/saving task file content + metadata (includes file relocation)
 │   ├── task-watcher.ts                    # Debounced filesystem watcher for task events (create/update/delete/move)
-│   └── template.ts                        # Service for loading task templates from filesystem
+│   └── fs-move.ts                          # Atomic-ish move helper used by task relocation
 ├── types/
 │   ├── config.ts                          # Configuration schema/types
 │   ├── context.ts                         # Type definitions for context system
@@ -268,10 +268,8 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 
 - Messages between host and webview use a versioned envelope: `{ version: 1, type, payload }`, defined in `src/webview/messaging.ts` and validated with zod.
 - Supported types:
-  - Host → Webview: `InitState`, `TaskUpdated`, `TaskSelected`, `FilterChanged`, `TemplatesLoaded`, `ContextsLoaded`, `AgentsLoaded`, `ShowKeyboardShortcuts`, `ToggleLayout`, `TaskContentLoaded`, `TaskContentLoadFailed`, `TaskContentSaved`, `TaskContentSaveFailed`.
-  - Host → Webview (task editor): `FullTaskDataLoaded`, `FullTaskDataLoadFailed`, `TaskMetadataSaved`, `TaskMetadataSaveFailed`, `TemplateContentLoaded`, `TemplateContentLoadFailed`.
-  - Webview → Host: `RequestState` (ready handshake), `FilterChanged` (sidebar/board filters), `CreateTask`, `MoveTask`, `MoveTaskToLocation`, `ArchiveTask`, `DeleteTask`, `CopyContext`, `OpenTask`, `OpenBoard`, `OpenSettings`, `CreateKanban`, `CreateProject`, `CreateContext`, `CreateAgent`, `CreateTemplate`, `UpdateTemplate`, `TaskContextMenu`, `RequestTemplates`, `RequestContexts`, `RequestAgents`, `PickFile`, `RequestTaskContent`, `SaveTaskContent`, `ALERT`.
-  - Webview → Host (task editor): `RequestFullTaskData`, `SaveTaskWithMetadata`, `RequestTemplateContent`.
+  - Host → Webview: `ShowKeyboardShortcuts`, `OpenTaskModal`, `TaskUpdated`, `TaskSelected`, `ToggleLayout`, `FilterChanged`, `InitState`, `ContextsLoaded`, `AgentsLoaded`, `FilePicked`, `FolderPicked`, `TaskContentLoaded`, `TaskContentLoadFailed`, `TaskContentSaved`, `TaskContentSaveFailed`, `FullTaskDataLoaded`, `FullTaskDataLoadFailed`, `TaskMetadataSaved`, `TaskMetadataSaveFailed`.
+  - Webview → Host: `FilterChanged`, `CreateTask`, `MoveTask`, `MoveTaskToLocation`, `ArchiveTask`, `DeleteTask`, `CopyContext`, `OpenTask`, `OpenBoard`, `OpenSettings`, `CreateKanban`, `CreateProject`, `CreateContext`, `CreateAgent`, `TaskContextMenu`, `RequestContexts`, `RequestAgents`, `PickFile`, `PickFolder`, `RequestTaskContent`, `SaveTaskContent`, `RequestFullTaskData`, `SaveTaskWithMetadata`, `RequestState`, `ALERT`.
 - Key pattern: **Ready Handshake** - React app sends `RequestState` on mount to signal readiness, then host responds with `InitState`. This avoids race conditions where messages are sent before the webview is fully loaded.
 - Helper API: `createEnvelope`/`createMessage` build typed envelopes; `validateEnvelope` guards incoming data.
 - VS Code API management: The shared `src/webview/ui/vscodeApi.ts` module ensures `acquireVsCodeApi()` is called only once (VS Code limitation), preventing "instance already acquired" errors.
@@ -414,7 +412,6 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - `TaskValidationError`: Malformed task properties
 - `ContextError`: Context file loading failures
 - `WorkspaceError`: Workspace validation issues
-- `TemplateError`: Template loading problems
 - `CopyError`: Clipboard operations
 - `ArchiveError`: Archive workflow errors
 

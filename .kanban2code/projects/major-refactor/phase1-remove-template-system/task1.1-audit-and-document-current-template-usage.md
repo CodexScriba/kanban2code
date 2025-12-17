@@ -1,5 +1,5 @@
 ---
-stage: complete
+stage: completed
 tags:
   - chore
   - p1

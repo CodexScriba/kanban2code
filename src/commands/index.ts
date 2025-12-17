@@ -96,7 +96,6 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
       stage?: Stage;
       agent?: string;
       tags?: string[];
-      template?: string;
       parent?: string;
       content?: string;
     }) => {
@@ -153,10 +152,6 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
 
       if (options?.tags && options.tags.length > 0) {
         frontmatterLines.push(`tags: [${options.tags.join(', ')}]`);
-      }
-
-      if (options?.template) {
-        frontmatterLines.push(`template: ${options.template}`);
       }
 
       if (options?.parent) {

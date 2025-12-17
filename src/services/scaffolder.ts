@@ -6,7 +6,7 @@ import {
   PROJECT_DETAILS,
   AGENT_OPUS,
   INBOX_TASK_SAMPLE,
-} from '../assets/templates';
+} from '../assets/seed-content';
 
 export const KANBAN_FOLDER = '.kanban2code';
 

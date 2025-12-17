@@ -36,7 +36,6 @@ describe('TaskModal', () => {
         tasks={[] as any}
         projects={[]}
         phasesByProject={{}}
-        templates={[]}
         contexts={[]}
         agents={[]}
         onClose={vi.fn()}

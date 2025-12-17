@@ -3,7 +3,6 @@ import * as path from 'path';
 import type { Dirent } from 'fs';
 import matter from 'gray-matter';
 import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER } from '../core/constants';
-import { Stage } from '../types/task';
 import { ensureSafePath } from '../workspace/validation';
 
 type NullableString = string | null | undefined;
@@ -345,9 +344,4 @@ export async function loadCustomContexts(root: string, contextNames?: string[] |
   );
 
   return contents.filter(Boolean).join('\n\n');
-}
-
-export async function loadStageTemplate(root: string, stage: Stage): Promise<string> {
-  void root;
-  return `## Stage: ${stage}\nNo stage template was found for this stage.`;
 }

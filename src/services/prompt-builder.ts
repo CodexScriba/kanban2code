@@ -1,5 +1,5 @@
 import { Task } from '../types/task';
-import { loadAgentContext, loadCustomContexts, loadGlobalContext, loadPhaseContext, loadProjectContext, loadStageTemplate } from './context';
+import { loadAgentContext, loadCustomContexts, loadGlobalContext, loadPhaseContext, loadProjectContext } from './context';
 
 function xmlEscape(value: string): string {
   return value
@@ -47,14 +47,12 @@ async function buildContextSection(task: Task, root: string): Promise<string> {
     agentContext,
     projectContext,
     phaseContext,
-    stageTemplate,
     customContexts,
   ] = await Promise.all([
     loadGlobalContext(root),
     loadAgentContext(root, task.agent),
     loadProjectContext(root, task.project),
     loadPhaseContext(root, task.project, task.phase),
-    loadStageTemplate(root, task.stage),
     loadCustomContexts(root, task.contexts),
   ]);
 
@@ -63,7 +61,6 @@ async function buildContextSection(task: Task, root: string): Promise<string> {
     wrapSection('agent', agentContext),
     wrapSection('project', projectContext),
     wrapSection('phase', phaseContext),
-    wrapSection('stage_template', stageTemplate),
     wrapSection('custom', customContexts),
   ];
 
