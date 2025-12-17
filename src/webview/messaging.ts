@@ -10,7 +10,6 @@ export const HostToWebviewMessageTypes = [
   'ToggleLayout',
   'FilterChanged',
   'InitState',
-  'TemplatesLoaded',
   'ContextsLoaded',
   'AgentsLoaded',
   'FilePicked',
@@ -23,8 +22,6 @@ export const HostToWebviewMessageTypes = [
   'FullTaskDataLoadFailed',
   'TaskMetadataSaved',
   'TaskMetadataSaveFailed',
-  'TemplateContentLoaded',
-  'TemplateContentLoadFailed',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
@@ -43,10 +40,7 @@ export const WebviewToHostMessageTypes = [
   'CreateProject',
   'CreateContext',
   'CreateAgent',
-  'CreateTemplate',
-  'UpdateTemplate',
   'TaskContextMenu',
-  'RequestTemplates',
   'RequestContexts',
   'RequestAgents',
   'PickFile',
@@ -55,7 +49,6 @@ export const WebviewToHostMessageTypes = [
   'SaveTaskContent',
   'RequestFullTaskData',
   'SaveTaskWithMetadata',
-  'RequestTemplateContent',
   // Webview ready handshake - requests initial state from host
   'RequestState',
   // Basic demo/ping path used by the placeholder UI

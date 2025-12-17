@@ -302,15 +302,6 @@ export class KanbanPanel {
           break;
         }
 
-        case 'RequestTemplateContent': {
-          const { templateId } = payload as { templateId: string };
-          this._postMessage(createEnvelope('TemplateContentLoadFailed', {
-            templateId,
-            error: 'Task templates have been removed.',
-          }));
-          break;
-        }
-
         case 'ALERT': {
           const text = (payload as { text?: string })?.text ?? 'Alert from Kanban2Code';
           vscode.window.showInformationMessage(text);
@@ -453,16 +444,6 @@ export class KanbanPanel {
               : folderUri[0].fsPath.replace(/[/\\]$/, '');
             this._postMessage(createEnvelope('FolderPicked', { path: relativePath, requestId }));
           }
-          break;
-        }
-
-        case 'CreateTemplate': {
-          vscode.window.showErrorMessage('Task templates have been removed.');
-          break;
-        }
-
-        case 'UpdateTemplate': {
-          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
       }

@@ -191,15 +191,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
-        case 'RequestTemplateContent': {
-          const { templateId } = payload as { templateId: string };
-          this._postMessage(createEnvelope('TemplateContentLoadFailed', {
-            templateId,
-            error: 'Task templates have been removed.',
-          }));
-          break;
-        }
-
         case 'CopyContext': {
           const { taskId, mode } = payload as { taskId: string; mode: string };
           await vscode.commands.executeCommand('kanban2code.copyTaskContext', taskId, mode);
@@ -285,16 +276,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           } else {
             await vscode.commands.executeCommand('kanban2code.newAgent');
           }
-          break;
-        }
-
-        case 'CreateTemplate': {
-          vscode.window.showErrorMessage('Task templates have been removed.');
-          break;
-        }
-
-        case 'UpdateTemplate': {
-          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
 
