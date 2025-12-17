@@ -92,6 +92,43 @@ Task description and implementation notes...
 - **Keyboard shortcuts**: Use keys 1-5 to move focused task to specific stages
 - **Stage transitions are validated** to prevent invalid moves
 
+### Orchestration Workflow (Idea → Executable Tasks)
+
+Kanban2Code can be used with an **agent-driven orchestration pipeline** that turns a raw idea into a set of phase/task files, then executes those tasks through the standard 5-stage workflow.
+
+There are two layers:
+
+1. **Orchestration meta-tasks** (create/shape work):
+   - `roadmapper` → produces a vision/roadmap document in `.kanban2code/projects/<project>/`
+   - `architect` → edits the roadmap to add technical design, phases, tasks, tests, and file touchpoints
+   - `splitter` → generates phase folders + individual task files from the roadmap (no new decisions)
+
+2. **Execution tasks** (build + verify, per task):
+   - `planner` (Plan) → refines the task and gathers implementation context
+   - `coder` (Code) → implements and writes tests
+   - `auditor` (Audit) → reviews and gates completion
+
+#### Orchestration State Tags
+
+Two tags are commonly used to track project readiness:
+- `missing-architecture`: present until the roadmap includes technical design + task specs and is approved
+- `missing-decomposition`: present until the roadmap has been split into phase/task files
+
+#### Where to Find the Canonical Protocol
+
+The full handoff protocol (including sample task file templates) lives in:
+- `.kanban2code/_context/ai-guide.md`
+
+#### Example: From Idea to Completed Tasks
+
+1. **Create a Roadmapper meta-task** (usually `stage: inbox`) to capture the vision and success criteria.
+2. **Roadmapper produces a roadmap document** at `.kanban2code/projects/<project>/<roadmap-name>.md`.
+3. **Roadmapper creates an Architect meta-task** (linked via `parent:`) with tags like `missing-architecture` and `missing-decomposition`.
+4. **Architect edits the roadmap** to include technical design, phases, and task definitions (definition of done, files, tests).
+5. **Architect creates a Splitter meta-task** with tag `missing-decomposition`.
+6. **Splitter generates phase/task files** under `.kanban2code/projects/<project>/phaseN-.../taskN.M-...md` (tasks enter the execution pipeline).
+7. **Execute each task** via `plan → code → audit → completed` (Planner → Coder → Auditor).
+
 ## Sidebar Interface
 
 The sidebar provides comprehensive task management capabilities:

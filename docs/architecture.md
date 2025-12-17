@@ -20,6 +20,41 @@ Key features include:
 
 The technology stack uses Bun as the runtime and package manager, TypeScript for type safety, React for webviews, and Vitest for testing. The extension follows a UI-first approach with comprehensive testing requirements at each phase of development.
 
+## Agent-Driven Orchestration Pipeline
+
+Kanban2Code supports an agent-driven workflow that turns an idea into executable tasks and then runs tasks through the 5-stage lifecycle.
+
+### Agent Files (Source of Truth)
+
+Agents are Markdown files under `.kanban2code/_agents/` and are scaffolded into new workspaces by the extension.
+
+Bundled agent templates live in:
+- `src/assets/agents.ts`
+
+Scaffolding writes them via:
+- `src/services/scaffolder.ts`
+
+### Two Layers: Orchestration vs Execution
+
+**Orchestration meta-tasks** (shape work):
+- `roadmapper` → produces a vision/roadmap document under `.kanban2code/projects/<project>/`
+- `architect` → edits the roadmap to add technical design, phases, and task specs
+- `splitter` → generates phase folders + task files from the roadmap (no new decisions)
+
+**Execution tasks** (build + verify, per task):
+- `planner` (`stage: plan`) → refines prompt and gathers code/test context
+- `coder` (`stage: code`) → implements and writes tests
+- `auditor` (`stage: audit`) → reviews and gates completion
+
+### Orchestration State Tags
+
+The pipeline commonly uses status tags to track whether a project is ready to proceed:
+- `missing-architecture` (remove once the roadmap has technical design + phases/tasks and is approved)
+- `missing-decomposition` (remove once the roadmap has been split into phase/task files)
+
+Canonical protocol and examples are documented in:
+- `.kanban2code/_context/ai-guide.md`
+
 ## Directory Structure
 
 ```
@@ -33,6 +68,12 @@ The technology stack uses Bun as the runtime and package manager, TypeScript for
 │   └── .gitkeep
 ├── _agents/                                # Agent definitions (markdown)
 │   ├── .gitkeep
+│   ├── roadmapper.md
+│   ├── architect.md
+│   ├── splitter.md
+│   ├── planner.md
+│   ├── coder.md
+│   ├── auditor.md
 │   ├── code-reviewer.md
 │   ├── context-gatherer-agent.md
 │   ├── react-dev.md
@@ -81,6 +122,7 @@ prompts/                                   # Prompt material used during develop
 src/
 ├── extension.ts                            # Main extension entry point handling activation and command registration
 ├── assets/
+│   ├── agents.ts                          # Bundled agent templates for workspace scaffolding
 │   └── seed-content.ts                    # Seed file contents for workspace scaffolding
 ├── commands/
 │   └── index.ts                           # Command registration and implementation for VS Code commands

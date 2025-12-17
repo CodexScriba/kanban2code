@@ -10,6 +10,7 @@ import {
   STATUS_TAGS,
   DOMAIN_TAGS,
   COMPONENT_TAGS,
+  ORCHESTRATION_TAGS,
   TAG_TAXONOMY,
   ALL_TAGS,
   isTagInCategory,
@@ -58,12 +59,21 @@ describe('Tag Taxonomy', () => {
       expect(COMPONENT_TAGS).toContain('context');
     });
 
+    it('should define orchestration tags', () => {
+      expect(ORCHESTRATION_TAGS).toContain('missing-architecture');
+      expect(ORCHESTRATION_TAGS).toContain('missing-decomposition');
+      expect(ORCHESTRATION_TAGS).toContain('roadmap');
+      expect(ORCHESTRATION_TAGS).toContain('architecture');
+      expect(ORCHESTRATION_TAGS).toContain('decomposition');
+    });
+
     it('should have all categories in TAG_TAXONOMY', () => {
       expect(TAG_TAXONOMY.type).toBe(TYPE_TAGS);
       expect(TAG_TAXONOMY.priority).toBe(PRIORITY_TAGS);
       expect(TAG_TAXONOMY.status).toBe(STATUS_TAGS);
       expect(TAG_TAXONOMY.domain).toBe(DOMAIN_TAGS);
       expect(TAG_TAXONOMY.component).toBe(COMPONENT_TAGS);
+      expect(TAG_TAXONOMY.orchestration).toBe(ORCHESTRATION_TAGS);
     });
 
     it('should have ALL_TAGS contain all tags', () => {
@@ -72,7 +82,8 @@ describe('Tag Taxonomy', () => {
         PRIORITY_TAGS.length +
         STATUS_TAGS.length +
         DOMAIN_TAGS.length +
-        COMPONENT_TAGS.length
+        COMPONENT_TAGS.length +
+        ORCHESTRATION_TAGS.length
       );
     });
   });
@@ -85,6 +96,8 @@ describe('Tag Taxonomy', () => {
       expect(isTagInCategory('blocked', 'status')).toBe(true);
       expect(isTagInCategory('mvp', 'domain')).toBe(true);
       expect(isTagInCategory('sidebar', 'component')).toBe(true);
+      expect(isTagInCategory('missing-architecture', 'orchestration')).toBe(true);
+      expect(isTagInCategory('roadmap', 'orchestration')).toBe(true);
     });
 
     it('should return false for tags not in category', () => {
@@ -103,6 +116,9 @@ describe('Tag Taxonomy', () => {
       expect(getTagCategory('blocked')).toBe('status');
       expect(getTagCategory('mvp')).toBe('domain');
       expect(getTagCategory('sidebar')).toBe('component');
+      expect(getTagCategory('missing-architecture')).toBe('orchestration');
+      expect(getTagCategory('missing-decomposition')).toBe('orchestration');
+      expect(getTagCategory('roadmap')).toBe('orchestration');
     });
 
     it('should return "custom" for unknown tags', () => {
@@ -152,6 +168,29 @@ describe('Tag Taxonomy', () => {
       const result = validateTags(['feature', 'custom-tag', 'another-custom']);
       expect(result.valid).toBe(true);
     });
+
+    it('should warn for missing-architecture without missing-decomposition', () => {
+      const result = validateTags(['architecture', 'p0', 'missing-architecture']);
+      expect(result.valid).toBe(true);
+      expect(result.warnings.some(w => w.includes('missing-architecture') && w.includes('missing-decomposition'))).toBe(true);
+    });
+
+    it('should pass for both missing-* tags together', () => {
+      const result = validateTags(['architecture', 'p0', 'missing-architecture', 'missing-decomposition']);
+      expect(result.valid).toBe(true);
+      expect(result.warnings.every(w => !w.includes('missing-architecture') || w.includes('priority'))).toBe(true);
+    });
+
+    it('should pass for only missing-decomposition', () => {
+      const result = validateTags(['architecture', 'p0', 'missing-decomposition']);
+      expect(result.valid).toBe(true);
+      expect(result.warnings.every(w => !w.includes('Typically both are set'))).toBe(true);
+    });
+
+    it('should warn for orchestration state tags without p0', () => {
+      const result = validateTags(['architecture', 'p1', 'missing-decomposition']);
+      expect(result.warnings.some(w => w.includes('Orchestration') && w.includes('p0'))).toBe(true);
+    });
   });
 
   describe('getTagColor', () => {
@@ -183,6 +222,17 @@ describe('Tag Taxonomy', () => {
       expect(domainColor).toBe('#1abc9c');
       expect(componentColor).toBe('#34495e');
       expect(customColor).toBe('#7f8c8d');
+    });
+
+    it('should return orange for orchestration state tags (missing-*)', () => {
+      expect(getTagColor('missing-architecture')).toBe('#e67e22');
+      expect(getTagColor('missing-decomposition')).toBe('#e67e22');
+    });
+
+    it('should return teal for orchestration type tags', () => {
+      expect(getTagColor('roadmap')).toBe('#16a085');
+      expect(getTagColor('architecture')).toBe('#16a085');
+      expect(getTagColor('decomposition')).toBe('#16a085');
     });
   });
 });

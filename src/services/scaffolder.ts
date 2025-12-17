@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { BUNDLED_AGENTS } from '../assets/agents';
 import {
   HOW_IT_WORKS,
   ARCHITECTURE,
@@ -43,6 +44,11 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
   await fs.writeFile(path.join(kanbanRoot, 'project-details.md'), PROJECT_DETAILS);
   await fs.writeFile(path.join(kanbanRoot, '_agents/opus.md'), AGENT_OPUS);
 
+  // Write bundled agents (orchestration + execution pipeline agents)
+  for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
+    await fs.writeFile(path.join(kanbanRoot, '_agents', filename), content);
+  }
+
   await fs.writeFile(
     path.join(kanbanRoot, 'inbox/sample-task.md'),
     INBOX_TASK_SAMPLE.replace('{date}', new Date().toISOString())
@@ -50,4 +56,30 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
 
   // Create .gitignore for _archive
   await fs.writeFile(path.join(kanbanRoot, '.gitignore'), '_archive/\n');
+}
+
+/**
+ * Sync bundled agents to an existing workspace.
+ * Only writes agents that don't already exist (preserves user customizations).
+ */
+export async function syncBundledAgents(rootPath: string): Promise<string[]> {
+  const agentsDir = path.join(rootPath, KANBAN_FOLDER, '_agents');
+  const synced: string[] = [];
+
+  // Ensure _agents directory exists
+  await fs.mkdir(agentsDir, { recursive: true });
+
+  for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
+    const agentPath = path.join(agentsDir, filename);
+    try {
+      await fs.access(agentPath);
+      // File exists, skip to preserve user customizations
+    } catch {
+      // File doesn't exist, write it
+      await fs.writeFile(agentPath, content);
+      synced.push(filename);
+    }
+  }
+
+  return synced;
 }

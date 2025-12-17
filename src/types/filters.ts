@@ -75,6 +75,32 @@ export const COMPONENT_TAGS = [
 
 export type ComponentTag = typeof COMPONENT_TAGS[number];
 
+/**
+ * Orchestration tags (agent pipeline state)
+ * These tags coordinate handoffs between agents in the orchestration pipeline.
+ *
+ * State tags (mutually exclusive within type):
+ * - missing-architecture: Roadmap needs technical design (Architect task needed)
+ * - missing-decomposition: Architecture needs task split (Splitter task needed)
+ *
+ * Type tags (can be combined):
+ * - roadmap: Vision/roadmap document
+ * - architecture: Technical design document
+ * - decomposition: Task generation work
+ */
+export const ORCHESTRATION_TAGS = [
+  // State tags - track what's missing/needed
+  'missing-architecture',   // Needs Architect to add technical design
+  'missing-decomposition',  // Needs Splitter to generate task files
+
+  // Type tags - categorize orchestration work
+  'roadmap',                // Vision document work
+  'architecture',           // Technical design work
+  'decomposition',          // Task splitting work
+] as const;
+
+export type OrchestrationTag = typeof ORCHESTRATION_TAGS[number];
+
 /** All tag categories */
 export const TAG_TAXONOMY = {
   type: TYPE_TAGS,
@@ -82,6 +108,7 @@ export const TAG_TAXONOMY = {
   status: STATUS_TAGS,
   domain: DOMAIN_TAGS,
   component: COMPONENT_TAGS,
+  orchestration: ORCHESTRATION_TAGS,
 } as const;
 
 /** All valid tags */
@@ -91,6 +118,7 @@ export const ALL_TAGS = [
   ...STATUS_TAGS,
   ...DOMAIN_TAGS,
   ...COMPONENT_TAGS,
+  ...ORCHESTRATION_TAGS,
 ] as const;
 
 export type KnownTag = typeof ALL_TAGS[number];
@@ -123,6 +151,8 @@ export function getTagCategory(
  * Validate tag usage rules:
  * - Only one type tag
  * - Only one priority tag
+ * - Orchestration state tags are mutually exclusive
+ * - Orchestration requires proper agent assignment
  */
 export function validateTags(tags: string[]): {
   valid: boolean;
@@ -134,6 +164,7 @@ export function validateTags(tags: string[]): {
 
   const typeTags = tags.filter(t => isTagInCategory(t, 'type'));
   const priorityTags = tags.filter(t => isTagInCategory(t, 'priority'));
+  const orchestrationTags = tags.filter(t => isTagInCategory(t, 'orchestration'));
 
   if (typeTags.length > 1) {
     errors.push(`Multiple type tags found: ${typeTags.join(', ')}. Pick only one.`);
@@ -141,6 +172,23 @@ export function validateTags(tags: string[]): {
 
   if (priorityTags.length > 1) {
     warnings.push(`Multiple priority tags found: ${priorityTags.join(', ')}. Consider using only one.`);
+  }
+
+  // Orchestration validation rules
+  const hasMissingArch = tags.includes('missing-architecture');
+  const hasMissingDecomp = tags.includes('missing-decomposition');
+
+  // Both missing-* tags is valid (fresh roadmap from Roadmapper)
+  // Only missing-decomposition is valid (Architect finished, needs Splitter)
+  // Neither is valid (fully decomposed)
+  // Only missing-architecture without missing-decomposition would be odd
+  if (hasMissingArch && !hasMissingDecomp) {
+    warnings.push('Task has missing-architecture but not missing-decomposition. Typically both are set together.');
+  }
+
+  // If task has orchestration state tags, it should likely have p0 priority
+  if ((hasMissingArch || hasMissingDecomp) && !tags.includes('p0')) {
+    warnings.push('Orchestration tasks with missing-* tags are typically high priority (p0).');
   }
 
   // Check for blocked without explanation (would need content check)
@@ -187,6 +235,10 @@ export function getTagColor(tag: string): string {
       return '#1abc9c';
     case 'component':
       return '#34495e';
+    case 'orchestration':
+      // State tags (missing-*) in orange to indicate action needed
+      // Type tags (roadmap, architecture, decomposition) in teal
+      return tag.startsWith('missing-') ? '#e67e22' : '#16a085';
     default:
       return '#7f8c8d';
   }

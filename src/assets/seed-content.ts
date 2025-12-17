@@ -41,3 +41,4 @@ stage: inbox
 
 This is a sample task. Drag me to 'Plan' to start working on it!
 `;
+
