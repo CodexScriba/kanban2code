@@ -1,9 +1,9 @@
 ---
-stage: plan
+stage: audit
 tags:
   - test
   - p2
-agent: coder
+agent: react-dev
 contexts: []
 ---
 
@@ -18,7 +18,13 @@ When you're done update stage: code to stage: audit
 - [x] `task-editor-modal.test.tsx` - Template tests removed
 - [x] `scaffolder.test.ts` - No template assertions (no changes needed)
 - [x] `context-service.test.ts` - Stage template tests updated
-- [ ] All remaining tests pass
+- [x] All remaining tests pass
 
 ## Context
 This task cleans up the test suite by removing tests for template functionality and updating tests that may have dependencies on the template system.
+
+## Audit
+.kanban2code/projects/major-refactor/phase1-remove-template-system/task1.10-update-tests.md
+src/services/archive.ts
+src/services/fs-move.ts
+src/services/stage-manager.ts

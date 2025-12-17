@@ -6,6 +6,7 @@ import { isTransitionAllowed } from '../core/rules';
 import { findTaskById } from './scanner';
 import { WorkspaceState } from '../workspace/state';
 import { INBOX_FOLDER, PROJECTS_FOLDER } from '../core/constants';
+import { movePath } from './fs-move';
 
 export class StageUpdateError extends Error {
   constructor(message: string) {
@@ -93,7 +94,7 @@ export async function moveTaskToLocation(taskId: string, location: TaskLocation)
   }
 
   // Move the file
-  await fs.rename(task.filePath, targetPath);
+  await movePath(task.filePath, targetPath);
 
   return targetPath;
 }

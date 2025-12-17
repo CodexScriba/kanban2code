@@ -4,6 +4,7 @@ import { Task } from '../types/task';
 import { ARCHIVE_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 import { updateTaskStage } from './stage-manager';
 import { ensureSafePath } from '../workspace/validation';
+import { movePath } from './fs-move';
 
 export async function archiveTask(task: Task, kanbanRoot: string): Promise<void> {
   if (task.stage !== 'completed') {
@@ -28,7 +29,7 @@ export async function archiveTask(task: Task, kanbanRoot: string): Promise<void>
   await ensureSafePath(kanbanRoot, targetPath);
 
   await fs.mkdir(targetDir, { recursive: true });
-  await fs.rename(task.filePath, targetPath);
+  await movePath(task.filePath, targetPath);
 }
 
 export async function archiveProject(kanbanRoot: string, projectName: string): Promise<void> {
@@ -45,7 +46,7 @@ export async function archiveProject(kanbanRoot: string, projectName: string): P
   }
 
   await fs.mkdir(path.dirname(targetPath), { recursive: true });
-  await fs.rename(projectPath, targetPath);
+  await movePath(projectPath, targetPath);
 }
 
 // Helper to mark complete AND archive
