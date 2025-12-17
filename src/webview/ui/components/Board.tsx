@@ -17,7 +17,6 @@ import { TaskContextMenu } from './TaskContextMenu';
 import { TaskEditorModal } from './TaskEditorModal';
 import { ContextModal } from './ContextModal';
 import { AgentModal } from './AgentModal';
-import { TemplateModal } from './TemplateModal';
 import { ProjectModal } from './ProjectModal';
 
 function postMessage(type: string, payload: unknown) {
@@ -65,14 +64,13 @@ export const Board: React.FC<BoardProps> = ({
   showKeyboardShortcutsNonce = 0,
   toggleLayoutNonce = 0,
 }) => {
-  const { tasks, templates, contexts, agents, projects, phasesByProject, isLoading, error, filterState } = useTaskData();
+  const { tasks, contexts, agents, projects, phasesByProject, isLoading, error, filterState } = useTaskData();
   const { layout, setLayout } = useBoardLayout('columns');
   const [search, setSearch] = useState('');
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showContextModal, setShowContextModal] = useState(false);
   const [showAgentModal, setShowAgentModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
@@ -298,7 +296,6 @@ export const Board: React.FC<BoardProps> = ({
         <TaskModal
           isOpen={showTaskModal}
           tasks={tasks}
-          templates={templates}
           contexts={contexts}
           agents={agents}
           projects={projects}
@@ -311,10 +308,6 @@ export const Board: React.FC<BoardProps> = ({
           onOpenAgentModal={() => {
             setShowTaskModal(false);
             setShowAgentModal(true);
-          }}
-          onOpenTemplateModal={() => {
-            setShowTaskModal(false);
-            setShowTemplateModal(true);
           }}
         />
       )}
@@ -331,14 +324,6 @@ export const Board: React.FC<BoardProps> = ({
         <AgentModal
           isOpen={showAgentModal}
           onClose={() => setShowAgentModal(false)}
-        />
-      )}
-
-      {showTemplateModal && (
-        <TemplateModal
-          isOpen={showTemplateModal}
-          mode="create"
-          onClose={() => setShowTemplateModal(false)}
         />
       )}
 

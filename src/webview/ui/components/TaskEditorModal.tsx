@@ -5,7 +5,6 @@ import { vscode } from '../vscodeApi';
 import loader from '@monaco-editor/loader';
 import { defineNavyNightTheme, NAVY_NIGHT_MONACO_THEME } from './monaco-theme';
 import { LocationPicker } from './LocationPicker';
-import { TemplatePicker } from './TemplatePicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
@@ -33,12 +32,6 @@ function ensureMonacoConfigured() {
     };
   }
   monacoConfigured = true;
-}
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
 }
 
 interface TaskMetadata {
@@ -80,16 +73,11 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const [originalMetadata, setOriginalMetadata] = useState<TaskMetadata | null>(null);
 
   // Available options from backend
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [availableContexts, setAvailableContexts] = useState<ContextFile[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [showProjectModal, setShowProjectModal] = useState(false);
-
-  // Template warning state
-  const [showTemplateWarning, setShowTemplateWarning] = useState(false);
-  const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
 
   const isMetadataDirty = useMemo(() => {
     if (!originalMetadata) return false;
@@ -131,30 +119,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     postMessage('RequestFullTaskData', { taskId: task.id });
   };
 
-  const handleTemplateChange = (newTemplate: string | null) => {
-    if (newTemplate && newTemplate !== template && value.trim()) {
-      setPendingTemplate(newTemplate);
-      setShowTemplateWarning(true);
-    } else {
-      setTemplate(newTemplate);
-      if (newTemplate) {
-        postMessage('RequestTemplateContent', { templateId: newTemplate });
-      }
-    }
-  };
-
-  const confirmTemplateChange = () => {
-    if (pendingTemplate) {
-      setTemplate(pendingTemplate);
-      postMessage('RequestTemplateContent', { templateId: pendingTemplate });
-    }
-  };
-
-  const cancelTemplateChange = () => {
-    setShowTemplateWarning(false);
-    setPendingTemplate(null);
-  };
-
   const handleAddTag = () => {
     const tag = tagInput.trim();
     if (tag && !tags.includes(tag)) {
@@ -185,8 +149,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     setTags([]);
     setTagInput('');
     setOriginalMetadata(null);
-    setShowTemplateWarning(false);
-    setPendingTemplate(null);
     // Request full task data
     postMessage('RequestFullTaskData', { taskId: task.id });
   }, [isOpen, task.id]);
@@ -219,7 +181,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
           taskId: string;
           content: string;
           metadata: TaskMetadata;
-          templates: Template[];
           contexts: ContextFile[];
           agents: Agent[];
           projects: string[];
@@ -235,7 +196,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setContexts(payload.metadata.contexts);
         setTags(payload.metadata.tags);
         setOriginalMetadata(payload.metadata);
-        setTemplates(payload.templates);
         setAvailableContexts(payload.contexts);
         setAgents(payload.agents);
         setProjects(payload.projects);
@@ -266,20 +226,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setError(payload.error || 'Failed to save task');
-      }
-
-      if (message.type === 'TemplateContentLoaded') {
-        const payload = message.payload as { templateId: string; content: string };
-        setValue(payload.content);
-        setShowTemplateWarning(false);
-        setPendingTemplate(null);
-      }
-
-      if (message.type === 'TemplateContentLoadFailed') {
-        const payload = message.payload as { templateId: string; error: string };
-        setError(payload.error || 'Failed to load template');
-        setShowTemplateWarning(false);
-        setPendingTemplate(null);
       }
 
       if (message.type === 'FolderPicked') {
@@ -389,25 +335,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     onChange={setAgent}
                     onCreateNew={() => postMessage('CreateAgent', {})}
                   />
-                </div>
-
-                {/* Template */}
-                <div className="task-editor-section">
-                  <TemplatePicker
-                    templates={templates}
-                    value={template}
-                    onChange={handleTemplateChange}
-                    onCreateNew={() => postMessage('CreateTemplate', {})}
-                  />
-                  {showTemplateWarning && (
-                    <div className="template-warning">
-                      <span>Changing template will replace content</span>
-                      <div className="template-warning-actions">
-                        <button className="btn btn-secondary" onClick={cancelTemplateChange}>Cancel</button>
-                        <button className="btn btn-primary" onClick={confirmTemplateChange}>Apply</button>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="task-editor-divider" />

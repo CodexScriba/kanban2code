@@ -18,7 +18,6 @@ import { MoveModal } from './MoveModal';
 import { TaskEditorModal } from './TaskEditorModal';
 import { ContextModal } from './ContextModal';
 import { AgentModal } from './AgentModal';
-import { TemplateModal } from './TemplateModal';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
 import type { FilterState as ProtocolFilterState } from '../../../types/filters';
@@ -36,7 +35,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0, openTaskModalNonce = 0 }) => {
-  const { tasks, templates, contexts, agents, projects, phasesByProject, isLoading } = useTaskData();
+  const { tasks, contexts, agents, projects, phasesByProject, isLoading } = useTaskData();
   const {
     filterState,
     toggleStage,
@@ -54,7 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showContextModal, setShowContextModal] = useState(false);
   const [showAgentModal, setShowAgentModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
   const [contextMenuState, setContextMenuState] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
@@ -125,10 +123,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
 
   const handleNewAgent = () => {
     setShowAgentModal(true);
-  };
-
-  const handleNewTemplate = () => {
-    setShowTemplateModal(true);
   };
 
   const handleTaskClick = (task: Task) => {
@@ -277,7 +271,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         onNewProject={handleNewProject}
         onNewContext={handleNewContext}
         onNewAgent={handleNewAgent}
-        onNewTemplate={handleNewTemplate}
       />
 
       <QuickViews activeView={filterState.quickView} onSetView={setQuickView} />
@@ -310,7 +303,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         <TaskModal
           isOpen={showTaskModal}
           tasks={tasks}
-          templates={templates}
           contexts={contexts}
           agents={agents}
           projects={projects}
@@ -323,10 +315,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
           onOpenAgentModal={() => {
             setShowTaskModal(false);
             setShowAgentModal(true);
-          }}
-          onOpenTemplateModal={() => {
-            setShowTaskModal(false);
-            setShowTemplateModal(true);
           }}
         />
       )}
@@ -343,14 +331,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         <AgentModal
           isOpen={showAgentModal}
           onClose={() => setShowAgentModal(false)}
-        />
-      )}
-
-      {showTemplateModal && (
-        <TemplateModal
-          isOpen={showTemplateModal}
-          mode="create"
-          onClose={() => setShowTemplateModal(false)}
         />
       )}
 

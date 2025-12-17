@@ -1,12 +1,11 @@
 import React from 'react';
-import { PlusIcon, FolderIcon, ContextIcon, AgentIcon, TemplateIcon } from './Icons';
+import { PlusIcon, FolderIcon, ContextIcon, AgentIcon } from './Icons';
 
 interface SidebarActionsProps {
   onNewTask: () => void;
   onNewProject: () => void;
   onNewContext: () => void;
   onNewAgent: () => void;
-  onNewTemplate: () => void;
 }
 
 export const SidebarActions: React.FC<SidebarActionsProps> = ({
@@ -14,7 +13,6 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
   onNewProject,
   onNewContext,
   onNewAgent,
-  onNewTemplate,
 }) => {
   return (
     <div className="sidebar-actions">
@@ -33,10 +31,6 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
       <button className="action-btn glass-button" onClick={onNewAgent}>
         <AgentIcon />
         New Agent
-      </button>
-      <button className="action-btn glass-button" onClick={onNewTemplate}>
-        <TemplateIcon />
-        New Template
       </button>
     </div>
   );

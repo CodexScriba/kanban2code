@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Stage } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
-import { TemplatePicker } from './TemplatePicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
@@ -14,16 +13,9 @@ function postMessage(type: string, payload: unknown) {
   }
 }
 
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-}
-
 interface TaskModalProps {
   isOpen: boolean;
   tasks: Task[];
-  templates?: Template[];
   contexts?: ContextFile[];
   agents?: Agent[];
   projects?: string[];
@@ -31,7 +23,6 @@ interface TaskModalProps {
   onClose: () => void;
   onOpenContextModal?: () => void;
   onOpenAgentModal?: () => void;
-  onOpenTemplateModal?: () => void;
   defaultLocation?: 'inbox' | { project: string; phase?: string };
   parentTaskId?: string;
 }
@@ -42,7 +33,6 @@ interface TaskFormData {
   stage: Stage;
   agent: string | null;
   tags: string[];
-  template: string | null;
   contexts: string[];
   content: string;
 }
@@ -57,7 +47,6 @@ const STAGES: { value: Stage; label: string }[] = [
 export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   tasks,
-  templates = [],
   contexts = [],
   agents = [],
   projects = [],
@@ -65,7 +54,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose,
   onOpenContextModal,
   onOpenAgentModal,
-  onOpenTemplateModal,
   defaultLocation = 'inbox',
   parentTaskId,
 }) => {
@@ -80,7 +68,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     stage: 'inbox',
     agent: null,
     tags: [],
-    template: null,
     contexts: [],
     content: '',
   });
@@ -99,7 +86,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         stage: 'inbox',
         agent: null,
         tags: [],
-        template: null,
         contexts: [],
         content: '',
       });
@@ -169,7 +155,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       stage: formData.stage,
       agent: formData.agent || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
-      template: formData.template || undefined,
       contexts: formData.contexts.length > 0 ? formData.contexts : undefined,
       parent: parentTaskId || undefined,
       content: formData.content || undefined,
@@ -293,14 +278,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             value={formData.agent}
             onChange={(agent) => setFormData((prev) => ({ ...prev, agent }))}
             onCreateNew={handleCreateAgent}
-          />
-
-          {/* Template */}
-          <TemplatePicker
-            templates={templates}
-            value={formData.template}
-            onChange={(template) => setFormData((prev) => ({ ...prev, template }))}
-            onCreateNew={onOpenTemplateModal}
           />
 
           {/* Context Files */}

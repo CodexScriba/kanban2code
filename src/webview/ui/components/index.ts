@@ -14,6 +14,5 @@ export { TaskContextMenu } from './TaskContextMenu';
 export { TaskItem } from './TaskItem';
 export { TaskModal } from './TaskModal';
 export { TaskTree } from './TaskTree';
-export { TemplatePicker } from './TemplatePicker';
 export { TreeNode } from './TreeNode';
 export { TreeSection } from './TreeSection';

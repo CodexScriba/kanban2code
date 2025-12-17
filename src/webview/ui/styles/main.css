@@ -1301,29 +1301,6 @@ body {
   margin: var(--spacing-md) 0;
 }
 
-.template-warning {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: var(--k2c-warning-muted);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--spacing-xs);
-  font-size: var(--font-size-xs);
-  color: var(--k2c-warning);
-}
-
-.template-warning-actions {
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-.template-warning-actions .btn {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-xs);
-}
-
 /* === FORM ELEMENTS === */
 .form-group {
   margin-bottom: var(--spacing-md);
@@ -1584,11 +1561,6 @@ body {
   gap: var(--spacing-sm);
 }
 
-/* === TEMPLATE PICKER === */
-.template-picker {
-  margin-bottom: var(--spacing-md);
-}
-
 /* === FOCUS STATES === */
 .task-item:focus {
   outline: none;
@@ -1742,8 +1714,7 @@ body {
 }
 
 .context-modal,
-.agent-modal,
-.template-modal {
+.agent-modal {
   max-width: 600px;
   max-height: 85vh;
 }
