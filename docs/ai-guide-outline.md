@@ -14,7 +14,6 @@ This document outlines the structure for `.kanban2code/_context/ai-guide.md`.
   - `.kanban2code/inbox/*.md`
   - `.kanban2code/projects/<project>/**/*.md`
 - Non-task folders:
-  - `.kanban2code/_templates/` (task and stage templates)
   - `.kanban2code/_agents/` (agent instruction files)
   - `.kanban2code/_context/` (optional custom context files)
   - `.kanban2code/_archive/` (archived tasks)
@@ -41,7 +40,6 @@ Fields:
 - `contexts`
 - `parent`
 - `order`
-- (Optional / passthrough) `template`
 
 ## 5. Stages and Transitions
 
@@ -68,13 +66,12 @@ Explain prompt/context layering:
 - Agent context (`_agents/<agent>.md`)
 - Project context (`projects/<project>/_context.md`)
 - Phase context (`projects/<project>/<phase>/_context.md`)
-- Stage template (`_templates/stages/<stage>.md`)
 - Custom contexts (`contexts:` frontmatter entries)
 
 ## 9. Task Examples (Good + Bad)
 
 Include at least:
-- One good example per “template type”:
+- One good example per "task type":
   - bug report
   - feature
   - refactor

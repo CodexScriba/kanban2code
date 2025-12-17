@@ -11,7 +11,7 @@ Key features include:
 - A comprehensive sidebar interface for task navigation and management (Phase 3)
   - Hierarchical task tree with inbox/projects/phases organization
   - Multi-dimensional filtering (stage, project, tags, quick views)
-  - Task creation modal with template support
+  - Task creation modal with agent assignment
   - Context menus for task operations
   - Full keyboard navigation and accessibility support
 - Workspace scaffolding to set up the Kanban2Code folder structure
@@ -26,7 +26,7 @@ The technology stack uses Bun as the runtime and package manager, TypeScript for
 .kanban2code/                               # Scaffolded kanban workspace state (created in user workspaces; committed here for dogfooding)
 ├── .gitignore                              # Repo-local ignore rules for `.kanban2code` contents
 ├── ARCHIVE_LOG.md                          # Human-readable archive/move log
-├── config.json                             # User-configurable defaults (agents, templates, etc.)
+├── config.json                             # User-configurable defaults (agents, etc.)
 ├── inbox/                                  # Inbox tasks (markdown w/ frontmatter)
 │   └── .gitkeep
 ├── projects/                               # Project folders containing phase/task markdown
@@ -39,7 +39,6 @@ The technology stack uses Bun as the runtime and package manager, TypeScript for
 │   └── roadmap-splitter.md
 ├── _context/                               # Global context files (markdown)
 │   └── ai-guide.md
-├── _templates/                             # Scaffold templates
 │   ├── context/
 │   │   ├── audit-phase.md
 │   │   └── phase-context.md
@@ -57,9 +56,6 @@ The technology stack uses Bun as the runtime and package manager, TypeScript for
 │   │   ├── spike-research.md
 │   │   ├── split-phase.md
 │   │   ├── test.md
-│   │   └── ui-component.md
-│   └── stages/                             # Stage folder templates
-│       └── .gitkeep
 └── _archive/                               # Internal backups/snapshots
     └── context-backups/
         ├── audit-phase1.md
@@ -158,8 +154,6 @@ src/
 │   │   │   ├── TaskItem.tsx               # Individual task item component
 │   │   │   ├── TaskModal.tsx              # Task creation modal
 │   │   │   ├── TaskTree.tsx               # Tree container with ARIA tree role
-│   │   │   ├── TemplateModal.tsx          # Create/edit template modal
-│   │   │   ├── TemplatePicker.tsx         # Template dropdown for new tasks
 │   │   │   ├── TreeNode.tsx               # Project/phase tree node component
 │   │   │   ├── TreeSection.tsx            # Inbox/Projects tree sections
 │   │   │   ├── monaco-theme.ts            # Monaco editor theme definition
@@ -197,7 +191,6 @@ tests/
 ├── task-content.test.ts                   # Unit tests for task content load/save + relocation
 ├── task-loading.test.ts                   # Integration tests for task loading from filesystem
 ├── task-watcher.test.ts                   # Unit tests for debounced watcher events and move detection
-├── template-service.test.ts               # Unit tests for template service
 ├── types.test.ts                          # Unit tests for type definitions and utilities
 ├── utils.test.ts                          # Unit tests for utility functions
 ├── validation.test.ts                     # Unit tests for workspace validation
@@ -260,7 +253,7 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 ### Key Features
 - **Hierarchical Task Display**: Tasks organized by inbox/projects/phases with collapsible tree structure
 - **Multi-dimensional Filtering**: Stage filters, project/tag filters, and preset quick views
-- **Task Creation**: Modal-based task creation with template support and location selection
+- **Task Creation**: Modal-based task creation with agent assignment and location selection
 - **Context Actions**: Right-click menus for task operations (move, archive, copy context, etc.)
 - **Keyboard Navigation**: Full keyboard accessibility with shortcuts for all major actions
 - **Real-time Updates**: Live synchronization with filesystem changes through the messaging system
@@ -287,10 +280,9 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 
 ### Task Editing Flow (Split-Panel Editor)
 
-- UI: [`src/webview/ui/components/TaskEditorModal.tsx`](../src/webview/ui/components/TaskEditorModal.tsx) renders a left metadata panel (title/location/agent/template/contexts/tags) and a right markdown editor (Monaco).
-- Load: webview sends `RequestFullTaskData` → host replies `FullTaskDataLoaded` with file content, current metadata, and option lists (templates/agents/contexts/projects/phases).
+- UI: [`src/webview/ui/components/TaskEditorModal.tsx`](../src/webview/ui/components/TaskEditorModal.tsx) renders a left metadata panel (title/location/agent/contexts/tags) and a right markdown editor (Monaco).
+- Load: webview sends `RequestFullTaskData` → host replies `FullTaskDataLoaded` with file content, current metadata, and option lists (agents/contexts/projects/phases).
 - Save: webview sends `SaveTaskWithMetadata` → host persists content/metadata via [`src/services/task-content.ts`](../src/services/task-content.ts) and returns `TaskMetadataSaved` (or `TaskMetadataSaveFailed`).
-- Templates: selecting a template triggers `RequestTemplateContent` → host loads via [`loadTemplateById`](../src/services/template.ts) and replies `TemplateContentLoaded` (or `TemplateContentLoadFailed`).
 
 ## Phase 3 Implementation Notes (Post-Completion Fixes)
 
@@ -576,6 +568,6 @@ Phase 6 addresses critical bugs and implements remaining design features:
 Design references in `docs/design/`:
 - `forms/task.html` - Task modal with context selection
 - `forms/context.html` - Context creation modal
-- `forms/agent.html` - Agent creation modal with quick templates
+- `forms/agent.html` - Agent creation modal
 - `board-swimlane.html` - Swimlane layout reference
 - `styles/variables.css` - Navy Night Gradient color palette

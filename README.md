@@ -23,14 +23,13 @@ Common customizations:
 - Tag categories: `tags.categories.*`
 - Stage ordering/transitions: `stages.*`
 
-## Templates
+## AI Agents
 
-Templates live under `.kanban2code/_templates/`:
+AI agents are defined in `.kanban2code/_agents/*.md` and provide specialized capabilities for different types of work:
 
-- Task templates: `.kanban2code/_templates/tasks/*.md`
-- Stage templates: `.kanban2code/_templates/stages/*.md`
-
-Task templates are markdown with optional YAML frontmatter (`name`, `description`, optional `default_stage`, optional `default_tags`). Stage templates are injected into AI prompts during context-copy.
+- Each agent has role description and guidelines
+- Agents generate contextually appropriate task content
+- Different agents excel at different types of work (e.g., react-dev for React components, code-reviewer for audits)
 
 ## Context Workflow (for AI prompting)
 
@@ -39,7 +38,6 @@ Kanban2Code builds a structured prompt from layered context sources:
 - Global: `.kanban2code/how-it-works.md`, `.kanban2code/architecture.md`, `.kanban2code/project-details.md`
 - Agent: `.kanban2code/_agents/<agent>.md`
 - Project/phase: `.kanban2code/projects/<project>/_context.md`, `.kanban2code/projects/<project>/<phase>/_context.md`
-- Stage template: `.kanban2code/_templates/stages/<stage>.md`
 - Custom contexts: `.kanban2code/_context/*.md` referenced by task `contexts: [...]`
 
 Copy commands:
@@ -57,7 +55,7 @@ The Kanban2Code sidebar provides quick access to your tasks:
 - **Quick Views**: Preset filters for Today's Focus, Development, Bugs, and Ideas
 - **Stage Filters**: Toggle visibility by stage (Inbox, Plan, Code, Audit)
 - **Project/Tag Filters**: Filter tasks by project or tags
-- **Task Creation**: Create new tasks via modal with location, stage, tags, and template selection
+- **Task Creation**: Create new tasks via modal with location, stage, tags, and agent assignment
 - **Context Menu**: Right-click tasks for copy, stage change, move, archive, or delete actions
 - **Move Modal**: Relocate tasks between Inbox and Project/Phase locations
 
@@ -118,9 +116,7 @@ An example workspace is included at `examples/sample-project/` (including `.kanb
 ├── inbox/              # Inbox tasks
 ├── projects/           # Project folders with phases
 ├── _agents/            # AI agent configurations
-├── _templates/
-│   ├── tasks/          # Task templates
-│   └── stages/         # Stage-specific templates
+├── _context/           # Context files for AI prompts
 ├── _archive/           # Archived tasks
 ├── architecture.md     # Project architecture context
 ├── project-details.md  # Project details context

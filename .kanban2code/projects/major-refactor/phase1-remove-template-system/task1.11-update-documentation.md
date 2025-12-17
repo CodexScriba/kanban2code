@@ -1,10 +1,12 @@
 ---
-stage: plan
+stage: audit
 tags:
   - docs
   - p2
-agent: opus
-contexts: []
+agent: react-dev
+contexts:
+  - architecture
+  - ai-guide
 ---
 
 # Update Documentation
@@ -20,3 +22,10 @@ Remove template references from all documentation and emphasize agent-generated 
 
 ## Context
 This task updates all documentation to reflect the new agent-driven workflow, removing references to the template system and highlighting how agents now generate content.
+
+## Audit
+
+docs/architecture.md
+.kanban2code/_context/ai-guide.md
+docs/user_guide.md
+README.md

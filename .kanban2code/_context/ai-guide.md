@@ -24,8 +24,6 @@ Notes:
 
 ### Non-task folders
 
-- `.kanban2code/_templates/tasks/` — user-defined task templates (markdown)
-- `.kanban2code/_templates/stages/` — stage templates (markdown), used for context injection
 - `.kanban2code/_agents/` — agent instruction files (markdown)
 - `.kanban2code/_context/` — custom context files (markdown), referenced via `contexts:`
 - `.kanban2code/_archive/` — archived tasks
@@ -98,9 +96,6 @@ Parent task ID (typically the parent filename without `.md`).
 
 Optional ordering value for custom sorting (if/when used by the UI).
 
-### `template` (string; passthrough)
-
-Some flows write `template: <id>` into frontmatter. It is preserved on disk, but it is not currently part of the in-memory `Task` model.
 
 ## 4) Stages and transitions
 
@@ -148,7 +143,32 @@ Optional **component** tags:
 
 Custom tags are allowed, but prefer known tags when possible.
 
-## 6) Context system (what gets injected)
+## 6) Agent-Generated Content
+
+Kanban2Code emphasizes AI agent-driven content generation:
+
+### Agent Specialization
+
+Each AI agent has specialized knowledge and capabilities:
+- Agents are defined in `.kanban2code/_agents/<agent>.md` with role descriptions and guidelines
+- Agents generate contextually appropriate task content based on their expertise
+- Different agents excel at different types of work (e.g., react-dev for React components, code-reviewer for audits)
+
+### Content Generation Workflow
+
+1. **Task Assignment**: When creating a task, assign an appropriate agent based on the work type
+2. **Context Awareness**: Agents use the 5-layer context system to understand project requirements
+3. **Content Creation**: Agents generate task content, acceptance criteria, and implementation notes
+4. **Quality Assurance**: Agents ensure their output follows project conventions and best practices
+
+### Benefits of Agent-Generated Content
+
+- **Contextual Relevance**: Content is generated with full awareness of project context
+- **Expertise Matching**: Tasks are handled by agents with appropriate domain knowledge
+- **Consistency**: Agents maintain consistent formatting and structure
+- **Adaptability**: Content adapts to project-specific requirements and constraints
+
+## 7) Context system (what gets injected)
 
 When generating a prompt payload (full XML or context-only), Kanban2Code builds context in layers:
 
@@ -156,8 +176,7 @@ When generating a prompt payload (full XML or context-only), Kanban2Code builds 
 2. **Agent context** (if `agent` set): `.kanban2code/_agents/<agent>.md`
 3. **Project context** (if task under a project): `.kanban2code/projects/<project>/_context.md`
 4. **Phase context** (if task under a phase): `.kanban2code/projects/<project>/<phase>/_context.md`
-5. **Stage template**: `.kanban2code/_templates/stages/<stage>.md` (falls back to a placeholder if missing)
-6. **Custom contexts** (if `contexts` set): files referenced by `contexts:` (see rules above)
+5. **Custom contexts** (if `contexts` set): files referenced by `contexts:` (see rules above)
 
 ### 6.1 Context update workflow (rules for AIs)
 
@@ -180,10 +199,6 @@ Goal: keep context files *minimal, current, and decision-oriented* so future tas
   - Create/update during an audit pass (end of phase or at a quality gate).
   - Capture: tasks reviewed, score (0–10), test status, issues + follow-ups, sign-off checklist.
 
-Templates (optional starting points):
-- `.kanban2code/_templates/context/architecture.md`
-- `.kanban2code/_templates/context/phase-context.md`
-- `.kanban2code/_templates/context/audit-phase.md`
 
 #### How to update (format rules)
 
@@ -205,7 +220,7 @@ Architecture decision (append-only):
 
 Phase completion entry:
 ```md
-- task2.3_implement-stage-template-resolution: added `_templates/stages/{stage}.md` lookup | date: 2025-12-14
+- task2.3_implement-context-resolution: added context file lookup | date: 2025-12-14
 ```
 
 ## 7) Task examples (good patterns)
