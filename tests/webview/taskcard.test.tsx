@@ -35,7 +35,7 @@ describe('TaskCard', () => {
   test('displays title in card header', async () => {
     const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
     const task = {
-      id: 't1',
+      id: 'task1.2-my-test-task',
       filePath: '/tmp/t1.md',
       title: 'My Test Task',
       stage: 'inbox',
@@ -44,7 +44,7 @@ describe('TaskCard', () => {
 
     render(<TaskCard task={task} onOpen={vi.fn()} />);
 
-    expect(screen.getByText('My Test Task')).toBeInTheDocument();
+    expect(screen.getByText('1.2 My Test Task')).toBeInTheDocument();
   });
 
   test('displays breadcrumb when project and phase exist', async () => {

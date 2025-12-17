@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Task } from '../../../types/task';
 import { EditIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon } from './Icons';
+import { getDisplayTitle } from '../../../utils/text';
 
 interface TaskCardProps {
   task: Task;
@@ -23,6 +24,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   const [dragging, setDragging] = useState(false);
   const isCompleted = task.stage === 'completed';
+  const displayTitle = getDisplayTitle(task);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -67,11 +69,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           onOpen(task);
         }
       }}
-      aria-label={`Open task ${task.title}`}
+      aria-label={`Open task ${displayTitle}`}
     >
       {/* Card Header */}
       <div className="card-header">
-        <span className={`card-title ${isCompleted ? 'completed' : ''}`}>{task.title}</span>
+        <span className={`card-title ${isCompleted ? 'completed' : ''}`}>{displayTitle}</span>
         <div className="card-actions">
           {onEdit && (
             <button

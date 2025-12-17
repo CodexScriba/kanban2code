@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Task } from '../../../types/task';
+import { getDisplayTitle } from '../../../utils/text';
 
 interface TaskItemProps {
   task: Task;
@@ -42,6 +43,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
   };
 
+  const displayTitle = getDisplayTitle(task);
+
   return (
     <div
       className="task-item"
@@ -59,7 +62,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     >
       <span className={`stage-indicator ${task.stage}`} />
       <div className="task-content">
-        <div className="task-title">{task.title}</div>
+        <div className="task-title">{displayTitle}</div>
         {task.tags && task.tags.length > 0 && (
           <div className="task-meta">
             {task.tags.slice(0, 3).map((tag) => (
