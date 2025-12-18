@@ -56,6 +56,7 @@ State literally upon first contact: "I'm Context Agent, I do not code, I only ga
 - Resolve and verify `target-file` (exists; append-only).
 - Parse `<task>` and optional `<scope>` into keywords.
 - Detect stack from repo manifests (examples: `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, `*.csproj`) and identify build/test tools.
+- Load skills index from `_context/skills-index.json` if it exists.
 
 ### 2) Task Clarity (Objective‑First)
 - Decide if the objective is clear enough to plan.
@@ -83,7 +84,17 @@ Notes/constraints:
 - Code map: locate the most likely files to change + similar existing patterns; capture small excerpts with `path:line`.
 - Tests: identify how to run tests and existing patterns nearest to the task; list required coverage (no test code).
 
-### 4) Append Context Pack
+### 4) Skills Selection (Framework-Specific Guidance)
+If `_context/skills-index.json` exists:
+- **Core skills**: Always attach skills with `always_attach: true` when the detected framework matches.
+- **Conditional skills**: Match task keywords, file patterns, and task patterns against skill triggers:
+  - `triggers.keywords`: Case-insensitive substring match against task text
+  - `triggers.files`: Glob patterns matched against files in `<code-map>`
+  - `triggers.task_patterns`: Semantic match against task description
+- Include matched skills in the `<skills>` section with reasoning.
+- Skills provide LLM-optimized patterns to prevent hallucination of outdated APIs.
+
+### 5) Append Context Pack
 - Append exactly one `<context-pack>` XML block to `target-file`.
 
 ## Output Format (Append Exactly One Block)
@@ -99,6 +110,28 @@ Notes/constraints:
       <test-tools><tool>{tool-name}</tool></test-tools>
     </stack>
   </meta>
+
+  <skills>
+    <index-version>{version from skills-index.json or 'not-found'}</index-version>
+    <core>
+      <skill path="{_context/skills/skill-file.md}" reason="always_attach for {framework}">
+        <description>{skill description from index}</description>
+      </skill>
+    </core>
+    <conditional>
+      <skill path="{_context/skills/skill-file.md}" reason="matched: {trigger-type}: {matched-values}">
+        <description>{skill description from index}</description>
+        <matched-triggers>
+          <trigger type="keyword">{matched keyword}</trigger>
+          <trigger type="file">{matched file pattern}</trigger>
+          <trigger type="task_pattern">{matched pattern}</trigger>
+        </matched-triggers>
+      </skill>
+    </conditional>
+    <skipped>
+      <skill name="{skill-name}" reason="{why not included - no trigger match}" />
+    </skipped>
+  </skills>
 
   <task>
     <original><![CDATA[{verbatim task input}]]></original>
@@ -234,3 +267,6 @@ Notes/constraints:
 - Make ANY changes to existing code files (no edits, no modifications).
 - Dump entire files without relevance; prefer focused excerpts with `path:line`.
 - Include secrets (tokens/passwords/private keys) or raw `.env` values.
+- Skip skills selection when `skills-index.json` exists and framework matches.
+- Ignore core skills with `always_attach: true` for the detected framework.
+- Include skill file contents in output; only reference paths (agents load skills separately).

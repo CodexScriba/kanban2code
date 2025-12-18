@@ -3,7 +3,7 @@
    Fixed colors independent of VS Code theme
    ======================================== */
 
-:root {
+body {
   /* === BACKGROUND HIERARCHY === */
   /* Deepest layer - main canvas */
   --k2c-bg-base: #0a0e17;
