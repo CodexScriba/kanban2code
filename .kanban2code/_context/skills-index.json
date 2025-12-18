@@ -1,0 +1,187 @@
+{
+  "version": "16.0.10",
+  "last_updated": "2025-12-18",
+  "core_skills": [
+    {
+      "file": "_context/skills/nextjs-core-skills.md",
+      "always_attach": true,
+      "description": "Mandatory baseline for Next.js 16. Covers async APIs (params, cookies, headers), proxy.ts migration, React 19 patterns (useActionState), and parallel route requirements. Always attach for any Next.js task."
+    }
+  ],
+  "conditional_skills": [
+    {
+      "name": "Caching & Data Fetching",
+      "file": "_context/skills/skill-caching-data-fetching.md",
+      "triggers": {
+        "keywords": [
+          "cache",
+          "caching",
+          "fetch",
+          "revalidate",
+          "revalidateTag",
+          "cacheTag",
+          "cacheLife",
+          "use cache",
+          "unstable_cache",
+          "ISR",
+          "stale",
+          "PPR",
+          "partial prerendering"
+        ],
+        "files": [
+          "**/use-cache.ts",
+          "**/cache.ts",
+          "**/data.ts",
+          "**/lib/fetch*.ts"
+        ],
+        "task_patterns": [
+          "performance",
+          "slow page",
+          "data not updating",
+          "stale data",
+          "caching strategy",
+          "incremental static regeneration"
+        ]
+      },
+      "description": "Deep dive into 'use cache' directive, cacheLife profiles (seconds/minutes/hours/days/weeks/max), cacheTag for invalidation, PPR patterns, and the 'uncached by default' paradigm shift."
+    },
+    {
+      "name": "Server Actions & Mutations",
+      "file": "_context/skills/skill-server-actions-mutations.md",
+      "triggers": {
+        "keywords": [
+          "server action",
+          "use server",
+          "useActionState",
+          "useFormState",
+          "useFormStatus",
+          "form action",
+          "FormData",
+          "mutation",
+          "submit",
+          "zod",
+          "validation",
+          ".bind"
+        ],
+        "files": [
+          "**/actions.ts",
+          "**/actions/*.ts",
+          "**/*-action.ts"
+        ],
+        "task_patterns": [
+          "form submission",
+          "create form",
+          "update data",
+          "delete record",
+          "handle form",
+          "validate input"
+        ]
+      },
+      "description": "Security patterns (Zod validation mandatory), useActionState migration from useFormState, .bind() for secure argument passing, redirect() placement outside try/catch."
+    },
+    {
+      "name": "Routing & Layouts",
+      "file": "_context/skills/skill-routing-layouts.md",
+      "triggers": {
+        "keywords": [
+          "parallel route",
+          "@modal",
+          "@slot",
+          "default.js",
+          "default.tsx",
+          "intercepting route",
+          "(.)folder",
+          "(..)folder",
+          "layout.tsx",
+          "loading.js",
+          "error.js",
+          "route group"
+        ],
+        "files": [
+          "**/default.tsx",
+          "**/default.js",
+          "**/@*/page.tsx",
+          "**/loading.tsx",
+          "**/error.tsx"
+        ],
+        "task_patterns": [
+          "modal",
+          "sidebar",
+          "navigation",
+          "nested layout",
+          "create page",
+          "add route",
+          "parallel slot"
+        ]
+      },
+      "description": "Parallel routes (default.js requirement), intercepting routes syntax (.)/(..)/(...), async params in layouts, loading.js and error.js patterns."
+    },
+    {
+      "name": "Metadata & SEO",
+      "file": "_context/skills/skill-metadata-seo.md",
+      "triggers": {
+        "keywords": [
+          "metadata",
+          "generateMetadata",
+          "SEO",
+          "openGraph",
+          "og:image",
+          "opengraph-image",
+          "sitemap",
+          "robots",
+          "meta tags",
+          "title",
+          "description",
+          "ImageResponse"
+        ],
+        "files": [
+          "**/opengraph-image.tsx",
+          "**/twitter-image.tsx",
+          "**/sitemap.ts",
+          "**/robots.ts",
+          "**/icon.tsx"
+        ],
+        "task_patterns": [
+          "SEO optimization",
+          "social sharing",
+          "meta tags",
+          "sitemap generation",
+          "open graph image",
+          "twitter card"
+        ]
+      },
+      "description": "Async generateMetadata signature change, ImageResponse with async params, sitemap.ts and robots.ts dynamic generation, image remotePatterns security."
+    },
+    {
+      "name": "TypeScript & Config",
+      "file": "_context/skills/skill-typescript-config.md",
+      "triggers": {
+        "keywords": [
+          "next.config",
+          "typescript",
+          "type error",
+          "Promise type",
+          "tsconfig",
+          "server-only",
+          "experimental",
+          "cacheComponents",
+          "@types/react"
+        ],
+        "files": [
+          "**/next.config.ts",
+          "**/next.config.js",
+          "**/tsconfig.json"
+        ],
+        "task_patterns": [
+          "type error",
+          "build error",
+          "configuration",
+          "setup project",
+          "module resolution",
+          "cannot be used as JSX"
+        ]
+      },
+      "description": "next.config.ts (typed config), Promise prop type patterns, React 19 type compatibility, server-only module protection, module resolution settings."
+    }
+  ]
+}

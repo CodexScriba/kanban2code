@@ -30,35 +30,55 @@ export async function listAvailableContexts(kanbanRoot: string): Promise<Context
   const contexts: ContextFile[] = [];
 
   try {
-    const files = await fs.readdir(contextDir);
+    const filePaths: string[] = [];
+    const normalizeSlashes = (value: string) => value.replace(/\\/g, '/');
 
-    for (const file of files) {
-      if (!file.endsWith('.md')) continue;
+    const walk = async (absoluteDir: string) => {
+      const dirEntries = await fs.readdir(absoluteDir, { withFileTypes: true });
+      for (const entry of dirEntries) {
+        const entryPath = path.join(absoluteDir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(entryPath);
+        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+          filePaths.push(entryPath);
+        }
+      }
+    };
 
-      const filePath = path.join(contextDir, file);
-      const stats = await fs.stat(filePath);
-      if (!stats.isFile()) continue;
+    await walk(contextDir);
+
+    for (const filePath of filePaths) {
+      const relativeFromContextDir = normalizeSlashes(path.relative(contextDir, filePath));
+      const relativeFromKanbanRoot = normalizeSlashes(path.relative(kanbanRoot, filePath));
+      const baseId = path.basename(filePath, '.md');
+
+      const isTopLevel = !relativeFromContextDir.includes('/');
+      const id = isTopLevel ? baseId : relativeFromKanbanRoot;
 
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const parsed = matter(content);
-        const id = path.basename(file, '.md');
+
+        const rawName =
+          typeof parsed.data.name === 'string'
+            ? parsed.data.name
+            : typeof parsed.data.skill_name === 'string'
+              ? formatContextName(parsed.data.skill_name)
+              : formatContextName(baseId);
 
         contexts.push({
           id,
-          name: typeof parsed.data.name === 'string' ? parsed.data.name : formatContextName(id),
+          name: rawName,
           description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
-          path: path.relative(kanbanRoot, filePath),
+          path: relativeFromKanbanRoot,
           scope: parsed.data.scope === 'project' ? 'project' : 'global',
         });
       } catch {
-        // If parsing fails, still include with defaults
-        const id = path.basename(file, '.md');
         contexts.push({
           id,
-          name: formatContextName(id),
+          name: formatContextName(baseId),
           description: '',
-          path: path.relative(kanbanRoot, filePath),
+          path: relativeFromKanbanRoot,
           scope: 'global',
         });
       }

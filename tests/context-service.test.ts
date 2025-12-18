@@ -3,13 +3,14 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import {
+  listAvailableContexts,
   loadAgentContext,
   loadCustomContexts,
   loadGlobalContext,
   loadPhaseContext,
   loadProjectContext,
 } from '../src/services/context';
-import { AGENTS_FOLDER, KANBAN_FOLDER, PROJECTS_FOLDER } from '../src/core/constants';
+import { AGENTS_FOLDER, CONTEXT_FOLDER, KANBAN_FOLDER, PROJECTS_FOLDER } from '../src/core/constants';
 
 let TEST_DIR: string;
 let KANBAN_ROOT: string;
@@ -82,4 +83,37 @@ test('loadCustomContexts expands folder: contexts recursively', async () => {
 
 test('loadCustomContexts rejects unsafe folder: contexts', async () => {
   await expect(loadCustomContexts(KANBAN_ROOT, ['folder:../escape'])).rejects.toThrow('Path validation failed');
+});
+
+test('listAvailableContexts includes nested context files', async () => {
+  const contextRoot = path.join(KANBAN_ROOT, CONTEXT_FOLDER);
+  await fs.mkdir(path.join(contextRoot, 'skills'), { recursive: true });
+
+  await fs.writeFile(
+    path.join(contextRoot, 'root.md'),
+    `---\nname: Root Context\ndescription: Root description\n---\nRoot body\n`
+  );
+  await fs.writeFile(
+    path.join(contextRoot, 'skills', 'nested.md'),
+    `---\nname: Nested Context\ndescription: Nested description\n---\nNested body\n`
+  );
+
+  const contexts = await listAvailableContexts(KANBAN_ROOT);
+
+  expect(contexts).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'root',
+        path: '_context/root.md',
+        name: 'Root Context',
+        description: 'Root description',
+      }),
+      expect.objectContaining({
+        id: '_context/skills/nested.md',
+        path: '_context/skills/nested.md',
+        name: 'Nested Context',
+        description: 'Nested description',
+      }),
+    ])
+  );
 });
