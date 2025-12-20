@@ -1,17 +1,53 @@
 {
-  "version": "16.0.10",
+  "version": "1.0.0",
   "last_updated": "2025-12-18",
+  "framework_detection": {
+    "nextjs": {
+      "files": ["next.config.js", "next.config.ts", "next.config.mjs"],
+      "package_json_deps": ["next"],
+      "keywords": ["next.js", "nextjs", "app router", "pages router"]
+    },
+    "react": {
+      "files": ["*.tsx", "*.jsx"],
+      "package_json_deps": ["react", "react-dom"],
+      "keywords": ["react", "component", "hooks", "useState", "useEffect"]
+    },
+    "python": {
+      "files": ["*.py", "pyproject.toml", "setup.py", "requirements.txt"],
+      "keywords": ["python", "pandas", "numpy", "greykite", "sklearn", "fastapi", "flask", "django"]
+    }
+  },
   "core_skills": [
     {
+      "name": "Next.js 16 Core",
       "file": "_context/skills/nextjs-core-skills.md",
+      "framework": "nextjs",
       "always_attach": true,
-      "description": "Mandatory baseline for Next.js 16. Covers async APIs (params, cookies, headers), proxy.ts migration, React 19 patterns (useActionState), and parallel route requirements. Always attach for any Next.js task."
+      "priority": 10,
+      "description": "Mandatory baseline for Next.js 16. Covers async APIs (params, cookies, headers), proxy.ts migration, React 19 patterns (useActionState), and parallel route requirements."
+    },
+    {
+      "name": "React + TypeScript Core",
+      "file": "_context/skills/react-core-skills.md",
+      "framework": "react",
+      "always_attach": true,
+      "priority": 9,
+      "description": "React/TypeScript naming conventions and patterns. Enforces PascalCase components, camelCase variables, {Component}Props interfaces, and hook best practices."
+    },
+    {
+      "name": "Python Core (PEP 8)",
+      "file": "_context/skills/python-core-skills.md",
+      "framework": "python",
+      "always_attach": true,
+      "priority": 9,
+      "description": "Python naming conventions and best practices. Enforces PEP 8 snake_case, type hints, docstrings, and Pythonic patterns."
     }
   ],
   "conditional_skills": [
     {
       "name": "Caching & Data Fetching",
       "file": "_context/skills/skill-caching-data-fetching.md",
+      "framework": "nextjs",
       "triggers": {
         "keywords": [
           "cache",
@@ -48,6 +84,7 @@
     {
       "name": "Server Actions & Mutations",
       "file": "_context/skills/skill-server-actions-mutations.md",
+      "framework": "nextjs",
       "triggers": {
         "keywords": [
           "server action",
@@ -82,6 +119,7 @@
     {
       "name": "Routing & Layouts",
       "file": "_context/skills/skill-routing-layouts.md",
+      "framework": "nextjs",
       "triggers": {
         "keywords": [
           "parallel route",
@@ -119,6 +157,7 @@
     {
       "name": "Metadata & SEO",
       "file": "_context/skills/skill-metadata-seo.md",
+      "framework": "nextjs",
       "triggers": {
         "keywords": [
           "metadata",
@@ -155,6 +194,7 @@
     {
       "name": "TypeScript & Config",
       "file": "_context/skills/skill-typescript-config.md",
+      "framework": "nextjs",
       "triggers": {
         "keywords": [
           "next.config",

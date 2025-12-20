@@ -83,6 +83,11 @@ export type ComponentTag = typeof COMPONENT_TAGS[number];
  * - missing-architecture / architecture-ready
  * - missing-decomposition / decomposition-ready
  *
+ * Context-Agent workflow tags:
+ * - context-done: Context gathered by context-agent
+ * - skills-done: Skills auto-assigned by context-agent
+ * - agent-assigned: Task ready for next agent
+ *
  * Type tags (can be combined):
  * - roadmap: Vision/roadmap document
  * - architecture: Technical design document
@@ -94,6 +99,11 @@ export const ORCHESTRATION_TAGS = [
   'architecture-ready',     // Architecture is complete and ready for decomposition
   'missing-decomposition',  // Needs Splitter to generate task files
   'decomposition-ready',    // Decomposition is complete and ready for execution
+
+  // Context-Agent workflow tags
+  'context-done',           // Context gathered by context-agent
+  'skills-done',            // Skills auto-assigned by context-agent
+  'agent-assigned',         // Task ready for next agent (coder/planner)
 
   // Type tags - categorize orchestration work
   'roadmap',                // Vision document work
