@@ -11,6 +11,7 @@ import { configService } from './services/config';
 
 let taskWatcher: TaskWatcher | null = null;
 let sidebarProvider: SidebarProvider | null = null;
+let statusBarItem: vscode.StatusBarItem | null = null;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('Kanban2Code is activating...');
@@ -36,8 +37,12 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize configuration service
     await configService.initialize(kanbanRoot);
     console.log('ConfigService initialized');
+
+    // Update Status Bar
+    updateStatusBar(kanbanRoot);
   } else {
     console.log('Kanban2Code not found in workspace.');
+    updateStatusBar(null);
   }
 
   // 2. Register Sidebar Provider
@@ -91,6 +96,8 @@ export function deactivate() {
   taskWatcher = null;
   configService.dispose();
   setSidebarProvider(null);
+  statusBarItem?.dispose();
+  statusBarItem = null;
 }
 
 // Export for use by commands
@@ -100,4 +107,20 @@ export function getSidebarProvider(): SidebarProvider | null {
 
 export function restartFileWatcher(kanbanRoot: string) {
   startFileWatcher(kanbanRoot);
+  updateStatusBar(kanbanRoot);
+}
+
+function updateStatusBar(kanbanRoot: string | null) {
+  if (!statusBarItem) {
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    statusBarItem.command = 'kanban2code.openBoard';
+    statusBarItem.tooltip = 'Open Kanban Board';
+  }
+
+  if (kanbanRoot) {
+    statusBarItem.text = `$(list-unordered) Kanban`;
+    statusBarItem.show();
+  } else {
+    statusBarItem.hide();
+  }
 }
