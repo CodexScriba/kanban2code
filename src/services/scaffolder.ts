@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { Stats } from 'fs';
 import { BUNDLED_AGENTS } from '../assets/agents';
+import { BUNDLED_CONTEXTS } from '../assets/contexts';
 import {
   HOW_IT_WORKS,
   ARCHITECTURE,
@@ -56,6 +57,13 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
     await fs.writeFile(path.join(kanbanRoot, '_agents', filename), content);
   }
 
+  // Write bundled context files
+  for (const [relativePath, content] of Object.entries(BUNDLED_CONTEXTS)) {
+    const contextPath = path.join(kanbanRoot, '_context', relativePath);
+    await fs.mkdir(path.dirname(contextPath), { recursive: true });
+    await fs.writeFile(contextPath, content);
+  }
+
   await fs.writeFile(
     path.join(kanbanRoot, 'inbox/sample-task.md'),
     INBOX_TASK_SAMPLE.replace('{date}', new Date().toISOString())
@@ -107,6 +115,10 @@ export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
 
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
     templates[`_agents/${filename}`] = content;
+  }
+
+  for (const [relativePath, content] of Object.entries(BUNDLED_CONTEXTS)) {
+    templates[`_context/${relativePath}`] = content;
   }
 
   const report: SyncReport = {

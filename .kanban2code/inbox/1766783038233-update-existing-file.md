@@ -39,6 +39,9 @@ src/services/scaffolder.ts
 src/commands/index.ts
 package.json
 tests/scaffolder.test.ts
+build.ts
+src/assets/agents.ts
+src/assets/contexts.ts
 
 ---
 

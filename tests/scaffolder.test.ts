@@ -56,6 +56,9 @@ test('scaffoldWorkspace creates expected structure', async () => {
 
   const gitignore = await fs.readFile(path.join(kanbanRoot, '.gitignore'), 'utf-8');
   expect(gitignore).toContain('_archive/');
+
+  const aiGuide = await fs.readFile(path.join(kanbanRoot, '_context/ai-guide.md'), 'utf-8');
+  expect(aiGuide).toContain('# Kanban2Code AI Guide');
 });
 
 test('scaffoldWorkspace fails if already initialized', async () => {
@@ -79,15 +82,15 @@ describe('bundled agents scaffolding', () => {
     }
 
     // Verify content of a few agents
-    const roadmapper = await fs.readFile(path.join(agentsDir, 'roadmapper.md'), 'utf-8');
+    const roadmapper = await fs.readFile(path.join(agentsDir, '01-🗺️roadmapper.md'), 'utf-8');
     expect(roadmapper).toContain('name: roadmapper');
-    expect(roadmapper).toContain('type: human');
+    expect(roadmapper).toContain('type: robot');
 
-    const coder = await fs.readFile(path.join(agentsDir, 'coder.md'), 'utf-8');
+    const coder = await fs.readFile(path.join(agentsDir, '05-⚙️coder.md'), 'utf-8');
     expect(coder).toContain('name: coder');
     expect(coder).toContain('type: robot');
 
-    const auditor = await fs.readFile(path.join(agentsDir, 'auditor.md'), 'utf-8');
+    const auditor = await fs.readFile(path.join(agentsDir, '06-✅auditor.md'), 'utf-8');
     expect(auditor).toContain('name: auditor');
     expect(auditor).toContain('Rating 8-10');
   });
@@ -99,27 +102,28 @@ describe('bundled agents scaffolding', () => {
     // Create _agents directory and one custom agent
     await fs.mkdir(agentsDir, { recursive: true });
     const customContent = '---\nname: roadmapper\ncustom: true\n---\nCustom roadmapper';
-    await fs.writeFile(path.join(agentsDir, 'roadmapper.md'), customContent);
+    await fs.writeFile(path.join(agentsDir, '01-🗺️roadmapper.md'), customContent);
 
     // Sync bundled agents
     const synced = await syncBundledAgents(TEST_DIR);
 
     // roadmapper.md should NOT be synced (already exists)
-    expect(synced).not.toContain('roadmapper.md');
+    expect(synced).not.toContain('01-🗺️roadmapper.md');
 
     // Other agents should be synced
-    expect(synced).toContain('architect.md');
-    expect(synced).toContain('splitter.md');
-    expect(synced).toContain('planner.md');
-    expect(synced).toContain('coder.md');
-    expect(synced).toContain('auditor.md');
+    expect(synced).toContain('02-🏛️architect.md');
+    expect(synced).toContain('03-✂️splitter.md');
+    expect(synced).toContain('04-📋planner.md');
+    expect(synced).toContain('05-⚙️coder.md');
+    expect(synced).toContain('06-✅auditor.md');
+    expect(synced).toContain('07-💬conversational.md');
 
     // Verify custom roadmapper is preserved
-    const roadmapper = await fs.readFile(path.join(agentsDir, 'roadmapper.md'), 'utf-8');
+    const roadmapper = await fs.readFile(path.join(agentsDir, '01-🗺️roadmapper.md'), 'utf-8');
     expect(roadmapper).toContain('custom: true');
 
     // Verify new agents are created correctly
-    const architect = await fs.readFile(path.join(agentsDir, 'architect.md'), 'utf-8');
+    const architect = await fs.readFile(path.join(agentsDir, '02-🏛️architect.md'), 'utf-8');
     expect(architect).toContain('name: architect');
   });
 
@@ -147,7 +151,7 @@ describe('bundled agents scaffolding', () => {
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
     const agentsDir = path.join(kanbanRoot, '_agents');
     await fs.mkdir(agentsDir, { recursive: true });
-    await fs.mkdir(path.join(agentsDir, 'roadmapper.md'), { recursive: true });
+    await fs.mkdir(path.join(agentsDir, '01-🗺️roadmapper.md'), { recursive: true });
 
     await expect(syncBundledAgents(TEST_DIR)).rejects.toThrow('Agent path exists but is not a file');
   });
@@ -190,7 +194,8 @@ describe('workspace sync', () => {
     const stat = await fs.stat(agentsDir);
     expect(stat.isDirectory()).toBe(true);
     expect(report.created).toContain('how-it-works.md');
-    expect(report.created).toContain('_agents/roadmapper.md');
+    expect(report.created).toContain('_agents/01-🗺️roadmapper.md');
+    expect(report.created).toContain('_context/ai-guide.md');
   });
 
   test('syncWorkspace returns detailed sync report', async () => {
