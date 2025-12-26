@@ -23,6 +23,9 @@ I need to delete some agents that are redudant or not use, and I need to rename 
 **Actions:**
 - Delete redundant agents: `roadmap-splitter.md` ✓, `code-reviewer.md` ✓, `react-dev.md` ✓, `context-agent.md` ✓
 - Rename agents with emoji + number prefix showing workflow order ✓
+- Delete `_templates/` directory (unused) ✓
+- Integrate skills system into architect, planner, and splitter ✓
+- Update agents to set correct next agent on stage transitions ✓
 
 **Final agent list:**
 - `01-🗺️roadmapper.md` - Orchestration

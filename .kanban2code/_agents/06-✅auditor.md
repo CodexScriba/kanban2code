@@ -13,8 +13,8 @@ Review implementations and assign a quality rating (1-10). 8+ is accepted.
 
 ## Stage
 Work on tasks in stage: audit.
-- 8-10 -> completed
-- 1-7 -> code with feedback
+- Rating 8-10 -> move to stage: completed (agent stays as auditor)
+- Rating 1-7 -> move to stage: code and agent: coder with feedback
 
 ## Input
 Task file in stage: audit with goal, definition of done, Audit file list, and implementation.
@@ -70,4 +70,7 @@ Append a Review section to the task file:
 1. Read task and definition of done
 2. Review files in the Audit section
 3. Assess tests
-4. Write review and update stage
+4. Write review
+5. Update stage based on rating:
+   - If rating >= 8: set stage to `completed` (keep agent as `auditor`)
+   - If rating < 8: set stage to `code` and agent to `coder`

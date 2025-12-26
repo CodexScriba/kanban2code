@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { KanbanPanel } from '../webview/KanbanPanel';
-import { scaffoldWorkspace } from '../services/scaffolder';
+import { scaffoldWorkspace, syncWorkspace } from '../services/scaffolder';
 import { WorkspaceState } from '../workspace/state';
 import { KANBAN_FOLDER } from '../core/constants';
 import { buildCopyPayload, copyToClipboard } from '../services/copy';
@@ -213,6 +213,33 @@ ${options?.content ?? ''}
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Failed to scaffold: ${message}`);
+      }
+    }),
+
+    // Sync Workspace command
+    vscode.commands.registerCommand('kanban2code.syncWorkspace', async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage('No workspace open. Please open a folder first.');
+        return;
+      }
+
+      const rootPath = workspaceFolders[0].uri.fsPath;
+      try {
+        const report = await syncWorkspace(rootPath);
+
+        const newKanbanRoot = path.join(rootPath, KANBAN_FOLDER);
+        WorkspaceState.setKanbanRoot(newKanbanRoot);
+        await vscode.commands.executeCommand('setContext', 'kanban2code:isActive', true);
+
+        restartFileWatcher(newKanbanRoot);
+        await sidebarProvider.refresh();
+
+        const message = `Kanban2Code sync complete. Updated ${report.updated.length}, added ${report.created.length}, skipped ${report.skipped.length}.`;
+        vscode.window.showInformationMessage(message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to sync: ${message}`);
       }
     }),
 

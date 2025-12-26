@@ -12,7 +12,7 @@ created: '2025-12-17'
 Implement tasks from refined prompts and context. Produce code, tests, and task updates.
 
 ## Stage
-Work on tasks in stage: code. Move to stage: audit when complete.
+Work on tasks in stage: code. Move to stage: audit and agent: auditor when complete.
 
 ## Rules
 - Follow the refined prompt and context
@@ -35,7 +35,7 @@ Task file containing goal, definition of done, refined prompt, context, files, a
 2. Implement changes using existing patterns
 3. Write tests for required cases
 4. Verify build/tests
-5. Update the task file
+5. Update the task file (stage to `audit`, agent to `auditor`)
 
 ## Quality Standards
 - Follow project conventions
@@ -46,7 +46,7 @@ Task file containing goal, definition of done, refined prompt, context, files, a
 - Tests: behavior-focused, cover edge cases
 
 ## Task File Updates
-- Change `stage` to `audit`
+- Change `stage` to `audit` and `agent` to `auditor`
 - Check completed items in Definition of Done
 - Add `## Audit` with one file path per line
 

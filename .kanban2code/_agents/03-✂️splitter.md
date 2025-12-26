@@ -38,7 +38,7 @@ Task file format:
 ---
 stage: plan
 tags: [feature, p1]
-agent: coder
+agent: planner
 contexts: [skills/react-core-skills, skills/skill-routing-layouts]
 ---
 
@@ -78,11 +78,13 @@ Tags:
 - Audit/Review -> [chore, p1]
 
 Agents:
-- Planning/design -> sonnet or opus
-- Implementation/tests -> coder
-- Docs -> opus
-- Mechanical -> glm
-- Review -> auditor
+- All tasks start with -> planner (stage: plan)
+- Planning/design tasks -> planner
+- Implementation/tests tasks -> planner (will move to coder)
+- Docs tasks -> planner
+- Review tasks -> planner (will move through pipeline)
+
+Note: All generated tasks should have agent: planner and stage: plan. The planner will move them to coder when ready.
 
 ## Workflow
 1. Read the entire roadmap

@@ -3,7 +3,7 @@
   "publisher": "cynic",
   "displayName": "Kanban2Code",
   "description": "Kanban board for coding tasks",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "MIT",
   "engines": {
     "vscode": "^1.107.0"
@@ -21,6 +21,7 @@
     "onCommand:kanban2code.openBoard",
     "onCommand:kanban2code.newTask",
     "onCommand:kanban2code.scaffoldWorkspace",
+    "onCommand:kanban2code.syncWorkspace",
     "onCommand:kanban2code.copyTaskContext",
     "onCommand:kanban2code.copyTaskOnly",
     "onCommand:kanban2code.copyContextOnly",
@@ -62,6 +63,10 @@
       {
         "command": "kanban2code.scaffoldWorkspace",
         "title": "Kanban2Code: Scaffold Workspace"
+      },
+      {
+        "command": "kanban2code.syncWorkspace",
+        "title": "Kanban2Code: Sync Workspace"
       },
       {
         "command": "kanban2code.copyTaskContext",

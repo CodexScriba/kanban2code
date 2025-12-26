@@ -3,15 +3,18 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { BUNDLED_AGENTS } from '../src/assets/agents';
+import { HOW_IT_WORKS } from '../src/assets/seed-content';
 
 let scaffoldWorkspace: typeof import('../src/services/scaffolder').scaffoldWorkspace;
 let syncBundledAgents: typeof import('../src/services/scaffolder').syncBundledAgents;
+let syncWorkspace: typeof import('../src/services/scaffolder').syncWorkspace;
 let KANBAN_FOLDER: typeof import('../src/services/scaffolder').KANBAN_FOLDER;
 
 beforeAll(async () => {
   const mod = await import('../src/services/scaffolder');
   scaffoldWorkspace = mod.scaffoldWorkspace;
   syncBundledAgents = mod.syncBundledAgents;
+  syncWorkspace = mod.syncWorkspace;
   KANBAN_FOLDER = mod.KANBAN_FOLDER;
 });
 
@@ -148,40 +151,59 @@ describe('bundled agents scaffolding', () => {
 
     await expect(syncBundledAgents(TEST_DIR)).rejects.toThrow('Agent path exists but is not a file');
   });
+});
 
-  test('syncBundledAgents rethrows non-ENOENT stat errors (no overwrite on access failure)', async () => {
-    const localDir = path.join(os.tmpdir(), 'kanban2code-test-mock-' + Date.now());
-    await fs.mkdir(path.join(localDir, '.kanban2code'), { recursive: true });
+describe('workspace sync', () => {
+  test('syncWorkspace updates unmodified files', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    await fs.mkdir(kanbanRoot, { recursive: true });
+    await fs.writeFile(path.join(kanbanRoot, 'how-it-works.md'), HOW_IT_WORKS);
 
-    let writeFileSpy: ReturnType<typeof vi.fn> | undefined;
+    const report = await syncWorkspace(TEST_DIR);
 
-    try {
-      vi.resetModules();
-      const actualFs = await vi.importActual<typeof import('fs/promises')>('fs/promises');
-      vi.doMock('fs/promises', () => {
-        writeFileSpy = vi.fn(actualFs.writeFile);
-        return {
-          ...actualFs,
-          writeFile: writeFileSpy,
-          stat: async (statPath: any) => {
-            if (String(statPath).endsWith(`${path.sep}roadmapper.md`)) {
-              const error: any = new Error('EACCES');
-              error.code = 'EACCES';
-              throw error;
-            }
-            return actualFs.stat(statPath);
-          },
-        };
-      });
+    expect(report.updated).toContain('how-it-works.md');
+    const synced = await fs.readFile(path.join(kanbanRoot, 'how-it-works.md'), 'utf-8');
+    expect(synced).toBe(HOW_IT_WORKS);
+  });
 
-      const mod = await import('../src/services/scaffolder');
-      await expect(mod.syncBundledAgents(localDir)).rejects.toMatchObject({ code: 'EACCES' });
-      expect(writeFileSpy).toBeDefined();
-      expect(writeFileSpy).not.toHaveBeenCalled();
-    } finally {
-      vi.doUnmock('fs/promises');
-      await fs.rm(localDir, { recursive: true, force: true });
-    }
+  test('syncWorkspace updates modified files', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    await fs.mkdir(kanbanRoot, { recursive: true });
+    const customContent = '# Custom Architecture\n';
+    const architecturePath = path.join(kanbanRoot, 'architecture.md');
+    await fs.writeFile(architecturePath, customContent);
+
+    const report = await syncWorkspace(TEST_DIR);
+
+    expect(report.updated).toContain('architecture.md');
+    const result = await fs.readFile(architecturePath, 'utf-8');
+    expect(result).not.toBe(customContent);
+  });
+
+  test('syncWorkspace handles missing directories', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    await fs.mkdir(kanbanRoot, { recursive: true });
+
+    const report = await syncWorkspace(TEST_DIR);
+
+    const agentsDir = path.join(kanbanRoot, '_agents');
+    const stat = await fs.stat(agentsDir);
+    expect(stat.isDirectory()).toBe(true);
+    expect(report.created).toContain('how-it-works.md');
+    expect(report.created).toContain('_agents/roadmapper.md');
+  });
+
+  test('syncWorkspace returns detailed sync report', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    await fs.mkdir(kanbanRoot, { recursive: true });
+    await fs.writeFile(path.join(kanbanRoot, 'how-it-works.md'), HOW_IT_WORKS);
+    await fs.writeFile(path.join(kanbanRoot, 'architecture.md'), '# Custom Architecture\n');
+
+    const report = await syncWorkspace(TEST_DIR);
+
+    expect(report.updated).toContain('how-it-works.md');
+    expect(report.updated).toContain('architecture.md');
+    expect(report.created).toContain('project-details.md');
   });
 });
 

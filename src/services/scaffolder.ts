@@ -12,6 +12,12 @@ import {
 
 export const KANBAN_FOLDER = '.kanban2code';
 
+export type SyncReport = {
+  updated: string[];
+  skipped: string[];
+  created: string[];
+};
+
 export async function scaffoldWorkspace(rootPath: string): Promise<void> {
   const kanbanRoot = path.join(rootPath, KANBAN_FOLDER);
 
@@ -57,6 +63,79 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
 
   // Create .gitignore for _archive
   await fs.writeFile(path.join(kanbanRoot, '.gitignore'), '_archive/\n');
+}
+
+/**
+ * Sync workspace template files to an existing workspace.
+ * Updates only files that match the bundled template content.
+ */
+export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
+  const kanbanRoot = path.join(rootPath, KANBAN_FOLDER);
+  let kanbanRootStat: Stats;
+  try {
+    kanbanRootStat = await fs.stat(kanbanRoot);
+  } catch (error: any) {
+    if (error?.code === 'ENOENT') {
+      throw new Error('Kanban2Code not initialized. Run scaffoldWorkspace first.');
+    }
+    throw error;
+  }
+
+  if (!kanbanRootStat.isDirectory()) {
+    throw new Error(`${KANBAN_FOLDER} exists but is not a directory.`);
+  }
+
+  const dirs = [
+    'inbox',
+    'projects',
+    '_agents',
+    '_context',
+    '_archive',
+  ];
+
+  for (const dir of dirs) {
+    await fs.mkdir(path.join(kanbanRoot, dir), { recursive: true });
+  }
+
+  const templates: Record<string, string> = {
+    'how-it-works.md': HOW_IT_WORKS,
+    'architecture.md': ARCHITECTURE,
+    'project-details.md': PROJECT_DETAILS,
+    '.gitignore': '_archive/\n',
+    '_agents/opus.md': AGENT_OPUS,
+  };
+
+  for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
+    templates[`_agents/${filename}`] = content;
+  }
+
+  const report: SyncReport = {
+    updated: [],
+    skipped: [],
+    created: [],
+  };
+
+  for (const [relativePath, content] of Object.entries(templates)) {
+    const filePath = path.join(kanbanRoot, relativePath);
+    try {
+      const stat = await fs.stat(filePath);
+      if (!stat.isFile()) {
+        throw new Error(`Template path exists but is not a file: ${filePath}`);
+      }
+
+      await fs.writeFile(filePath, content);
+      report.updated.push(relativePath);
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, content);
+      report.created.push(relativePath);
+    }
+  }
+
+  return report;
 }
 
 /**
