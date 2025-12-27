@@ -63,7 +63,7 @@ src/
 │   ├── routing.ts
 │   ├── navigation.ts
 │   └── request.ts
-├── middleware.ts
+proxy.ts
 └── app/[locale]/layout.tsx
 messages/
 └── en.json
@@ -116,12 +116,31 @@ export default getRequestConfig(async ({ requestLocale }) => {
 });
 ```
 
-### Middleware (`src/middleware.ts`)
-```ts
-import createMiddleware from 'next-intl/middleware';
-import { routing } from './i18n/routing';
+### Proxy (`proxy.ts`) — compose with other request interceptors
+If you also use Supabase SSR (`@supabase/ssr`), run both i18n + session refresh in **one** `proxy.ts`.
 
-export default createMiddleware(routing);
+```ts
+import type { NextRequest } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from '@/i18n/routing';
+import { updateSession } from '@/lib/supabase/proxy';
+
+const handleI18n = createIntlMiddleware(routing);
+
+export async function proxy(request: NextRequest) {
+  // 1) Refresh Supabase session (may set cookies)
+  const sessionResponse = await updateSession(request);
+
+  // 2) Apply i18n routing (may rewrite/redirect)
+  const i18nResponse = handleI18n(request);
+
+  // 3) Merge cookies into the final response
+  for (const cookie of sessionResponse.cookies.getAll()) {
+    i18nResponse.cookies.set(cookie);
+  }
+
+  return i18nResponse;
+}
 
 export const config = {
   matcher: ['/((?!api|trpc|_next|_vercel|.*\\..*).*)']
@@ -209,4 +228,4 @@ export default function Navigation() {
 - [ ] `setRequestLocale(locale)` called before server translations.
 - [ ] `NextIntlClientProvider` wraps app under `[locale]/layout.tsx`.
 - [ ] Navigation uses `@/i18n/navigation` wrappers.
-- [ ] Middleware matcher includes unprefixed routes.
+- [ ] Proxy matcher includes unprefixed routes.

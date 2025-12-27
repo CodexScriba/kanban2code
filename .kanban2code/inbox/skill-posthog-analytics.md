@@ -32,7 +32,7 @@ The guide must emphasize the separation of environments to avoid runtime errors.
 - Enforce separation with `import 'server-only'` (and optionally `import 'client-only'`).
 - Server tracking must run in Node runtime (not Edge); set `export const runtime = 'nodejs'` when needed.
 - Choose one pageview strategy:
-  - preferred: modern defaults-based SPA auto-tracking
+  - preferred: built-in SPA auto-tracking (no manual capture)
   - fallback: manual `$pageview` + `$pageleave` with `sendBeacon`
 - Always flush server events in short-lived runtimes (`flushAt: 1`, `flushInterval: 0`, `shutdown()`).
 - Standardize event naming (`[object] [verb]`) and always include core properties like `source: 'client'|'server'`.

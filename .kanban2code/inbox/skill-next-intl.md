@@ -21,7 +21,7 @@ Concise rules for Next.js 16 + next-intl App Router i18n.
 - Wrap the app with `NextIntlClientProvider` in `app/[locale]/layout.tsx`.
 - Use `defineRouting` + `createNavigation` wrappers; avoid `next/link` and `next/navigation` directly.
 - Validate locale with `hasLocale` and fallback to `defaultLocale`.
-- Middleware matcher must include unprefixed routes when using `localePrefix: 'as-needed'`.
+- Proxy matcher must include unprefixed routes when using `localePrefix: 'as-needed'`.
 
 ## Files
 

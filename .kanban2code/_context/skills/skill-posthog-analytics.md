@@ -25,7 +25,7 @@ LLM INSTRUCTION: Use for PostHog analytics in Next.js App Router.
 Strictly separate client tracking (posthog-js/@posthog/react) from server tracking (posthog-node).
 Mark server analytics modules as server-only and client analytics modules as client-only to prevent cross-imports.
 Server tracking must run in Node runtime (not Edge); set export const runtime = 'nodejs' where needed.
-Prefer modern SPA pageview defaults; only use manual $pageview/$pageleave when required.
+Prefer PostHog SPA pageview auto-tracking; only use manual $pageview/$pageleave when required.
 Always flush server events in short-lived runtimes (flushAt: 1, flushInterval: 0, shutdown()).
 -->
 
@@ -47,7 +47,7 @@ Always flush server events in short-lived runtimes (flushAt: 1, flushInterval: 0
 - **Client:** `posthog-js` + `@posthog/react` in `'use client'` components only.
 - **Server:** `posthog-node` in server-only modules only; flush events on completion.
 - Enforce separation with `import 'server-only'` and optionally `import 'client-only'`.
-- Prefer SPA pageview auto-tracking via modern defaults; standardize one approach.
+- Prefer SPA pageview auto-tracking; standardize one approach.
 - For server handlers/actions using PostHog Node SDK, ensure `export const runtime = 'nodejs'` if your project uses Edge elsewhere.
 
 ### ❌ DON'T
@@ -85,7 +85,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-      defaults: '2025-11-30'
     });
   }, []);
 
@@ -97,7 +96,7 @@ Wrap in `app/layout.tsx` without forcing full client rendering (boundary is fine
 
 ## 5. Pageview Tracking
 
-- Prefer modern defaults-driven SPA tracking (`defaults: '2025-11-30'` or equivalent).
+- Prefer built-in SPA pageview auto-tracking (don’t manually capture unless you disable it).
 - If manual is required:
   - disable auto (`capture_pageview: false`)
   - capture both `$pageview` and `$pageleave` (use `sendBeacon` for leave).
