@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as os from 'os';
 import {
   listAvailableContexts,
+  listAvailableSkills,
   loadAgentContext,
   loadCustomContexts,
   loadGlobalContext,
@@ -85,7 +86,7 @@ test('loadCustomContexts rejects unsafe folder: contexts', async () => {
   await expect(loadCustomContexts(KANBAN_ROOT, ['folder:../escape'])).rejects.toThrow('Path validation failed');
 });
 
-test('listAvailableContexts includes nested context files', async () => {
+test('listAvailableContexts excludes nested skills files', async () => {
   const contextRoot = path.join(KANBAN_ROOT, CONTEXT_FOLDER);
   await fs.mkdir(path.join(contextRoot, 'skills'), { recursive: true });
 
@@ -100,20 +101,36 @@ test('listAvailableContexts includes nested context files', async () => {
 
   const contexts = await listAvailableContexts(KANBAN_ROOT);
 
-  expect(contexts).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        id: 'root',
-        path: '_context/root.md',
-        name: 'Root Context',
-        description: 'Root description',
-      }),
-      expect.objectContaining({
-        id: '_context/skills/nested.md',
-        path: '_context/skills/nested.md',
-        name: 'Nested Context',
-        description: 'Nested description',
-      }),
-    ])
+  expect(contexts).toHaveLength(1);
+  expect(contexts[0]).toEqual(
+    expect.objectContaining({
+      id: 'root',
+      path: '_context/root.md',
+      name: 'Root Context',
+      description: 'Root description',
+    })
+  );
+});
+
+test('listAvailableSkills includes skill files', async () => {
+  const contextRoot = path.join(KANBAN_ROOT, CONTEXT_FOLDER);
+  await fs.mkdir(path.join(contextRoot, 'skills'), { recursive: true });
+
+  await fs.writeFile(
+    path.join(contextRoot, 'skills', 'react.md'),
+    `---\nname: React Skill\ndescription: React description\nframework: react\n---\nReact body\n`
+  );
+
+  const skills = await listAvailableSkills(KANBAN_ROOT);
+
+  expect(skills).toHaveLength(1);
+  expect(skills[0]).toEqual(
+    expect.objectContaining({
+      id: 'react',
+      path: '_context/skills/react.md',
+      name: 'React Skill',
+      description: 'React description',
+      framework: 'react',
+    })
   );
 });
