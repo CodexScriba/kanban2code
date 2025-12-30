@@ -270,6 +270,7 @@ export const Board: React.FC<BoardProps> = ({
       {!isLoading && !error && layout === 'columns' && (
         <BoardHorizontal
           tasksByStage={tasksByStage}
+          agents={agents}
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}
@@ -283,6 +284,7 @@ export const Board: React.FC<BoardProps> = ({
         <BoardSwimlane
           rows={swimlaneRows}
           projects={swimlaneProjects}
+          agents={agents}
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}

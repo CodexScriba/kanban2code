@@ -2,11 +2,11 @@ import { expect, test, afterEach, beforeEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { updateTaskStage, changeStageAndReload, moveTaskToLocation } from '../src/services/stage-manager';
+import { updateTaskStage, changeStageAndReload, moveTaskToLocation, getDefaultAgentForStage } from '../src/services/stage-manager';
 import { parseTaskFile } from '../src/services/frontmatter';
 import { Task } from '../src/types/task';
 import { WorkspaceState } from '../src/workspace/state';
-import { KANBAN_FOLDER } from '../src/core/constants';
+import { KANBAN_FOLDER, AGENTS_FOLDER } from '../src/core/constants';
 
 let TEST_DIR: string;
 let TASK_PATH: string;
@@ -151,4 +151,161 @@ test('moveTaskToLocation throws when task is not found', async () => {
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
   WorkspaceState.setKanbanRoot(kanbanRoot);
   await expect(moveTaskToLocation('missing', { type: 'inbox' })).rejects.toThrow('Task not found');
+});
+
+test('getDefaultAgentForStage returns agent matching stage', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  await fs.mkdir(agentsDir, { recursive: true });
+
+  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+name: planner
+stage: plan
+---
+# Planner
+`);
+  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+name: coder
+stage: code
+---
+# Coder
+`);
+  await fs.writeFile(path.join(agentsDir, '06-auditor.md'), `---
+name: auditor
+stage: audit
+---
+# Auditor
+`);
+
+  expect(await getDefaultAgentForStage(kanbanRoot, 'plan')).toBe('04-planner');
+  expect(await getDefaultAgentForStage(kanbanRoot, 'code')).toBe('05-coder');
+  expect(await getDefaultAgentForStage(kanbanRoot, 'audit')).toBe('06-auditor');
+  expect(await getDefaultAgentForStage(kanbanRoot, 'inbox')).toBeUndefined();
+  expect(await getDefaultAgentForStage(kanbanRoot, 'completed')).toBeUndefined();
+});
+
+test('updateTaskStage auto-assigns agent when transitioning stages', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  await fs.mkdir(agentsDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+
+  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+name: planner
+stage: plan
+---
+# Planner
+`);
+
+  const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(inboxTaskPath, `---
+stage: inbox
+---
+# Task 1
+`);
+
+  const task = await parseTaskFile(inboxTaskPath);
+  const updated = await updateTaskStage(task, 'plan', kanbanRoot);
+
+  expect(updated.stage).toBe('plan');
+  expect(updated.agent).toBe('04-planner');
+
+  const fileContent = await fs.readFile(inboxTaskPath, 'utf-8');
+  expect(fileContent).toContain('stage: plan');
+  expect(fileContent).toContain('agent: 04-planner');
+});
+
+test('updateTaskStage preserves custom agent when transitioning', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  await fs.mkdir(agentsDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+
+  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+name: planner
+stage: plan
+---
+# Planner
+`);
+  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+name: coder
+stage: code
+---
+# Coder
+`);
+
+  const planTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(planTaskPath, `---
+stage: plan
+agent: custom-agent
+---
+# Task 1
+`);
+
+  const task = await parseTaskFile(planTaskPath);
+  const updated = await updateTaskStage(task, 'code', kanbanRoot);
+
+  expect(updated.stage).toBe('code');
+  expect(updated.agent).toBe('custom-agent');
+});
+
+test('updateTaskStage updates agent when current matches stage default', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  await fs.mkdir(agentsDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+
+  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+name: planner
+stage: plan
+---
+# Planner
+`);
+  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+name: coder
+stage: code
+---
+# Coder
+`);
+
+  const planTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(planTaskPath, `---
+stage: plan
+agent: 04-planner
+---
+# Task 1
+`);
+
+  const task = await parseTaskFile(planTaskPath);
+  const updated = await updateTaskStage(task, 'code', kanbanRoot);
+
+  expect(updated.stage).toBe('code');
+  expect(updated.agent).toBe('05-coder');
+});
+
+test('changeStageAndReload auto-assigns agent', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  await fs.mkdir(agentsDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+
+  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+name: planner
+stage: plan
+---
+# Planner
+`);
+
+  const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(inboxTaskPath, `---
+stage: inbox
+---
+# Task 1
+`);
+
+  WorkspaceState.setKanbanRoot(kanbanRoot);
+
+  const updated = await changeStageAndReload('t1', 'plan');
+  expect(updated.stage).toBe('plan');
+  expect(updated.agent).toBe('04-planner');
 });

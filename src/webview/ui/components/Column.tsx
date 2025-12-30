@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import type { Stage, Task } from '../../../types/task';
+import type { Agent } from '../hooks/useTaskData';
 import { TaskCard } from './TaskCard';
 
 interface ColumnProps {
   stage: Stage;
   title: string;
   tasks: Task[];
+  agents?: Agent[];
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -18,6 +20,7 @@ export const Column: React.FC<ColumnProps> = ({
   stage,
   title,
   tasks,
+  agents,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -65,6 +68,7 @@ export const Column: React.FC<ColumnProps> = ({
           <TaskCard
             key={task.id}
             task={task}
+            agents={agents}
             onOpen={onOpenTask}
             onEdit={onOpenTask}
             onFocusTask={onFocusTask}

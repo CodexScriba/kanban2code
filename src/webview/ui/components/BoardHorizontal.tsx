@@ -1,10 +1,12 @@
 import React from 'react';
 import type { Stage, Task } from '../../../types/task';
+import type { Agent } from '../hooks/useTaskData';
 import { STAGES } from '../../../core/constants';
 import { Column } from './Column';
 
 interface BoardHorizontalProps {
   tasksByStage: Record<Stage, Task[]>;
+  agents?: Agent[];
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -23,6 +25,7 @@ const STAGE_TITLES: Record<Stage, string> = {
 
 export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({
   tasksByStage,
+  agents,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -38,6 +41,7 @@ export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({
           stage={stage}
           title={STAGE_TITLES[stage]}
           tasks={tasksByStage[stage] || []}
+          agents={agents}
           onMoveTask={onMoveTask}
           onOpenTask={onOpenTask}
           onFocusTask={onFocusTask}

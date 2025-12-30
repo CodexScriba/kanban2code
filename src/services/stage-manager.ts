@@ -1,12 +1,85 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import matter from 'gray-matter';
 import { Task, Stage } from '../types/task';
 import { parseTaskFile, stringifyTaskFile } from './frontmatter';
 import { isTransitionAllowed } from '../core/rules';
 import { findTaskById } from './scanner';
 import { WorkspaceState } from '../workspace/state';
-import { INBOX_FOLDER, PROJECTS_FOLDER } from '../core/constants';
+import { INBOX_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER } from '../core/constants';
 import { movePath } from './fs-move';
+
+interface AgentInfo {
+  id: string;
+  name: string;
+  stage?: string;
+}
+
+/**
+ * List all agents with their frontmatter info (id from filename, name and stage from frontmatter).
+ */
+async function listAgentsWithStage(kanbanRoot: string): Promise<AgentInfo[]> {
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  const agents: AgentInfo[] = [];
+
+  try {
+    const entries = await fs.readdir(agentsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+
+      const filePath = path.join(agentsDir, entry.name);
+      const id = path.basename(entry.name, '.md');
+
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const parsed = matter(content);
+        agents.push({
+          id,
+          name: typeof parsed.data.name === 'string' ? parsed.data.name : id,
+          stage: typeof parsed.data.stage === 'string' ? parsed.data.stage : undefined,
+        });
+      } catch {
+        agents.push({ id, name: id });
+      }
+    }
+  } catch {
+    return [];
+  }
+
+  return agents.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/**
+ * Get the default agent ID for a given stage.
+ * Returns the first agent (by id sort) whose frontmatter `stage` matches the target stage.
+ * Returns undefined if no agent is found for the stage.
+ */
+export async function getDefaultAgentForStage(kanbanRoot: string, stage: Stage): Promise<string | undefined> {
+  if (stage === 'inbox' || stage === 'completed') {
+    return undefined;
+  }
+
+  const agents = await listAgentsWithStage(kanbanRoot);
+  const match = agents.find((a) => a.stage === stage);
+  return match?.id;
+}
+
+/**
+ * Determine whether the task's agent should be auto-updated on stage transition.
+ * Only update if:
+ * - Current agent is unset, OR
+ * - Current agent matches the default agent for the *current* stage (meaning it wasn't manually assigned)
+ */
+async function shouldAutoUpdateAgent(
+  kanbanRoot: string,
+  currentAgent: string | undefined,
+  currentStage: Stage
+): Promise<boolean> {
+  if (!currentAgent) return true;
+
+  const currentDefault = await getDefaultAgentForStage(kanbanRoot, currentStage);
+  return currentAgent === currentDefault;
+}
 
 export class StageUpdateError extends Error {
   constructor(message: string) {
@@ -15,10 +88,10 @@ export class StageUpdateError extends Error {
   }
 }
 
-export async function updateTaskStage(task: Task, newStage: Stage): Promise<Task> {
+export async function updateTaskStage(task: Task, newStage: Stage, kanbanRoot?: string): Promise<Task> {
   // 1. Read fresh content (to avoid race conditions/stale data)
   const freshTask = await parseTaskFile(task.filePath);
-  
+
   if (freshTask.id !== task.id) {
     throw new StageUpdateError('Task ID mismatch in file. File might have been overwritten.');
   }
@@ -28,13 +101,27 @@ export async function updateTaskStage(task: Task, newStage: Stage): Promise<Task
     throw new StageUpdateError(`Transition from '${freshTask.stage}' to '${newStage}' is not allowed.`);
   }
 
+  const oldStage = freshTask.stage;
+
   // 3. Update Stage
   freshTask.stage = newStage;
 
-  // 4. Serialize and Write
+  // 4. Auto-update agent if we have kanbanRoot and stage has a default agent
+  const root = kanbanRoot ?? WorkspaceState.kanbanRoot;
+  if (root) {
+    const shouldUpdate = await shouldAutoUpdateAgent(root, freshTask.agent, oldStage);
+    if (shouldUpdate) {
+      const newAgent = await getDefaultAgentForStage(root, newStage);
+      if (newAgent) {
+        freshTask.agent = newAgent;
+      }
+    }
+  }
+
+  // 5. Serialize and Write
   const originalContent = await fs.readFile(task.filePath, 'utf-8');
   const newContent = stringifyTaskFile(freshTask, originalContent);
-  
+
   await fs.writeFile(task.filePath, newContent, 'utf-8');
 
   return freshTask;
@@ -51,7 +138,7 @@ export async function changeStageAndReload(taskId: string, newStage: Stage): Pro
     throw new Error(`Task not found: ${taskId}`);
   }
 
-  return updateTaskStage(task, newStage);
+  return updateTaskStage(task, newStage, root);
 }
 
 export type TaskLocation = { type: 'inbox' } | { type: 'project'; project: string; phase?: string };

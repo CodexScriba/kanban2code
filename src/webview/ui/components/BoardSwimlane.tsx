@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Stage, Task } from '../../../types/task';
+import type { Agent } from '../hooks/useTaskData';
 import { STAGES } from '../../../core/constants';
 import { TaskCard } from './TaskCard';
 
@@ -11,6 +12,7 @@ interface SwimlaneRow {
 interface BoardSwimlaneProps {
   rows: SwimlaneRow[];
   projects: string[];
+  agents?: Agent[];
   onMoveTask: (taskId: string, toStage: Stage, toProject?: string) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -32,6 +34,7 @@ const STAGE_LABELS: Record<Stage, string> = {
 export const BoardSwimlane: React.FC<BoardSwimlaneProps> = ({
   rows,
   projects,
+  agents,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -118,6 +121,7 @@ export const BoardSwimlane: React.FC<BoardSwimlaneProps> = ({
                       <TaskCard
                         key={task.id}
                         task={task}
+                        agents={agents}
                         onOpen={onOpenTask}
                         onEdit={onOpenTask}
                         onFocusTask={onFocusTask}

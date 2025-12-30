@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Task } from '../../../types/task';
 import { EditIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon } from './Icons';
 import { getDisplayTitle } from '../../../utils/text';
+import type { Agent } from '../hooks/useTaskData';
 
 interface TaskCardProps {
   task: Task;
+  agents?: Agent[];
   onOpen: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
   onDelete?: (task: Task) => void;
@@ -15,6 +17,7 @@ interface TaskCardProps {
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
+  agents,
   onOpen,
   onFocusTask,
   onDelete,
@@ -25,6 +28,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [dragging, setDragging] = useState(false);
   const isCompleted = task.stage === 'completed';
   const displayTitle = getDisplayTitle(task);
+
+  const agentDisplayName = useMemo(() => {
+    if (!task.agent) return 'unassigned';
+    if (!agents || agents.length === 0) return task.agent;
+    const found = agents.find((a) => a.id === task.agent);
+    return found ? found.name : task.agent;
+  }, [task.agent, agents]);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -132,7 +142,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <div className="card-footer">
         <div className="card-agent">
           <AgentIcon className="agent-icon" />
-          <span>{task.agent || 'unassigned'}</span>
+          <span>{agentDisplayName}</span>
         </div>
         {onCopyXml && (
           <button

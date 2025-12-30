@@ -101,6 +101,46 @@ describe('TaskCard', () => {
     expect(screen.getByText('Ncode')).toBeInTheDocument();
   });
 
+  test('displays canonical agent name when agents lookup provided', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Task',
+      stage: 'code',
+      agent: '05-⚙️coder',
+      content: '',
+    } as any;
+    const agents = [
+      { id: '04-📋planner', name: 'planner', description: '', path: '' },
+      { id: '05-⚙️coder', name: 'coder', description: '', path: '' },
+      { id: '06-✅auditor', name: 'auditor', description: '', path: '' },
+    ];
+
+    render(<TaskCard task={task} agents={agents} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('coder')).toBeInTheDocument();
+  });
+
+  test('displays raw agent id when not found in agents lookup', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Task',
+      stage: 'code',
+      agent: 'custom-agent',
+      content: '',
+    } as any;
+    const agents = [
+      { id: '05-⚙️coder', name: 'coder', description: '', path: '' },
+    ];
+
+    render(<TaskCard task={task} agents={agents} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('custom-agent')).toBeInTheDocument();
+  });
+
   test('displays "unassigned" when no agent', async () => {
     const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
     const task = {
