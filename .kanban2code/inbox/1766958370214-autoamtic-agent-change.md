@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: []
 contexts:
   - ai-guide
@@ -80,3 +80,39 @@ Skills are reusable context files in `_context/skills/` that provide framework-s
 - src/webview/ui/components/Board.tsx
 - tests/stage-manager.test.ts
 - tests/webview/taskcard.test.tsx
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+Stage transitions now auto-assign the stage’s default agent (without clobbering manual assignments), and the UI displays canonical agent names using the existing `agents` lookup.
+
+### Findings
+
+#### Blockers
+- [ ] None
+
+#### High Priority
+- [ ] None
+
+#### Medium Priority
+- [ ] Default agent resolution only scans top-level `_agents` (unlike `listAvailableAgents()` which is recursive); consider aligning if nested agents are supported - `src/services/stage-manager.ts:21`
+
+#### Low Priority / Nits
+- [ ] `listAgentsWithStage()` duplicates agent parsing logic from `src/services/context.ts`; consider reusing/shared helper to reduce drift - `src/services/stage-manager.ts:21`
+
+### Test Assessment
+- Coverage: Adequate
+- Missing tests: None for the stated scope
+
+### What's Good
+- Uses agent frontmatter `stage` for default resolution and preserves custom `task.agent` assignments as intended - `src/services/stage-manager.ts:57`
+- UI keeps agent IDs stable for context loading while displaying canonical names via `agents` lookup - `src/webview/ui/components/TaskCard.tsx:32`
+
+### Recommendations
+- If you ever introduce agent subfolders, update `listAgentsWithStage()` to walk directories (or reuse `listAvailableAgents()` and add `stage` to its return type).

@@ -375,12 +375,12 @@ Board UI lives in `src/webview/ui/components/`:
 - `LayoutToggle.tsx` + `useBoardLayout.ts`: columns/swimlanes preference persisted in localStorage key `kanban2code.boardLayout`.
 - `BoardHorizontal.tsx` + `Column.tsx`: five stage columns from `STAGES`.
 - `BoardSwimlane.tsx` + `Swimlane.tsx`: project/phase rows with stage columns.
-- `TaskCard.tsx`: draggable card; click/Enter opens task.
+- `TaskCard.tsx`: draggable card; click/Enter opens task; resolves agent display name from the `agents` list provided by `InitState`.
 
 ### Drag‑and‑Drop and Task Actions
 
 - Board uses native HTML drag‑and‑drop; drops send `MoveTask` to host.
-- Host validates stage transitions via existing `stage-manager` + `core/rules.ts` and broadcasts updated tasks.
+- Host validates stage transitions via existing `stage-manager` + `core/rules.ts`, and auto-assigns the destination stage’s default agent (from `.kanban2code/_agents` frontmatter `stage`) when the task is unassigned or previously on the current stage default.
 - Board reuses Phase 3 `TaskModal` for "New Task"; `kanban2code.newTask` now supports optional `parent` in frontmatter to enable follow‑up tasks.
 
 ## Phase 5 Polish and Documentation
