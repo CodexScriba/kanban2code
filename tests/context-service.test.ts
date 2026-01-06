@@ -10,6 +10,7 @@ import {
   loadGlobalContext,
   loadPhaseContext,
   loadProjectContext,
+  loadSkills,
 } from '../src/services/context';
 import { AGENTS_FOLDER, CONTEXT_FOLDER, KANBAN_FOLDER, PROJECTS_FOLDER } from '../src/core/constants';
 
@@ -133,4 +134,32 @@ test('listAvailableSkills includes skill files', async () => {
       framework: 'react',
     })
   );
+});
+
+test('loadSkills loads skill files by ID', async () => {
+  const skillsDir = path.join(KANBAN_ROOT, CONTEXT_FOLDER, 'skills');
+  await fs.mkdir(skillsDir, { recursive: true });
+
+  await fs.writeFile(path.join(skillsDir, 'react.md'), 'REACT SKILL');
+  await fs.writeFile(path.join(skillsDir, 'typescript.md'), 'TS SKILL');
+
+  const content = await loadSkills(KANBAN_ROOT, ['react', 'typescript']);
+  expect(content).toContain('REACT SKILL');
+  expect(content).toContain('TS SKILL');
+});
+
+test('loadSkills returns empty string for empty or null skills', async () => {
+  expect(await loadSkills(KANBAN_ROOT, [])).toBe('');
+  expect(await loadSkills(KANBAN_ROOT, null)).toBe('');
+  expect(await loadSkills(KANBAN_ROOT, undefined)).toBe('');
+});
+
+test('loadSkills handles nested skill paths', async () => {
+  const skillsDir = path.join(KANBAN_ROOT, CONTEXT_FOLDER, 'skills');
+  await fs.mkdir(path.join(skillsDir, 'frameworks'), { recursive: true });
+
+  await fs.writeFile(path.join(skillsDir, 'frameworks', 'nextjs.md'), 'NEXTJS SKILL');
+
+  const content = await loadSkills(KANBAN_ROOT, ['frameworks/nextjs']);
+  expect(content).toContain('NEXTJS SKILL');
 });

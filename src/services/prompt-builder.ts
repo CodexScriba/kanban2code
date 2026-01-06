@@ -1,5 +1,5 @@
 import { Task } from '../types/task';
-import { loadAgentContext, loadCustomContexts, loadGlobalContext, loadPhaseContext, loadProjectContext } from './context';
+import { loadAgentContext, loadCustomContexts, loadGlobalContext, loadPhaseContext, loadProjectContext, loadSkills } from './context';
 
 function xmlEscape(value: string): string {
   return value
@@ -48,12 +48,14 @@ async function buildContextSection(task: Task, root: string): Promise<string> {
     projectContext,
     phaseContext,
     customContexts,
+    skills,
   ] = await Promise.all([
     loadGlobalContext(root),
     loadAgentContext(root, task.agent),
     loadProjectContext(root, task.project),
     loadPhaseContext(root, task.project, task.phase),
     loadCustomContexts(root, task.contexts),
+    loadSkills(root, task.skills),
   ]);
 
   const layers = [
@@ -62,6 +64,7 @@ async function buildContextSection(task: Task, root: string): Promise<string> {
     wrapSection('project', projectContext),
     wrapSection('phase', phaseContext),
     wrapSection('custom', customContexts),
+    wrapSection('skills', skills),
   ];
 
   return `<context>${layers.filter(Boolean).join('')}</context>`;

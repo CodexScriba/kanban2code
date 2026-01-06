@@ -3,6 +3,7 @@ import type { Task, Stage } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
+import { SkillPicker, type SkillFile } from './SkillPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
@@ -17,6 +18,7 @@ interface TaskModalProps {
   isOpen: boolean;
   tasks: Task[];
   contexts?: ContextFile[];
+  skills?: SkillFile[];
   agents?: Agent[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
@@ -34,6 +36,7 @@ interface TaskFormData {
   agent: string | null;
   tags: string[];
   contexts: string[];
+  skills: string[];
   content: string;
 }
 
@@ -48,6 +51,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   tasks,
   contexts = [],
+  skills = [],
   agents = [],
   projects = [],
   phasesByProject = {},
@@ -69,6 +73,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     agent: null,
     tags: [],
     contexts: [],
+    skills: [],
     content: '',
   });
   const [tagInput, setTagInput] = useState('');
@@ -87,6 +92,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         agent: null,
         tags: [],
         contexts: [],
+        skills: [],
         content: '',
       });
       setTagInput('');
@@ -156,6 +162,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       agent: formData.agent || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       contexts: formData.contexts.length > 0 ? formData.contexts : undefined,
+      skills: formData.skills.length > 0 ? formData.skills : undefined,
       parent: parentTaskId || undefined,
       content: formData.content || undefined,
     };
@@ -287,6 +294,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             onChange={(selectedContexts) => setFormData((prev) => ({ ...prev, contexts: selectedContexts }))}
             onCreateNew={handleCreateContext}
             onPickFolder={handlePickFolder}
+          />
+
+          {/* Skills */}
+          <SkillPicker
+            skills={skills}
+            selected={formData.skills}
+            onChange={(selectedSkills) => setFormData((prev) => ({ ...prev, skills: selectedSkills }))}
           />
 
           {/* Tags */}

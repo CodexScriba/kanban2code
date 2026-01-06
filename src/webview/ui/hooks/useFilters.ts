@@ -8,31 +8,36 @@ export interface FilterState {
   selectedProject: string | null;
   selectedTags: string[];
   quickView: QuickViewType | null;
+  hiddenProjects: string[];
 }
 
 export interface UseFiltersResult {
   // State
   filterState: FilterState;
-  
+
   // Stage actions
   toggleStage: (stage: Stage) => void;
   setActiveStages: (stages: Stage[]) => void;
-  
+
   // Project actions
   setSelectedProject: (project: string | null) => void;
-  
+
+  // Project visibility actions
+  toggleProjectVisibility: (project: string) => void;
+  showAllProjects: () => void;
+
   // Tag actions
   addTag: (tag: string) => void;
   removeTag: (tag: string) => void;
   clearTags: () => void;
-  
+
   // Quick view actions
   setQuickView: (view: QuickViewType | null) => void;
-  
+
   // Utility
   clearAllFilters: () => void;
   hasActiveFilters: boolean;
-  
+
   // Filter function
   filterTasks: (tasks: Task[]) => Task[];
 }
@@ -51,13 +56,15 @@ export function useFilters(): UseFiltersResult {
   const [selectedProject, setSelectedProjectState] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [quickView, setQuickViewState] = useState<QuickViewType | null>(null);
+  const [hiddenProjects, setHiddenProjects] = useState<string[]>([]);
 
   const filterState: FilterState = useMemo(() => ({
     activeStages,
     selectedProject,
     selectedTags,
     quickView,
-  }), [activeStages, selectedProject, selectedTags, quickView]);
+    hiddenProjects,
+  }), [activeStages, selectedProject, selectedTags, quickView, hiddenProjects]);
 
   const toggleStage = useCallback((stage: Stage) => {
     setActiveStagesState((prev) => {
@@ -80,6 +87,19 @@ export function useFilters(): UseFiltersResult {
   const setSelectedProject = useCallback((project: string | null) => {
     setSelectedProjectState(project);
     setQuickViewState(null);
+  }, []);
+
+  const toggleProjectVisibility = useCallback((project: string) => {
+    setHiddenProjects((prev) => {
+      if (prev.includes(project)) {
+        return prev.filter((p) => p !== project);
+      }
+      return [...prev, project];
+    });
+  }, []);
+
+  const showAllProjects = useCallback(() => {
+    setHiddenProjects([]);
   }, []);
 
   const addTag = useCallback((tag: string) => {
@@ -114,6 +134,7 @@ export function useFilters(): UseFiltersResult {
     setSelectedProjectState(null);
     setSelectedTags([]);
     setQuickViewState(null);
+    setHiddenProjects([]);
   }, []);
 
   const hasActiveFilters = useMemo(() => {
@@ -122,9 +143,10 @@ export function useFilters(): UseFiltersResult {
       !DEFAULT_STAGES.every((s) => activeStages.includes(s)) ||
       selectedProject !== null ||
       selectedTags.length > 0 ||
-      quickView !== null
+      quickView !== null ||
+      hiddenProjects.length > 0
     );
-  }, [activeStages, selectedProject, selectedTags, quickView]);
+  }, [activeStages, selectedProject, selectedTags, quickView, hiddenProjects]);
 
   const filterTasks = useCallback((tasks: Task[]): Task[] => {
     return tasks.filter((task) => {
@@ -157,6 +179,8 @@ export function useFilters(): UseFiltersResult {
     toggleStage,
     setActiveStages,
     setSelectedProject,
+    toggleProjectVisibility,
+    showAllProjects,
     addTag,
     removeTag,
     clearTags,

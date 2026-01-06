@@ -1131,6 +1131,71 @@ body {
   text-decoration: underline;
 }
 
+/* Project Visibility Controls */
+.filter-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.filter-label {
+  font-size: var(--font-size-xs);
+  color: var(--vscode-descriptionForeground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.show-all-btn {
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  color: var(--vscode-textLink-foreground);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.show-all-btn:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.project-visibility-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.project-visibility-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.project-visibility-item:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.project-visibility-item input[type="checkbox"] {
+  accent-color: var(--vscode-button-background);
+}
+
+.project-visibility-item .project-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* === GLASS OVERLAY & MODALS === */
 .glass-overlay {
   position: fixed;

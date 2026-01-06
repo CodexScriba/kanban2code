@@ -157,3 +157,78 @@ test('Delete button sends DeleteTask message', async () => {
   const sent = postMessageSpy.mock.calls.find((c) => c[0]?.type === 'DeleteTask');
   expect(sent?.[0]?.payload).toMatchObject({ taskId: '1' });
 });
+
+test('Board hides tasks from hidden projects', async () => {
+  const { Board } = await import('../../src/webview/ui/components/Board');
+  render(<Board hasKanban={true} />);
+
+  await act(async () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          version: 1,
+          type: 'InitState',
+          payload: {
+            context: 'board',
+            hasKanban: true,
+            tasks: mockTasks,
+            workspaceRoot: '/tmp',
+            filterState: {
+              stages: ['inbox', 'plan', 'code', 'audit', 'completed'],
+              hiddenProjects: ['proj'],
+            },
+          },
+        },
+      }),
+    );
+  });
+
+  // Task 1 (no project) should be visible
+  expect(await screen.findByText('Task 1')).toBeInTheDocument();
+  // Task 2 (project: 'proj') should be hidden
+  expect(screen.queryByText('Task 2')).not.toBeInTheDocument();
+});
+
+test('Board shows inbox tasks even when all projects are hidden', async () => {
+  const { Board } = await import('../../src/webview/ui/components/Board');
+  render(<Board hasKanban={true} />);
+
+  const tasksWithProjects = [
+    ...mockTasks,
+    {
+      id: '3',
+      filePath: '/tmp/3.md',
+      title: 'Task 3',
+      stage: 'plan',
+      content: 'another',
+      project: 'other-proj',
+    },
+  ];
+
+  await act(async () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          version: 1,
+          type: 'InitState',
+          payload: {
+            context: 'board',
+            hasKanban: true,
+            tasks: tasksWithProjects,
+            workspaceRoot: '/tmp',
+            filterState: {
+              stages: ['inbox', 'plan', 'code', 'audit', 'completed'],
+              hiddenProjects: ['proj', 'other-proj'],
+            },
+          },
+        },
+      }),
+    );
+  });
+
+  // Task 1 (inbox, no project) should still be visible
+  expect(await screen.findByText('Task 1')).toBeInTheDocument();
+  // Task 2 and Task 3 (with projects) should be hidden
+  expect(screen.queryByText('Task 2')).not.toBeInTheDocument();
+  expect(screen.queryByText('Task 3')).not.toBeInTheDocument();
+});

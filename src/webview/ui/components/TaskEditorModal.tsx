@@ -278,7 +278,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
       <div className="glass-modal task-editor-modal" role="dialog" aria-labelledby="task-editor-title">
         <div className="modal-header">
           <h2 id="task-editor-title">Edit Task: {title || task.title}</h2>
-          <button className="modal-close-btn" onClick={requestClose} aria-label="Close">×</button>
+          <button type="button" className="modal-close-btn" onClick={(e) => { e.stopPropagation(); requestClose(); }} aria-label="Close">×</button>
         </div>
 
         <div className="modal-body task-editor-body-split">
@@ -447,7 +447,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
             {isSaving && <span className="task-editor-saving">Saving...</span>}
           </div>
           <div className="task-editor-actions">
-            <button className="btn btn-secondary" onClick={requestClose} disabled={isSaving}>Cancel</button>
+            <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); requestClose(); }} disabled={isSaving}>Cancel</button>
             <button className="btn btn-primary" onClick={requestSave} disabled={isSaving || isLoading || !title.trim()}>Save</button>
           </div>
         </div>

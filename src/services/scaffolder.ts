@@ -131,13 +131,14 @@ export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
       if (!stat.isFile()) {
         throw new Error(`Template path exists but is not a file: ${filePath}`);
       }
-
-      await fs.writeFile(filePath, content);
-      report.updated.push(relativePath);
+      
+      // File exists, skipping to preserve user changes
+      report.skipped.push(relativePath);
     } catch (error: any) {
       if (error?.code !== 'ENOENT') {
         throw error;
       }
+      // File does not exist, creating it
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, content);
       report.created.push(relativePath);

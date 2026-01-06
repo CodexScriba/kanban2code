@@ -502,3 +502,33 @@ export async function loadCustomContexts(root: string, contextNames?: string[] |
 
   return contents.filter(Boolean).join('\n\n');
 }
+
+export async function loadSkills(root: string, skillIds?: string[] | null): Promise<string> {
+  if (!skillIds || skillIds.length === 0) return '';
+
+  const skillsDir = path.join(CONTEXT_FOLDER, 'skills');
+
+  const contents = await Promise.all(
+    skillIds.map(async (skillId) => {
+      const normalized = ensureExtension(skillId);
+      // Check if the skillId includes a path (e.g., "subfolder/skill-name.md")
+      const hasPath = normalized.includes('/') || normalized.includes('\\');
+
+      if (hasPath) {
+        // Try as-is first (relative to skills directory)
+        const skillPath = path.join(skillsDir, normalized);
+        if (await fileExists(root, skillPath)) {
+          return readFileIfExists(root, skillPath);
+        }
+        // Fall back to treating as explicit path from root
+        return readFileIfExists(root, normalized);
+      }
+
+      // Simple ID: look in skills directory
+      const skillPath = path.join(skillsDir, normalized);
+      return readFileIfExists(root, skillPath);
+    }),
+  );
+
+  return contents.filter(Boolean).join('\n\n');
+}

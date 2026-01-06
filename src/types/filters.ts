@@ -6,6 +6,7 @@ export interface FilterState {
   tags?: string[];
   search?: string;
   quickView?: string | null;
+  hiddenProjects?: string[]; // projects hidden from board view
 }
 
 /**

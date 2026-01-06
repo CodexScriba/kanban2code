@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { buildContextOnlyPrompt, buildXMLPrompt } from '../src/services/prompt-builder';
-import { KANBAN_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER } from '../src/core/constants';
+import { KANBAN_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER, CONTEXT_FOLDER } from '../src/core/constants';
 import { Task } from '../src/types/task';
 
 let TEST_DIR: string;
@@ -98,4 +98,40 @@ test('agent section is skipped when missing', async () => {
 
   const xml = await buildXMLPrompt(task, KANBAN_ROOT);
   expect(xml).not.toContain('name="agent"');
+});
+
+test('skills are included in the prompt when specified', async () => {
+  await seedContextFiles();
+
+  const skillsDir = path.join(KANBAN_ROOT, CONTEXT_FOLDER, 'skills');
+  await fs.mkdir(skillsDir, { recursive: true });
+  await fs.writeFile(path.join(skillsDir, 'react.md'), 'REACT_SKILL_CONTENT');
+
+  const task: Task = {
+    id: 'task-4',
+    filePath: path.join(KANBAN_ROOT, 'inbox', 'task-4.md'),
+    title: 'Task 4',
+    stage: 'plan',
+    skills: ['react'],
+    content: 'BODY',
+  };
+
+  const xml = await buildXMLPrompt(task, KANBAN_ROOT);
+  expect(xml).toContain('REACT_SKILL_CONTENT');
+  expect(xml).toContain('name="skills"');
+});
+
+test('skills section is skipped when no skills specified', async () => {
+  await seedContextFiles();
+
+  const task: Task = {
+    id: 'task-5',
+    filePath: path.join(KANBAN_ROOT, 'inbox', 'task-5.md'),
+    title: 'Task 5',
+    stage: 'plan',
+    content: 'BODY',
+  };
+
+  const xml = await buildXMLPrompt(task, KANBAN_ROOT);
+  expect(xml).not.toContain('name="skills"');
 });

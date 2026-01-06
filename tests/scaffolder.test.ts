@@ -166,12 +166,12 @@ describe('workspace sync', () => {
 
     const report = await syncWorkspace(TEST_DIR);
 
-    expect(report.updated).toContain('how-it-works.md');
+    expect(report.skipped).toContain('how-it-works.md');
     const synced = await fs.readFile(path.join(kanbanRoot, 'how-it-works.md'), 'utf-8');
     expect(synced).toBe(HOW_IT_WORKS);
   });
 
-  test('syncWorkspace updates modified files', async () => {
+  test('syncWorkspace preserves modified files', async () => {
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
     await fs.mkdir(kanbanRoot, { recursive: true });
     const customContent = '# Custom Architecture\n';
@@ -180,9 +180,9 @@ describe('workspace sync', () => {
 
     const report = await syncWorkspace(TEST_DIR);
 
-    expect(report.updated).toContain('architecture.md');
+    expect(report.skipped).toContain('architecture.md');
     const result = await fs.readFile(architecturePath, 'utf-8');
-    expect(result).not.toBe(customContent);
+    expect(result).toBe(customContent);
   });
 
   test('syncWorkspace handles missing directories', async () => {
@@ -207,8 +207,8 @@ describe('workspace sync', () => {
 
     const report = await syncWorkspace(TEST_DIR);
 
-    expect(report.updated).toContain('how-it-works.md');
-    expect(report.updated).toContain('architecture.md');
+    expect(report.skipped).toContain('how-it-works.md');
+    expect(report.skipped).toContain('architecture.md');
     expect(report.created).toContain('project-details.md');
   });
 });

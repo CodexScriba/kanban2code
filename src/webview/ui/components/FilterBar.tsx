@@ -6,9 +6,12 @@ interface FilterBarProps {
   tasks: Task[];
   selectedProject: string | null;
   selectedTags: string[];
+  hiddenProjects: string[];
   onSetProject: (project: string | null) => void;
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
+  onToggleProjectVisibility: (project: string) => void;
+  onShowAllProjects: () => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -17,9 +20,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   tasks,
   selectedProject,
   selectedTags,
+  hiddenProjects,
   onSetProject,
   onAddTag,
   onRemoveTag,
+  onToggleProjectVisibility,
+  onShowAllProjects,
   onClearFilters,
   hasActiveFilters,
 }) => {
@@ -112,6 +118,36 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                   >
                     {tag}
                   </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Project Visibility */}
+          {projects.length > 0 && (
+            <div className="filter-group">
+              <div className="filter-label-row">
+                <label className="filter-label">Show Projects</label>
+                {hiddenProjects.length > 0 && (
+                  <button
+                    className="show-all-btn"
+                    onClick={onShowAllProjects}
+                    title="Show all projects"
+                  >
+                    Show all
+                  </button>
+                )}
+              </div>
+              <div className="project-visibility-list">
+                {projects.map((project) => (
+                  <label key={project} className="project-visibility-item">
+                    <input
+                      type="checkbox"
+                      checked={!hiddenProjects.includes(project)}
+                      onChange={() => onToggleProjectVisibility(project)}
+                    />
+                    <span className="project-name">{project}</span>
+                  </label>
                 ))}
               </div>
             </div>

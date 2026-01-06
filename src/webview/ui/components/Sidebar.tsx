@@ -40,6 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
     filterState,
     toggleStage,
     setSelectedProject,
+    toggleProjectVisibility,
+    showAllProjects,
     addTag,
     removeTag,
     clearTags,
@@ -73,6 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
       stages: filterState.activeStages,
       tags: filterState.selectedTags,
       quickView: filterState.quickView,
+      hiddenProjects: filterState.hiddenProjects,
     };
     postMessage('FilterChanged', { filters: protocolState });
   }, [filterState]);
@@ -281,9 +284,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         tasks={tasks}
         selectedProject={filterState.selectedProject}
         selectedTags={filterState.selectedTags}
+        hiddenProjects={filterState.hiddenProjects}
         onSetProject={setSelectedProject}
         onAddTag={addTag}
         onRemoveTag={removeTag}
+        onToggleProjectVisibility={toggleProjectVisibility}
+        onShowAllProjects={showAllProjects}
         onClearFilters={() => {
           clearTags();
           clearAllFilters();

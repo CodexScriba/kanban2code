@@ -45,6 +45,11 @@ function applyFilters(tasks: Task[], filters: FilterState | null, search: string
       }
     }
 
+    // Hide tasks from hidden projects (inbox tasks are never hidden)
+    if (filters?.hiddenProjects?.length && task.project) {
+      if (filters.hiddenProjects.includes(task.project)) return false;
+    }
+
     if (filters?.tags?.length) {
       const taskTags = task.tags || [];
       if (!filters.tags.every((t) => taskTags.includes(t))) return false;
@@ -152,16 +157,17 @@ export const Board: React.FC<BoardProps> = ({
     return rows;
   }, [filteredTasks]);
 
-  // Extract unique project names (excluding inbox)
+  // Extract unique project names (excluding inbox and hidden projects)
   const swimlaneProjects = useMemo(() => {
     const projectSet = new Set<string>();
+    const hidden = filterState?.hiddenProjects || [];
     for (const task of filteredTasks) {
-      if (task.project) {
+      if (task.project && !hidden.includes(task.project)) {
         projectSet.add(task.project);
       }
     }
     return Array.from(projectSet).sort();
-  }, [filteredTasks]);
+  }, [filteredTasks, filterState?.hiddenProjects]);
 
   const handleMoveTask = (taskId: string, toStage: Stage, toProject?: string) => {
     const task = tasks.find((t) => t.id === taskId);
