@@ -2,6 +2,8 @@
 
 _Distilled from design conversation, 2026-02-19_
 
+**Note:** Original files from the previous version are located at `/home/cynicus/code/kanban2code-v1/`. All references to "v1" or "old project" refer to this location.
+
 ---
 
 ## The Vision
@@ -34,10 +36,10 @@ A VS Code extension where a **chat interface drives everything**. You talk to an
 | `_agents/` config files | Provider config already there. |
 | `skills-index.json` | Already has framework detection + conditional skill routing. |
 | `_context/skills/*.md` | All the skill files themselves. |
-| `scanner.ts` | Filesystem scanning works. |
-| `frontmatter.ts` | Parsing/serialization works. |
-| `stage-manager.ts` | Stage transition logic works. |
-| `runner-engine.ts` | Execution logic, extract and clean up. |
+| `scanner.ts` | Filesystem scanning works. (from `/home/cynicus/code/kanban2code-v1/`) |
+| `frontmatter.ts` | Parsing/serialization works. (from `/home/cynicus/code/kanban2code-v1/`) |
+| `stage-manager.ts` | Stage transition logic works. (from `/home/cynicus/code/kanban2code-v1/`) |
+| `runner-engine.ts` | Execution logic, extract and clean up. (from `/home/cynicus/code/kanban2code-v1/`) |
 
 ---
 
@@ -167,7 +169,7 @@ Orchestrator: sees workspace state (5 inbox tasks)
 5. **Skill auto-selection** — consume `skills-index.json`, attach to API calls.
 6. **Terminal executor** — VS Code terminal API, paste command, stay visible.
 7. **Task file generator** — orchestrator output → write `.md` with correct frontmatter.
-8. **Carry over** — port scanner, frontmatter, stage-manager, runner-engine cleanly.
+8. **Carry over** — port scanner, frontmatter, stage-manager, runner-engine cleanly (from `/home/cynicus/code/kanban2code-v1/`).
 
 ---
 
@@ -198,16 +200,16 @@ Orchestrator: sees workspace state (5 inbox tasks)
 
 **Files to create (new):**
 - `package.json` — strip old commands, old webview contributors; keep core VS Code extension manifest, Bun scripts, esbuild
-- `tsconfig.json` — copy from v1, verify paths
-- `build.ts` — copy from v1, trim board bundle references
-- `vitest.config.ts` — copy from v1
-- `vitest.e2e.config.ts` — copy from v1
-- `.vscodeignore` — copy from v1
-- `.prettierrc` — copy from v1
-- `eslint.config.mjs` — copy from v1
+- `tsconfig.json` — copy from `/home/cynicus/code/kanban2code-v1/`, verify paths
+- `build.ts` — copy from `/home/cynicus/code/kanban2code-v1/`, trim board bundle references
+- `vitest.config.ts` — copy from `/home/cynicus/code/kanban2code-v1/`
+- `vitest.e2e.config.ts` — copy from `/home/cynicus/code/kanban2code-v1/`
+- `.vscodeignore` — copy from `/home/cynicus/code/kanban2code-v1/`
+- `.prettierrc` — copy from `/home/cynicus/code/kanban2code-v1/`
+- `eslint.config.mjs` — copy from `/home/cynicus/code/kanban2code-v1/`
 - `src/extension.ts` — stub only: `activate()` logs "Kanban2Code V2 activated", `deactivate()` is empty
 - `src/webview/ui/main.tsx` — stub: renders `<div>Loading...</div>`
-- `src/webview/ui/vscodeApi.ts` — **port from v1** (`src/webview/ui/vscodeApi.ts`), singleton pattern must be preserved
+- `src/webview/ui/vscodeApi.ts` — **port from `/home/cynicus/code/kanban2code-v1/`** (`src/webview/ui/vscodeApi.ts`), singleton pattern must be preserved
 
 **Done when:** `bun run build` succeeds, extension loads in Extension Development Host, Output Channel shows activation message.
 
@@ -330,10 +332,10 @@ _Port runner tests:_
 **Files to create (new):**
 - `src/services/workspace-snapshot.ts`
   - `buildWorkspaceSnapshot(kanbanRoot: string): Promise<WorkspaceSnapshot>`
-  - Calls `loadAllTasks()` from scanner — tasks with id, title, stage, project, tags, agent
-  - Calls `listAvailableProviders()` from provider-service — available agent names
+  - Calls `loadAllTasks()` from scanner (from `/home/cynicus/code/kanban2code-v1/`) — tasks with id, title, stage, project, tags, agent
+  - Calls `listAvailableProviders()` from provider-service (from `/home/cynicus/code/kanban2code-v1/`) — available agent names
   - Reads `skills-index.json` — available skill names + descriptions (compact, not full file content)
-  - Calls `listProjects()` from projects — active project/phase names
+  - Calls `listProjects()` from projects (from `/home/cynicus/code/kanban2code-v1/`) — active project/phase names
   - Returns `WorkspaceSnapshot` type (defined in same file or `src/types/snapshot.ts`)
 
 **WorkspaceSnapshot shape:**
@@ -432,8 +434,8 @@ interface WorkspaceSnapshot {
 - `src/services/task-generator.ts`
   - `parseTaskProposal(responseText: string): TaskProposal | null` — extracts structured block from orchestrator response
   - `generateTaskFile(kanbanRoot: string, proposal: TaskProposal): Promise<string>` — writes .md, returns relative path
-  - Uses `stringifyTaskFile()` from `src/services/frontmatter.ts`
-  - Uses `ensureSafePath()` from `src/workspace/validation.ts`
+  - Uses `stringifyTaskFile()` from `src/services/frontmatter.ts` (from `/home/cynicus/code/kanban2code-v1/`)
+  - Uses `ensureSafePath()` from `src/workspace/validation.ts` (from `/home/cynicus/code/kanban2code-v1/`)
 - `src/types/task-proposal.ts`
   - `TaskProposal` — title, description (markdown body), stage, agent, tags, project?, phase?
 - `tests/task-generator.test.ts` — parse proposal from mock response, verify written file has correct frontmatter
@@ -450,9 +452,9 @@ interface WorkspaceSnapshot {
 
 **How it works:**
 1. Read task file (frontmatter to get agent/provider)
-2. Resolve provider config via `provider-service.ts`
-3. Build CLI command via `adapter-factory.ts` + `cli-adapter.buildCommand()`
-4. Build the full prompt string via `prompt-builder.ts` (task content + skill files)
+2. Resolve provider config via `provider-service.ts` (from `/home/cynicus/code/kanban2code-v1/`)
+3. Build CLI command via `adapter-factory.ts` (from `/home/cynicus/code/kanban2code-v1/`) + `cli-adapter.buildCommand()`
+4. Build the full prompt string via `prompt-builder.ts` (from `/home/cynicus/code/kanban2code-v1/`) (task content + skill files)
 5. Open terminal: `vscode.window.createTerminal({ name: taskTitle })`
 6. Send command: `terminal.sendText(command)` — terminal becomes interactive
 7. Show terminal: `terminal.show()`
@@ -473,7 +475,7 @@ interface WorkspaceSnapshot {
 
 **Goal:** A lean, typed message contract between the extension host and the chat webview. No legacy board/filter/tree messages.
 
-**Why its own phase:** Getting this right before building the UI prevents the class of bugs v1 had (race conditions, message loss, API acquired twice).
+**Why its own phase:** Getting this right before building the UI prevents the class of bugs `/home/cynicus/code/kanban2code-v1/` had (race conditions, message loss, API acquired twice).
 
 **Message types needed:**
 
@@ -486,17 +488,17 @@ _Host → Webview:_
 - `Error` — something failed, here's the message
 
 _Webview → Host:_
-- `RequestState` — webview mounted, send me InitState (keep ready handshake from v1)
+- `RequestState` — webview mounted, send me InitState (keep ready handshake from `/home/cynicus/code/kanban2code-v1/`)
 - `SendMessage` — user sent a chat message, here's the text
 - `GenerateTask` — user clicked "Generate .md", here's the confirmed proposal
 - `RunTask` — user clicked "Run", here's the task file path
 - `CancelStream` — user cancelled an in-progress orchestrator response
 
 **Files to create (new):**
-- `src/webview/messaging.ts` — full rewrite. Keep `createEnvelope`/`validateEnvelope` pattern from v1, new message types only.
+- `src/webview/messaging.ts` — full rewrite. Keep `createEnvelope`/`validateEnvelope` pattern from `/home/cynicus/code/kanban2code-v1/`, new message types only.
 
 **Files to port (keep):**
-- `src/webview/ui/vscodeApi.ts` — already ported in Phase 0, no changes needed
+- `src/webview/ui/vscodeApi.ts` — already ported from `/home/cynicus/code/kanban2code-v1/` in Phase 0, no changes needed
 
 **Done when:** All message types have Zod schemas, round-trip test passes, no `any` types.
 
@@ -523,18 +525,18 @@ SidebarProvider.ts (host)
 ```
 
 **Files to create (new):**
-- `src/webview/SidebarProvider.ts` — rewrite. Handles `RequestState` → `InitState`, `SendMessage` → orchestrator → stream chunks, `GenerateTask` → task-generator, `RunTask` → terminal-executor, `task-watcher` events → `WorkspaceUpdated`
+- `src/webview/SidebarProvider.ts` — rewrite. Handles `RequestState` → `InitState`, `SendMessage` → orchestrator → stream chunks, `GenerateTask` → task-generator, `RunTask` → terminal-executor, `task-watcher` (from `/home/cynicus/code/kanban2code-v1/`) events → `WorkspaceUpdated`
 - `src/webview/ui/App.tsx` — rewrite. Chat-only. No board toggle, no filter state. Receives `InitState`, renders `<Chat />` or `<EmptyState />`
 - `src/webview/ui/components/Chat.tsx` — conversation state (array of ChatMessage), streams incoming tokens into last assistant message
 - `src/webview/ui/components/ChatMessage.tsx` — renders user vs assistant bubble, parses assistant message for task proposal blocks, renders `<TaskProposalCard />` when found
 - `src/webview/ui/components/TaskProposalCard.tsx` — displays proposed task (title, stage, agent, tags), "Generate .md" button sends `GenerateTask`, shows confirmation when file created
 - `src/webview/ui/components/WorkspaceBar.tsx` — counts tasks per stage (inbox: 3, plan: 1, code: 2...), collapses to a single line, click to expand list
 - `src/webview/ui/components/ChatInput.tsx` — auto-resizing textarea, Shift+Enter for newline, Enter to send, provider selector dropdown (shows available orchestrators)
-- `src/webview/ui/components/EmptyState.tsx` — **port from v1** (`src/webview/ui/components/EmptyState.tsx`), "Create Kanban Workspace" button
+- `src/webview/ui/components/EmptyState.tsx` — **port from `/home/cynicus/code/kanban2code-v1/`** (`src/webview/ui/components/EmptyState.tsx`), "Create Kanban Workspace" button
 - `src/webview/ui/hooks/useChat.ts` — chat state: messages array, streaming state, send handler, cancel handler
 
 **Files to port (keep with minor updates):**
-- `src/webview/ui/components/Icons.tsx` — port from v1, keep useful icons, add new ones as needed
+- `src/webview/ui/components/Icons.tsx` — port from `/home/cynicus/code/kanban2code-v1/`, keep useful icons, add new ones as needed
 
 **Files to delete (do not port):**
 - All of `src/webview/ui/components/` not listed above — Sidebar.tsx, TaskTree.tsx, TreeNode.tsx, TreeSection.tsx, FilterBar.tsx, QuickFilters.tsx, QuickViews.tsx, Board.tsx, BoardHeader.tsx, BoardHorizontal.tsx, BoardSwimlane.tsx, Column.tsx, Swimlane.tsx, TaskCard.tsx, TaskItem.tsx, TaskModal.tsx, TaskEditorModal.tsx, TaskContextMenu.tsx, MoveModal.tsx, AgentModal.tsx, AgentPicker.tsx, ContextModal.tsx, ContextMenu.tsx, ContextPicker.tsx, SkillPicker.tsx, LocationPicker.tsx, ProjectModal.tsx, LayoutToggle.tsx, KeyboardHelp.tsx, SidebarActions.tsx, SidebarToolbar.tsx, BoardHeader.tsx, MentionsTextarea.tsx
@@ -566,7 +568,7 @@ SidebarProvider.ts (host)
 | `kanban2code.openSettings` | Open Settings | Opens `_providers/` folder or config.json |
 
 **Files to rewrite:**
-- `src/extension.ts` — activate: detect workspace, start task watcher, register commands, create SidebarProvider. No runner engine wired here (runner is terminal-driven now). Clean, under 150 lines.
+- `src/extension.ts` — activate: detect workspace, start task watcher (from `/home/cynicus/code/kanban2code-v1/`), register commands, create SidebarProvider. No runner engine wired here (runner is terminal-driven now). Clean, under 150 lines.
 - `src/commands/index.ts` — registerCommands(context, kanbanRoot), one function per command, imports from services.
 
 **Files to delete (do not port):**
@@ -589,7 +591,7 @@ SidebarProvider.ts (host)
 - `.kanban2code/_providers/minimax.md` — provider config file for dogfooding workspace
 
 **Files to update:**
-- `src/runner/adapter-factory.ts` — add `'minimax'` case
+- `src/runner/adapter-factory.ts` (from `/home/cynicus/code/kanban2code-v1/`) — add `'minimax'` case
 - `src/orchestrator/openai-client.ts` — MiniMax is OpenAI-compatible, add `baseURL` branch for `provider: minimax`
 
 **Done when:** A task runs end-to-end via MiniMax in the terminal. Kimi K2 runs end-to-end via terminal.
@@ -652,16 +654,16 @@ SidebarProvider.ts (host)
 
 | Phase | Goal | New Files | Ported Files | Blocks |
 |-------|------|-----------|--------------|--------|
-| 0 | Bootstrap | extension stub, build | vscodeApi.ts | nothing |
-| 1 | Core services | — | 30+ services, types, tests | P0 |
-| 2 | Runner | — | 10 runner files + tests | P1 |
+| 0 | Bootstrap | extension stub, build | vscodeApi.ts (from `/home/cynicus/code/kanban2code-v1/`) | nothing |
+| 1 | Core services | — | 30+ services, types, tests (from `/home/cynicus/code/kanban2code-v1/`) | P0 |
+| 2 | Runner | — | 10 runner files + tests (from `/home/cynicus/code/kanban2code-v1/`) | P1 |
 | 3 | Workspace snapshot | workspace-snapshot.ts, snapshot.ts | — | P1 |
 | 4 | Skill selector | skill-selector.ts, skill.ts | — | P3 |
 | 5 | Orchestrator service | orchestrator/, system-prompt-builder | — | P3, P4 |
-| 6 | Task file generator | task-generator.ts, task-proposal.ts | frontmatter.ts (already) | P5 |
-| 7 | Terminal executor | terminal-executor.ts | provider-service, adapter-factory (already) | P2 |
+| 6 | Task file generator | task-generator.ts, task-proposal.ts | frontmatter.ts (already from `/home/cynicus/code/kanban2code-v1/`) | P5 |
+| 7 | Terminal executor | terminal-executor.ts | provider-service, adapter-factory (already from `/home/cynicus/code/kanban2code-v1/`) | P2 |
 | 8 | Messaging protocol | messaging.ts (rewrite) | — | P0 |
-| 9 | Chat UI | Chat, ChatMessage, ChatInput, WorkspaceBar, TaskProposalCard, SidebarProvider, App | EmptyState, Icons | P5, P6, P7, P8 |
+| 9 | Chat UI | Chat, ChatMessage, ChatInput, WorkspaceBar, TaskProposalCard, SidebarProvider, App | EmptyState, Icons (from `/home/cynicus/code/kanban2code-v1/`) | P5, P6, P7, P8 |
 | 10 | Extension entry point | extension.ts (rewrite), commands/index.ts | — | P9 |
 | 11 | MiniMax + providers | minimax-adapter.ts | adapter-factory (update) | P7 |
 | 12 | E2E hardening | e2e tests | — | P10 |
@@ -900,7 +902,7 @@ This becomes a data-driven model selection guide. You stop guessing. The log tel
 
 ## Terminal Executor
 
-Every task runs in a **named, visible VS Code terminal**. This is non-negotiable based on v1 experience with hidden child processes.
+Every task runs in a **named, visible VS Code terminal**. This is non-negotiable based on `/home/cynicus/code/kanban2code-v1/` experience with hidden child processes.
 
 ```
 Terminal name: "[task title] — [stage]"
@@ -1124,8 +1126,8 @@ The UI (future) can surface this as a provider performance table. For now, the r
 | Phase | Goal |
 |-------|------|
 | 0 | Bootstrap — extension activates, build pipeline works |
-| 1 | Port core services — scanner, frontmatter, stage-manager, types, tests |
-| 2 | Port runner — cli adapters, runner-engine, output-parser |
+| 1 | Port core services — scanner, frontmatter, stage-manager, types, tests (from `/home/cynicus/code/kanban2code-v1/`) |
+| 2 | Port runner — cli adapters, runner-engine, output-parser (from `/home/cynicus/code/kanban2code-v1/`) |
 | 3 | Workspace snapshot — JSON of tasks, projects, providers, skills |
 | 4 | Skill auto-selector — detect framework, score skills by keyword |
 | 5 | Orchestrator service — direct API (Anthropic/OpenAI), streaming |
