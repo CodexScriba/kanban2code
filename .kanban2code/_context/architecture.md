@@ -16,6 +16,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task4.1-skill-auto-selector`
+  - files-updated: none
+  - new-files-created:
+    - `src/services/skill-selector.ts` - Skill auto-selection service with framework detection, scoring, ordering, and content hydration
+    - `src/types/skill.ts` - Shared types for selected skills and skill index metadata
+    - `tests/skill-selector.test.ts` - Unit tests for framework detection, matching behavior, ordering, and hydration
+
+- date: 2026-02-26
   - task: `task3.1-workspace-snapshot-service`
   - files-updated: none
   - new-files-created:
