@@ -17,6 +17,7 @@ import { ensureSafePath } from '../workspace/validation';
 import {
   createEnvelope,
   validateEnvelope,
+  type SendMessagePayload,
   type SaveTaskPayload,
 } from './messaging';
 
@@ -113,16 +114,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async handleSendMessage(userMessage: ChatMessage): Promise<void> {
+  private async handleSendMessage(payload: SendMessagePayload): Promise<void> {
     const snapshot = this.snapshot ?? await buildWorkspaceSnapshot(this.options.kanbanRoot);
     this.snapshot = snapshot;
 
-    const providerId = this.selectedProviderId ?? this.resolveDefaultProviderId(snapshot);
+    const requestedProviderId = payload.providerId?.trim();
+    const providerId = requestedProviderId
+      ? this.resolveProviderId(snapshot, requestedProviderId)
+      : (this.selectedProviderId ?? this.resolveDefaultProviderId(snapshot));
     if (!providerId) {
       throw new Error('No provider configured. Add a provider in .kanban2code/_providers.');
     }
 
     this.selectedProviderId = providerId;
+    const userMessage: ChatMessage = {
+      role: payload.role,
+      content: payload.content,
+    };
     this.chatHistory.push(userMessage);
 
     const generation = ++this.streamGeneration;
@@ -218,6 +226,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     const firstValid = snapshot.providers.find((provider) => provider.config);
     return firstValid?.id ?? null;
+  }
+
+  private resolveProviderId(snapshot: WorkspaceSnapshot, providerId: string): string {
+    const provider = snapshot.providers.find((candidate) => candidate.id === providerId);
+    if (!provider || !provider.config) {
+      throw new Error(`Provider not found or invalid: ${providerId}`);
+    }
+    return provider.id;
   }
 
   private async sendInitState(): Promise<void> {

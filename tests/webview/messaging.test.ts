@@ -80,6 +80,7 @@ describe('webview messaging protocol v2', () => {
       SendMessage: {
         role: 'user',
         content: 'Generate a task for this bug',
+        providerId: 'codex',
       },
       GenerateTask: {
         title: 'Fix bug',
@@ -88,6 +89,7 @@ describe('webview messaging protocol v2', () => {
       },
       RunTask: {
         taskFilePath: '.kanban2code/projects/demo/task.md',
+        allRemaining: true,
       },
       SaveTask: {
         taskFilePath: '.kanban2code/projects/demo/task.md',
@@ -142,6 +144,7 @@ describe('webview messaging protocol v2', () => {
     const sendMessagePayload: SendMessagePayload = {
       role: 'user',
       content: 'hello',
+      providerId: 'codex',
     };
     const sendEnvelope = createEnvelope('SendMessage', sendMessagePayload);
 
@@ -171,7 +174,7 @@ describe('webview messaging protocol v2', () => {
     const workspaceUpdatedPayload: WorkspaceUpdatedPayload = { workspaceSnapshot: baseSnapshot };
     const errorPayload: ErrorPayload = { message: 'error' };
     const requestStatePayload: RequestStatePayload = {};
-    const runTaskPayload: RunTaskPayload = { taskFilePath: 'a.md' };
+    const runTaskPayload: RunTaskPayload = { taskFilePath: 'a.md', allRemaining: true };
     const saveTaskPayload: SaveTaskPayload = {
       taskFilePath: 'a.md',
       title: 'A',
@@ -187,6 +190,7 @@ describe('webview messaging protocol v2', () => {
     expect(errorPayload.message).toBe('error');
     expect(requestStatePayload).toEqual({});
     expect(runTaskPayload.taskFilePath).toBe('a.md');
+    expect(runTaskPayload.allRemaining).toBe(true);
     expect(saveTaskPayload.title).toBe('A');
     expect(cancelStreamPayload).toEqual({});
   });

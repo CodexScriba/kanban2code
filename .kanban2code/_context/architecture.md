@@ -16,6 +16,21 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task12.1-e2e-integration-and-hardening`
+  - files-updated:
+    - `package.json` (added/confirmed `test:e2e` and `typecheck` scripts for DoD command coverage)
+    - `src/services/task-generator.ts` (moved proposal parsing import to shared parser module)
+    - `src/webview/messaging.ts` (typed protocol schemas used by chat-flow and messaging contract tests)
+    - `src/webview/ui/components/ChatMessage.tsx` (uses shared task proposal extraction path)
+    - `tests/e2e/chat-flow.test.ts` (updated to exercise real `useChat` transitions)
+  - new-files-created:
+    - `src/shared/task-proposal-parser.ts` - Shared YAML/JSON task proposal parser reused by generator and webview chat rendering
+    - `tests/e2e/chat-flow.test.ts` - End-to-end chat protocol and streaming lifecycle tests
+    - `tests/e2e/terminal-executor.test.ts` - E2E terminal execution seam tests with command quoting/terminal reuse coverage
+    - `tests/integration/skill-selector.test.ts` - Integration tests for malformed skills, empty directory handling, and trigger-cap behavior
+    - `tests/integration/workspace-snapshot.test.ts` - Integration tests for corrupted config fallback, mixed task parsing, concurrency, and invalid-root errors
+
+- date: 2026-02-26
   - task: `task7.1-terminal-executor`
   - files-updated: none
   - new-files-created:

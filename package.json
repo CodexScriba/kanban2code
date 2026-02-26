@@ -84,7 +84,9 @@
     "compile": "bun run build.ts",
     "watch": "bun run build.ts --watch",
     "package": "bun run build.ts --production",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "fast-glob": "^3.3.3",

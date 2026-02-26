@@ -1,8 +1,10 @@
 import { z } from 'zod';
-import type { ChatMessage } from '../types/orchestrator';
+import type { Agent, ContextFile, SkillFile } from '../services/context';
+import type { ProviderConfigFile } from '../services/provider-service';
+import type { Kanban2CodeConfig } from '../types/config';
 import { ProviderConfigSchema, type ProviderConfig } from '../types/provider';
 import type { WorkspaceSnapshot } from '../types/snapshot';
-import type { Stage } from '../types/task';
+import type { Stage, Task } from '../types/task';
 
 export const MESSAGE_VERSION = 2 as const;
 
@@ -16,20 +18,26 @@ const TaskCountsSchema = z.object({
   completed: z.number().int().nonnegative(),
 }).strict();
 
+const TaskSchema = z.custom<Task>();
+const AgentSchema = z.custom<Agent>();
+const ContextSchema = z.custom<ContextFile>();
+const SkillSchema = z.custom<SkillFile>();
+const ProviderFileSchema = z.custom<ProviderConfigFile>();
+
 // Workspace snapshots are large and evolve over time. Validate required protocol shape and counts.
 export const WorkspaceSnapshotSchema: z.ZodType<WorkspaceSnapshot> = z.object({
-  config: z.unknown(),
+  config: z.custom<Kanban2CodeConfig>(),
   tasks: z.object({
-    inbox: z.array(z.unknown()),
-    plan: z.array(z.unknown()),
-    code: z.array(z.unknown()),
-    audit: z.array(z.unknown()),
-    completed: z.array(z.unknown()),
+    inbox: z.array(TaskSchema),
+    plan: z.array(TaskSchema),
+    code: z.array(TaskSchema),
+    audit: z.array(TaskSchema),
+    completed: z.array(TaskSchema),
   }).strict(),
-  agents: z.array(z.unknown()),
-  contexts: z.array(z.unknown()),
-  skills: z.array(z.unknown()),
-  providers: z.array(z.unknown()),
+  agents: z.array(AgentSchema),
+  contexts: z.array(ContextSchema),
+  skills: z.array(SkillSchema),
+  providers: z.array(ProviderFileSchema),
   metadata: z.object({
     taskCounts: TaskCountsSchema,
     totalTasks: z.number().int().nonnegative(),
@@ -40,7 +48,7 @@ export const WorkspaceSnapshotSchema: z.ZodType<WorkspaceSnapshot> = z.object({
   }).strict(),
 }).strict();
 
-export const ChatMessageSchema: z.ZodType<ChatMessage> = z.object({
+export const ChatMessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant']),
   content: z.string(),
 }).strict();
@@ -81,7 +89,9 @@ export type ErrorPayload = z.infer<typeof ErrorPayloadSchema>;
 export const RequestStatePayloadSchema = z.object({}).strict();
 export type RequestStatePayload = z.infer<typeof RequestStatePayloadSchema>;
 
-export const SendMessagePayloadSchema = ChatMessageSchema;
+export const SendMessagePayloadSchema = ChatMessageSchema.extend({
+  providerId: z.string().min(1).optional(),
+}).strict();
 export type SendMessagePayload = z.infer<typeof SendMessagePayloadSchema>;
 
 export const GenerateTaskPayloadSchema = z.object({
@@ -99,6 +109,7 @@ export type GenerateTaskPayload = z.infer<typeof GenerateTaskPayloadSchema>;
 
 export const RunTaskPayloadSchema = z.object({
   taskFilePath: z.string(),
+  allRemaining: z.boolean().optional(),
 }).strict();
 export type RunTaskPayload = z.infer<typeof RunTaskPayloadSchema>;
 
@@ -157,11 +168,15 @@ export type MessagePayloadMap = {
   CancelStream: CancelStreamPayload;
 };
 
-export type MessageEnvelope<TType extends MessageType = MessageType> = {
+export type MessageEnvelope<TType extends MessageType> = {
   version: typeof MESSAGE_VERSION;
   type: TType;
   payload: MessagePayloadMap[TType];
 };
+
+export type AnyMessageEnvelope = {
+  [TType in MessageType]: MessageEnvelope<TType>;
+}[MessageType];
 
 const InitStateEnvelopeSchema = z.object({
   version: z.literal(MESSAGE_VERSION),
@@ -261,15 +276,13 @@ export function createEnvelope<TType extends MessageType>(
   };
 }
 
-export function validateEnvelope<TType extends MessageType = MessageType>(
-  data: unknown,
-): MessageEnvelope<TType> {
+export function validateEnvelope(data: unknown): AnyMessageEnvelope {
   const result = EnvelopeSchema.safeParse(data);
   if (!result.success) {
     throw new Error(`Invalid message envelope: ${result.error.message}`);
   }
 
-  return result.data as MessageEnvelope<TType>;
+  return result.data as AnyMessageEnvelope;
 }
 
 export type { Stage };

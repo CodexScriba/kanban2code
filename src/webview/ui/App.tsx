@@ -48,7 +48,9 @@ export const App: React.FC<AppProps> = ({ vscode }) => {
             setProviders(envelope.payload.workspaceSnapshot.providers);
             if (envelope.payload.activeProvider) {
               const selected = envelope.payload.workspaceSnapshot.providers.find(
-                (provider) => provider.config?.model === envelope.payload.activeProvider?.model,
+                (provider) =>
+                  provider.config?.cli === envelope.payload.activeProvider?.cli
+                  && provider.config?.model === envelope.payload.activeProvider?.model,
               );
               if (selected) setSelectedProvider(selected.id);
             }
@@ -109,8 +111,8 @@ export const App: React.FC<AppProps> = ({ vscode }) => {
     }));
   };
 
-  const handleRunTask = (task: Task) => {
-    vscode?.postMessage(createEnvelope('RunTask', { taskFilePath: task.filePath }));
+  const handleRunTask = (task: Task, allRemaining: boolean) => {
+    vscode?.postMessage(createEnvelope('RunTask', { taskFilePath: task.filePath, allRemaining }));
   };
 
   const handleSaveTask = (payload: TaskEditorSavePayload) => {
@@ -139,13 +141,13 @@ export const App: React.FC<AppProps> = ({ vscode }) => {
         isStreaming={chat.isStreaming}
         error={chat.error}
         onProviderChange={setSelectedProvider}
-        onSend={chat.sendMessage}
+        onSend={(message) => chat.sendMessage(message, selectedProvider || undefined)}
         onCancel={chat.cancelStream}
         onGenerateTask={handleGenerateTask}
       />
       <BoardPanel
         snapshot={snapshot}
-        onRunTask={(task) => handleRunTask(task)}
+        onRunTask={(task, allRemaining) => handleRunTask(task, allRemaining)}
         onEditTask={(task) => {
           setEditorTask(task);
           setIsEditorOpen(true);

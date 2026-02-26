@@ -10,7 +10,7 @@ export interface UseChatResult {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, providerId?: string) => void;
   cancelStream: () => void;
   handleStreamChunk: (token: string) => void;
   handleMessageComplete: () => void;
@@ -22,14 +22,20 @@ export function useChat(vscode?: VsCodePoster): UseChatResult {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sendMessage = useCallback((text: string) => {
+  const sendMessage = useCallback((text: string, providerId?: string) => {
     const trimmed = text.trim();
     if (!trimmed || isStreaming) return;
 
     setError(null);
     setMessages((prev) => [...prev, { role: 'user', content: trimmed }, { role: 'assistant', content: '' }]);
     setIsStreaming(true);
-    vscode?.postMessage(createEnvelope('SendMessage', { role: 'user', content: trimmed }));
+    vscode?.postMessage(
+      createEnvelope('SendMessage', {
+        role: 'user',
+        content: trimmed,
+        providerId: providerId?.trim() || undefined,
+      }),
+    );
   }, [isStreaming, vscode]);
 
   const cancelStream = useCallback(() => {

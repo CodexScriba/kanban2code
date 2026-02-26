@@ -1,86 +1,106 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createEnvelope,
   MESSAGE_VERSION,
   validateEnvelope,
-  type MessageEnvelope,
-  type MessageType,
 } from '../../src/webview/messaging';
+import type { UseChatResult, VsCodePoster } from '../../src/webview/ui/hooks/useChat';
 
-interface ChatState {
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
-  isStreaming: boolean;
-  error: string | null;
-}
+type StateUpdater<T> = T | ((previous: T) => T);
 
-function createInitialState(): ChatState {
+function createReactHookRuntime() {
+  const slots: unknown[] = [];
+  let cursor = 0;
+
   return {
-    messages: [],
-    isStreaming: false,
-    error: null,
+    beginRender() {
+      cursor = 0;
+    },
+    useState<T>(initial: T): [T, (value: StateUpdater<T>) => void] {
+      const index = cursor++;
+      if (!(index in slots)) {
+        slots[index] = initial;
+      }
+
+      const setState = (value: StateUpdater<T>): void => {
+        const previous = slots[index] as T;
+        slots[index] = typeof value === 'function' ? (value as (previous: T) => T)(previous) : value;
+      };
+
+      return [slots[index] as T, setState];
+    },
+    useCallback<T extends (...args: unknown[]) => unknown>(fn: T): T {
+      return fn;
+    },
   };
 }
 
-function applyHostEnvelope(state: ChatState, envelope: MessageEnvelope<MessageType>): ChatState {
-  if (envelope.type === 'StreamChunk') {
-    const token = envelope.payload.token;
-    const nextMessages = [...state.messages];
-    const last = nextMessages[nextMessages.length - 1];
+async function createUseChatHarness(): Promise<{
+  render: () => UseChatResult;
+  postMessage: ReturnType<typeof vi.fn>;
+}> {
+  vi.resetModules();
+  const runtime = createReactHookRuntime();
 
-    if (last?.role === 'assistant') {
-      nextMessages[nextMessages.length - 1] = { ...last, content: `${last.content}${token}` };
-    } else {
-      nextMessages.push({ role: 'assistant', content: token });
-    }
-
+  vi.doMock('react', async () => {
+    const actual = await vi.importActual<typeof import('react')>('react');
     return {
-      ...state,
-      messages: nextMessages,
+      ...actual,
+      useState: runtime.useState,
+      useCallback: runtime.useCallback,
     };
-  }
+  });
 
-  if (envelope.type === 'MessageComplete') {
-    return {
-      ...state,
-      isStreaming: false,
-    };
-  }
+  const { useChat } = await import('../../src/webview/ui/hooks/useChat');
+  const postMessage = vi.fn();
+  const vscode: VsCodePoster = { postMessage };
 
-  if (envelope.type === 'Error') {
-    return {
-      ...state,
-      isStreaming: false,
-      error: envelope.payload.message,
-    };
-  }
-
-  return state;
+  return {
+    render: () => {
+      runtime.beginRender();
+      return useChat(vscode);
+    },
+    postMessage,
+  };
 }
 
 describe('E2E: chat flow protocol and streaming lifecycle', () => {
-  it('supports SendMessage -> StreamChunk -> MessageComplete with valid envelopes', () => {
-    let state = createInitialState();
+  afterEach(() => {
+    vi.doUnmock('react');
+    vi.resetModules();
+  });
 
-    const outbound = createEnvelope('SendMessage', { role: 'user', content: 'Generate task please' });
+  it('supports SendMessage -> StreamChunk -> MessageComplete with real useChat transitions', async () => {
+    const { render, postMessage } = await createUseChatHarness();
+    let state = render();
+
+    state.sendMessage('  Generate task please  ', 'codex');
+    state = render();
+
+    const outbound = createEnvelope('SendMessage', {
+      role: 'user',
+      content: 'Generate task please',
+      providerId: 'codex',
+    });
     const validatedOutbound = validateEnvelope(outbound);
 
     expect(validatedOutbound.version).toBe(MESSAGE_VERSION);
     expect(validatedOutbound.type).toBe('SendMessage');
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(postMessage).toHaveBeenCalledWith(outbound);
+    expect(state.messages).toEqual([
+      { role: 'user', content: 'Generate task please' },
+      { role: 'assistant', content: '' },
+    ]);
+    expect(state.isStreaming).toBe(true);
+    expect(state.error).toBeNull();
 
-    state = {
-      ...state,
-      error: null,
-      isStreaming: true,
-      messages: [
-        { role: 'user', content: 'Generate task please' },
-        { role: 'assistant', content: '' },
-      ],
-    };
-
-    const chunk1 = validateEnvelope(createEnvelope('StreamChunk', { token: 'Drafting ' }));
-    const chunk2 = validateEnvelope(createEnvelope('StreamChunk', { token: 'task now.' }));
-    state = applyHostEnvelope(state, chunk1);
-    state = applyHostEnvelope(state, chunk2);
+    const chunk1 = validateEnvelope(createEnvelope('StreamChunk', { token: 'Drafting ' })).payload.token;
+    const chunk2 = validateEnvelope(createEnvelope('StreamChunk', { token: 'task now.' })).payload.token;
+    state.handleStreamChunk(chunk1);
+    state = render();
+    state.handleStreamChunk(chunk2);
+    state = render();
 
     expect(state.messages[state.messages.length - 1]).toEqual({
       role: 'assistant',
@@ -88,32 +108,31 @@ describe('E2E: chat flow protocol and streaming lifecycle', () => {
     });
     expect(state.isStreaming).toBe(true);
 
-    state = applyHostEnvelope(state, validateEnvelope(createEnvelope('MessageComplete', {})));
+    state.handleMessageComplete();
+    state = render();
     expect(state.isStreaming).toBe(false);
     expect(state.error).toBeNull();
   });
 
-  it('handles CancelStream mid-stream and remains consistent when late chunks arrive', () => {
-    let state: ChatState = {
-      messages: [
-        { role: 'user', content: 'Long response please' },
-        { role: 'assistant', content: '' },
-      ],
-      isStreaming: true,
-      error: null,
-    };
+  it('handles CancelStream mid-stream and remains consistent when late chunks arrive', async () => {
+    const { render, postMessage } = await createUseChatHarness();
+    let state = render();
+    state.sendMessage('Long response please');
+    state = render();
 
     const cancel = validateEnvelope(createEnvelope('CancelStream', {}));
     expect(cancel.version).toBe(MESSAGE_VERSION);
     expect(cancel.type).toBe('CancelStream');
+    expect(state.isStreaming).toBe(true);
 
-    state = {
-      ...state,
-      isStreaming: false,
-    };
+    state.cancelStream();
+    state = render();
+    expect(postMessage).toHaveBeenLastCalledWith(cancel);
+    expect(state.isStreaming).toBe(false);
 
-    // Simulate an in-flight token delivered after cancellation.
-    state = applyHostEnvelope(state, validateEnvelope(createEnvelope('StreamChunk', { token: 'partial' })));
+    const lateChunk = validateEnvelope(createEnvelope('StreamChunk', { token: 'partial' })).payload.token;
+    state.handleStreamChunk(lateChunk);
+    state = render();
 
     expect(state.messages[state.messages.length - 1]).toEqual({ role: 'assistant', content: 'partial' });
     expect(state.isStreaming).toBe(false);

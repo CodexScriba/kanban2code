@@ -1,5 +1,5 @@
 import React from 'react';
-import { parseTaskProposal } from '../../../services/task-generator';
+import { parseTaskProposal } from '../../../shared/task-proposal-parser';
 import type { ChatMessage as ChatMessageModel } from '../../../types/orchestrator';
 import type { TaskProposal } from '../../../types/task-proposal';
 import { TaskProposalCard } from './TaskProposalCard';

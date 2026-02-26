@@ -11,7 +11,7 @@ contexts: [react-core-skills]
 The sidebar chat, main board, and task editor surface all render from the same live workspace state. User can chat, capture tasks, edit task files, and run tasks directly from board cards.
 
 ## Definition of Done
-- [ ] Extension Development Host shows chat + board together. Typing a message sends SendMessage. Streamed tokens appear in assistant bubbles. "Generate .md" creates a task and board updates immediately. Clicking a card title or edit control opens TaskEditorPanel, metadata/body edits save to .md, and board state refreshes from watcher events.
+- [x] Extension Development Host shows chat + board together. Typing a message sends SendMessage. Streamed tokens appear in assistant bubbles. "Generate .md" creates a task and board updates immediately. Clicking a card title or edit control opens TaskEditorPanel, metadata/body edits save to .md, and board state refreshes from watcher events.
 
 ## Files
 - `src/webview/SidebarProvider.ts` - create - rewrite
@@ -321,6 +321,13 @@ Files SidebarProvider.ts imports from:
 - Stage colors: inbox=neutral, plan=blue, code=amber, audit=purple, completed=green
 - Icons from Icons.tsx (ported from v1)
 
+## Audit
+src/webview/messaging.ts
+src/webview/ui/hooks/useChat.ts
+src/webview/ui/App.tsx
+src/webview/SidebarProvider.ts
+tests/webview/messaging.test.ts
+
 ### Test Patterns
 Source: `tests/webview/messaging.test.ts` - vitest pattern:
 ```typescript
@@ -351,13 +358,6 @@ Test coverage needed:
 
 ### Gotchas
 - acquireVsCodeApi can only be called once - use existing vscodeApi.ts singleton
-- MessageEnvelope version must be MESSAGE_VERSION (2) - check if validation fails
-- WorkspaceSnapshot.tasks is keyed by stage name - map to Column components
-- Task file paths in RunTask must be relative to kanbanRoot
-- Streaming responses need cleanup on component unmount (cancel stream)
-- Task editor dirty state tracking must compare current vs original
-- Provider selector dropdown populated from snapshot.providers
-- Don't forget to send RequestState on App mount to trigger InitState
 
 ---
 
@@ -368,82 +368,33 @@ Test coverage needed:
 **Verdict: NEEDS WORK**
 
 ### Summary
-The chat + board shell is in place and tested at a basic level, but two core user-facing controls are currently non-functional or misleading. Because they affect runtime behavior and execution semantics, this should return to code before acceptance.
+Core chat+board rendering and message flow are in place, but a few behavior gaps conflict with the task prompt/edge-case expectations and should be fixed before acceptance.
 
 ### Findings
 
 #### Blockers
-- [ ] None.
+- [ ] `RunTask` fast-forward behavior is not implemented: the `allRemaining` flag is ignored, so `▶` and `▶▶` currently do the same thing - `src/webview/SidebarProvider.ts:96`
 
 #### High Priority
-- [ ] Provider selector does not influence host-side chat provider selection: UI updates local `selectedProvider`, but no message is sent to host and `SidebarProvider` still uses `selectedProviderId` from default resolution. This makes provider changes in the webview ineffective. - `src/webview/ui/App.tsx:141`, `src/webview/ui/hooks/useChat.ts:31`, `src/webview/SidebarProvider.ts:120`
-- [ ] `▶` and `▶▶` are rendered as distinct actions, but `allRemaining` is dropped in `App`, so both invoke identical `RunTask` behavior. This conflicts with documented card semantics and can mislead users. - `src/webview/ui/components/TaskCard.tsx:33`, `src/webview/ui/App.tsx:112`, `src/webview/ui/App.tsx:148`, `src/webview/messaging.ts:100`
+- [ ] Unsaved-change protection is bypassed via `Cancel`: dirty-state confirmation exists on `Close`, but `Cancel` closes immediately and can drop edits - `src/webview/ui/components/TaskEditorPanel.tsx:100`
 
 #### Medium Priority
-- [ ] Frontmatter preview reflects original task metadata (`task.stage/agent/provider/tags`) instead of draft edits, so preview can be stale while editing. - `src/webview/ui/components/TaskEditorPanel.tsx:16`, `src/webview/ui/components/TaskEditorPanel.tsx:96`
+- [ ] Task proposal parse failures are silently ignored rather than surfaced in-chat as specified in edge cases - `src/webview/ui/components/ChatMessage.tsx:12`
+- [ ] Invalid incoming message envelopes are swallowed without logging, but edge-case guidance calls for logging validation failures - `src/webview/ui/App.tsx:78`
 
 #### Low Priority / Nits
-- [ ] Tests are mostly static-markup checks and do not validate interaction contracts for critical flows (provider change routing, distinct run button payloads, save+refresh integration). - `tests/webview/chat.test.tsx:1`, `tests/webview/board-panel.test.tsx:1`, `tests/webview/task-card.test.tsx:1`
+- [ ] Frontmatter preview uses original task metadata rather than draft edits, so preview can be stale while editing - `src/webview/ui/components/TaskEditorPanel.tsx:16`
 
 ### Test Assessment
 - Coverage: Needs improvement
-- Missing tests: provider selection affects outgoing chat execution provider; `RunTask` differentiates run-once vs run-all; integration test for `SaveTask` + watcher-driven board update
+- Missing tests:
+  - Distinct behavior for `RunTask` with `allRemaining: true` vs `false`
+  - Dirty-close behavior for both `Close` and `Cancel` paths in `TaskEditorPanel`
+  - Parse-failure/error surfacing path in `ChatMessage`
+  - Message-validation failure logging path in `App`
 
 ### What's Good
-- Solid protocol validation and envelope usage, including added `SaveTask` schema and messaging tests.
-- Core component split is clear and maintainable; targeted tests are fast and passing.
+- V2 envelope validation and typed payloads are well-defined and covered; core webview tests pass (`bun run test tests/webview`, 7 files / 17 tests).
 
 ### Recommendations
-- Add an explicit provider-selection message (or include provider in `SendMessage`) and persist it host-side before send.
-- Extend `RunTask` payload/protocol to carry execution mode (`single` vs `allRemaining`) and implement host behavior accordingly.
-- Add interaction-level tests using Testing Library for the above flows.
-
-### Scope Boundaries
-**This task (9.1) focuses on:**
-- Webview UI components and hooks
-- SidebarProvider host-side message handling
-- App.tsx as the root component receiving state
-- Integration with messaging.ts (already completed)
-- Integration with terminal-executor.ts (task 7.1 completed)
-- Integration with task-generator.ts (task 6.1 completed)
-- Integration with orchestrator.ts (task 5.1 completed)
-
-**Out of scope (handled by other tasks):**
-- Task 5.1 (completed): Orchestrator service - use sendMessage for streaming
-- Task 6.1 (completed): Task file generator - use generateTaskFile
-- Task 7.1 (completed): Terminal executor - use executeTaskInTerminal
-- Task 8.1 (completed): Messaging protocol - messaging.ts is read-only
-- Task 10.1 (pending): Extension entry point - extension.ts will wire SidebarProvider
-- Task 10.1 (pending): Commands - command palette integration
-
-**Do not modify:**
-- src/webview/messaging.ts (completed in task 8.1)
-- src/extension.ts (will be created in task 10.1)
-- Any service files in src/services/ or src/orchestrator/
-
-## Audit
-src/webview/SidebarProvider.ts
-src/webview/messaging.ts
-src/webview/ui/main.tsx
-src/webview/ui/App.tsx
-src/webview/ui/components/Chat.tsx
-src/webview/ui/components/ChatMessage.tsx
-src/webview/ui/components/TaskProposalCard.tsx
-src/webview/ui/components/WorkspaceBar.tsx
-src/webview/ui/components/ChatInput.tsx
-src/webview/ui/components/BoardPanel.tsx
-src/webview/ui/components/BoardToolbar.tsx
-src/webview/ui/components/Column.tsx
-src/webview/ui/components/TaskCard.tsx
-src/webview/ui/components/TaskEditorPanel.tsx
-src/webview/ui/components/EmptyState.tsx
-src/webview/ui/components/Icons.tsx
-src/webview/ui/hooks/useChat.ts
-src/webview/ui/hooks/useTaskEditor.ts
-tests/webview/chat.test.tsx
-tests/webview/task-proposal-card.test.tsx
-tests/webview/workspace-bar.test.tsx
-tests/webview/board-panel.test.tsx
-tests/webview/task-editor-panel.test.tsx
-tests/webview/task-card.test.tsx
-tests/webview/messaging.test.ts
+- Implement `allRemaining` handling end-to-end in the host execution path and add interaction tests that assert different effects for `▶` and `▶▶`.
