@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 agent: auditor
 tags: [feature, p1]
 contexts: []
@@ -280,3 +280,38 @@ The terminal executor implementation is close and the current tests pass, but th
 
 ### Recommendations
 - Fix prompt root usage (`buildXMLPrompt(task, kanbanRoot)`), then add targeted tests for root separation and the remaining error branches.
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+The implementation now satisfies the task requirements end-to-end, including correct `kanbanRoot` vs `workspaceRoot` separation, terminal execution behavior, and user-facing error handling. Test coverage for the required branches is present and passing.
+
+### Findings
+
+#### Blockers
+- [ ] None.
+
+#### High Priority
+- [ ] None.
+
+#### Medium Priority
+- [ ] None.
+
+#### Low Priority / Nits
+- [ ] None.
+
+### Test Assessment
+- Coverage: Adequate
+- Missing tests: None for the defined scope
+
+### What&apos;s Good
+- The service cleanly composes task lookup, provider resolution, prompt generation, adapter command building, shell-safe command formatting, terminal reuse, and visible error reporting.
+
+### Recommendations
+- Keep an eye on terminal naming conventions if future tasks require the `"[task title] — [stage]"` format globally.

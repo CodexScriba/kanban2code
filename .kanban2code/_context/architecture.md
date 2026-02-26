@@ -16,6 +16,13 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task7.1-terminal-executor`
+  - files-updated: none
+  - new-files-created:
+    - `src/services/terminal-executor.ts` - Service that resolves task/provider context, builds CLI command text, and executes it in a named VS Code terminal
+    - `tests/terminal-executor.test.ts` - Unit tests covering command formatting, terminal reuse, prompt-size warning, and user-facing error paths
+
+- date: 2026-02-26
   - task: `task13.1-dogfooding-and-iteration`
   - files-updated:
     - `.kanban2code/projects/roadmap/task13.1-dogfooding-and-iteration.md` (captured dogfooding execution log, hardening checklist validation, and auditor review)
