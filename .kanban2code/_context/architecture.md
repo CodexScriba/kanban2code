@@ -16,6 +16,17 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task5.1-orchestrator-service`
+  - files-updated: none
+  - new-files-created:
+    - `src/orchestrator/orchestrator.ts` - Main stateless orchestrator service that resolves provider config, builds system prompt context, and streams model tokens
+    - `src/orchestrator/anthropic-client.ts` - Anthropic HTTP streaming client for `content_block_delta` SSE token extraction
+    - `src/orchestrator/openai-client.ts` - OpenAI HTTP streaming client for chat completion delta token extraction
+    - `src/orchestrator/system-prompt-builder.ts` - Workspace-aware system prompt builder with task/skill summaries and optional agent/custom prompt sections
+    - `src/types/orchestrator.ts` - Shared orchestrator call/message types for provider calls and context injection
+    - `tests/orchestrator.test.ts` - Unit tests covering system prompt content and Anthropic stream/error behavior
+
+- date: 2026-02-26
   - task: `task4.1-skill-auto-selector`
   - files-updated: none
   - new-files-created:
