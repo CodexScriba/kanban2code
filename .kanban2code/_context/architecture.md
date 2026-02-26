@@ -16,6 +16,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task3.1-workspace-snapshot-service`
+  - files-updated: none
+  - new-files-created:
+    - `src/types/snapshot.ts` - Defines `WorkspaceSnapshot` types including stage-grouped tasks and metadata counts
+    - `src/services/workspace-snapshot.ts` - Builds aggregate workspace snapshot from config, tasks, agents, contexts, skills, and providers
+    - `tests/workspace-snapshot.test.ts` - Unit tests for populated workspace snapshot, empty workspace defaults, and invalid-root errors
+
+- date: 2026-02-26
   - task: `task2.1-port-runner`
   - files-updated: none
   - new-files-created:
