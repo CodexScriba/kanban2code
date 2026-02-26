@@ -102,6 +102,21 @@ export const RunTaskPayloadSchema = z.object({
 }).strict();
 export type RunTaskPayload = z.infer<typeof RunTaskPayloadSchema>;
 
+export const SaveTaskPayloadSchema = z.object({
+  taskFilePath: z.string(),
+  title: z.string().min(1),
+  stage: StageSchema,
+  content: z.string(),
+  agent: z.string().optional(),
+  provider: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  contexts: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  project: z.string().optional(),
+  phase: z.string().optional(),
+}).strict();
+export type SaveTaskPayload = z.infer<typeof SaveTaskPayloadSchema>;
+
 export const CancelStreamPayloadSchema = z.object({}).strict();
 export type CancelStreamPayload = z.infer<typeof CancelStreamPayloadSchema>;
 
@@ -119,6 +134,7 @@ export const WebviewToHostMessageTypes = [
   'SendMessage',
   'GenerateTask',
   'RunTask',
+  'SaveTask',
   'CancelStream',
 ] as const;
 
@@ -137,6 +153,7 @@ export type MessagePayloadMap = {
   SendMessage: SendMessagePayload;
   GenerateTask: GenerateTaskPayload;
   RunTask: RunTaskPayload;
+  SaveTask: SaveTaskPayload;
   CancelStream: CancelStreamPayload;
 };
 
@@ -206,6 +223,12 @@ const RunTaskEnvelopeSchema = z.object({
   payload: RunTaskPayloadSchema,
 }).strict();
 
+const SaveTaskEnvelopeSchema = z.object({
+  version: z.literal(MESSAGE_VERSION),
+  type: z.literal('SaveTask'),
+  payload: SaveTaskPayloadSchema,
+}).strict();
+
 const CancelStreamEnvelopeSchema = z.object({
   version: z.literal(MESSAGE_VERSION),
   type: z.literal('CancelStream'),
@@ -223,6 +246,7 @@ export const EnvelopeSchema = z.discriminatedUnion('type', [
   SendMessageEnvelopeSchema,
   GenerateTaskEnvelopeSchema,
   RunTaskEnvelopeSchema,
+  SaveTaskEnvelopeSchema,
   CancelStreamEnvelopeSchema,
 ]);
 

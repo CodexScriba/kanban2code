@@ -16,6 +16,19 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task11.1-minimax-adapter-provider-expansion`
+  - files-updated:
+    - `src/runner/adapter-factory.ts` (registered `minimax` adapter case)
+    - `src/orchestrator/openai-client.ts` (added configurable OpenAI-compatible base URL and provider label)
+    - `src/orchestrator/orchestrator.ts` (routes MiniMax providers to `https://api.minimax.chat` via OpenAI-compatible stream client)
+    - `src/assets/providers.ts` (regenerated bundled providers to include `minimax.md`)
+    - `tests/orchestrator.test.ts` (added coverage for MiniMax endpoint routing)
+  - new-files-created:
+    - `.kanban2code/_providers/minimax.md` - Provider configuration for MiniMax CLI using the Kimi K2 model profile
+    - `src/runner/adapters/minimax-adapter.ts` - MiniMax CLI adapter implementing flag-based prompt execution and response parsing
+    - `tests/minimax-adapter.test.ts` - Unit tests for MiniMax adapter command construction, parsing behavior, and factory resolution
+
+- date: 2026-02-26
   - task: `task8.1-new-messaging-protocol`
   - files-updated: none
   - new-files-created:

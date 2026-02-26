@@ -7,6 +7,7 @@ import {
   type MessagePayloadMap,
   type RequestStatePayload,
   type RunTaskPayload,
+  type SaveTaskPayload,
   type SendMessagePayload,
   type StreamChunkPayload,
   type TaskGeneratedPayload,
@@ -88,6 +89,12 @@ describe('webview messaging protocol v2', () => {
       RunTask: {
         taskFilePath: '.kanban2code/projects/demo/task.md',
       },
+      SaveTask: {
+        taskFilePath: '.kanban2code/projects/demo/task.md',
+        title: 'Updated Demo Task',
+        stage: 'code',
+        content: '# Updated',
+      },
       CancelStream: {},
     };
 
@@ -165,6 +172,12 @@ describe('webview messaging protocol v2', () => {
     const errorPayload: ErrorPayload = { message: 'error' };
     const requestStatePayload: RequestStatePayload = {};
     const runTaskPayload: RunTaskPayload = { taskFilePath: 'a.md' };
+    const saveTaskPayload: SaveTaskPayload = {
+      taskFilePath: 'a.md',
+      title: 'A',
+      stage: 'plan',
+      content: '# A',
+    };
     const cancelStreamPayload: CancelStreamPayload = {};
 
     expect(initStatePayload.kanbanRootExists).toBe(true);
@@ -174,6 +187,7 @@ describe('webview messaging protocol v2', () => {
     expect(errorPayload.message).toBe('error');
     expect(requestStatePayload).toEqual({});
     expect(runTaskPayload.taskFilePath).toBe('a.md');
+    expect(saveTaskPayload.title).toBe('A');
     expect(cancelStreamPayload).toEqual({});
   });
 });

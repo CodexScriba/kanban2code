@@ -8,6 +8,10 @@ import { streamOpenAIMessages } from './openai-client';
 import { buildOrchestratorSystemPrompt } from './system-prompt-builder';
 
 type ProviderFamily = 'anthropic' | 'openai';
+interface OpenAICompatSettings {
+  apiBaseUrl?: string;
+  providerLabel: string;
+}
 
 function inferProviderFamily(config: ProviderConfig): ProviderFamily {
   const providerHint = (config.provider || '').toLowerCase();
@@ -19,7 +23,9 @@ function inferProviderFamily(config: ProviderConfig): ProviderFamily {
 
   if (
     providerHint.includes('openai') ||
+    providerHint.includes('minimax') ||
     cliHint.includes('openai') ||
+    cliHint.includes('minimax') ||
     cliHint.includes('gpt') ||
     cliHint.includes('codex')
   ) {
@@ -29,6 +35,22 @@ function inferProviderFamily(config: ProviderConfig): ProviderFamily {
   throw new Error(
     `Unknown provider '${config.provider ?? config.cli}'. Supported providers: anthropic, openai.`,
   );
+}
+
+function resolveOpenAICompatSettings(config: ProviderConfig): OpenAICompatSettings {
+  const providerHint = (config.provider || '').toLowerCase();
+  const cliHint = config.cli.toLowerCase();
+
+  if (providerHint.includes('minimax') || cliHint.includes('minimax')) {
+    return {
+      apiBaseUrl: 'https://api.minimax.chat',
+      providerLabel: 'MiniMax',
+    };
+  }
+
+  return {
+    providerLabel: 'OpenAI',
+  };
 }
 
 function resolveApiKey(family: ProviderFamily, override?: string): string {
@@ -93,6 +115,8 @@ export async function* sendMessage(options: OrchestratorCallOptions): AsyncItera
       return;
     }
 
+    const openAICompat = resolveOpenAICompatSettings(providerConfig);
+
     yield* streamOpenAIMessages({
       apiKey,
       model: providerConfig.model,
@@ -100,6 +124,8 @@ export async function* sendMessage(options: OrchestratorCallOptions): AsyncItera
       systemPrompt,
       temperature: options.temperature,
       maxTokens: options.maxTokens,
+      apiBaseUrl: openAICompat.apiBaseUrl,
+      providerLabel: openAICompat.providerLabel,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown orchestrator error';

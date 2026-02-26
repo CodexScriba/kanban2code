@@ -7,6 +7,8 @@ export interface OpenAIStreamOptions {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  apiBaseUrl?: string;
+  providerLabel?: string;
 }
 
 function toOpenAIMessages(messages: ChatMessage[], systemPrompt?: string): Array<{ role: string; content: string }> {
@@ -63,7 +65,11 @@ async function* readJsonStream(response: Response): AsyncIterable<string> {
 }
 
 export async function* streamOpenAIMessages(options: OpenAIStreamOptions): AsyncIterable<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const apiBaseUrl = options.apiBaseUrl?.replace(/\/+$/, '') || 'https://api.openai.com';
+  const endpoint = `${apiBaseUrl}/v1/chat/completions`;
+  const providerLabel = options.providerLabel?.trim() || 'OpenAI';
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -83,7 +89,7 @@ export async function* streamOpenAIMessages(options: OpenAIStreamOptions): Async
     const retryAfter = response.headers.get('retry-after');
     const retryHint = retryAfter ? ` Retry-After: ${retryAfter}s.` : '';
     throw new Error(
-      `OpenAI API error ${response.status}${retryHint}${responseText ? ` ${responseText}` : ''}`,
+      `${providerLabel} API error ${response.status}${retryHint}${responseText ? ` ${responseText}` : ''}`,
     );
   }
 

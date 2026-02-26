@@ -1,6 +1,6 @@
 ---
-stage: code
-agent: coder
+stage: audit
+agent: auditor
 tags: [feature, p1]
 contexts: []
 ---

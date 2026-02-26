@@ -17,7 +17,11 @@
   ],
   "activationEvents": [
     "workspaceContains:.kanban2code",
-    "onView:kanban2code.sidebar"
+    "onView:kanban2code.sidebar",
+    "onCommand:kanban2code.createWorkspace",
+    "onCommand:kanban2code.runTask",
+    "onCommand:kanban2code.newTask",
+    "onCommand:kanban2code.openSettings"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -36,6 +40,40 @@
           "type": "webview",
           "id": "kanban2code.sidebar",
           "name": "Kanban2Code"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "kanban2code.createWorkspace",
+        "title": "Kanban2Code: Create Kanban Workspace"
+      },
+      {
+        "command": "kanban2code.runTask",
+        "title": "Kanban2Code: Run Task in Terminal"
+      },
+      {
+        "command": "kanban2code.newTask",
+        "title": "Kanban2Code: New Task (Chat)"
+      },
+      {
+        "command": "kanban2code.openSettings",
+        "title": "Kanban2Code: Open Settings"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "kanban2code.createWorkspace"
+        },
+        {
+          "command": "kanban2code.runTask"
+        },
+        {
+          "command": "kanban2code.newTask"
+        },
+        {
+          "command": "kanban2code.openSettings"
         }
       ]
     }

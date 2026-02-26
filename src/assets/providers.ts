@@ -8,6 +8,7 @@ export const BUNDLED_PROVIDERS: Record<string, string> = {
   "glm.md": "---\ncli: kilo\nsubcommand: run\nmodel: zai/glm-5\nunattended_flags:\n  - '--auto'\noutput_flags: []\nprompt_style: positional\nprovider: zai\n---\n",
   "haiku.md": "---\ncli: claude\nmodel: claude-haiku-4-5\nunattended_flags:\n  - '--dangerously-skip-permissions'\noutput_flags:\n  - '--output-format'\n  - json\nprompt_style: flag\nsafety:\n  max_turns: 20\n  max_budget_usd: 2\nprovider: anthropic\n---\n\n",
   "kimi.md": "---\ncli: kimi\nmodel: kimi-k2-thinking-turbo\nunattended_flags:\n  - '--print'\noutput_flags:\n  - '--quiet'\nprompt_style: flag\nprovider: moonshot\n---\n\n",
+  "minimax.md": "---\ncli: minimax\nmodel: kimi-k2-5\nunattended_flags:\n  - '--print'\noutput_flags:\n  - '--quiet'\nprompt_style: flag\nprovider: minimax\n---\n",
   "opus.md": "---\ncli: claude\nmodel: claude-opus-4-6\nunattended_flags:\n  - '--dangerously-skip-permissions'\noutput_flags:\n  - '--output-format'\n  - json\nprompt_style: flag\nsafety:\n  max_turns: 20\n  max_budget_usd: 5\nprovider: anthropic\n---\n\n",
   "sonnet.md": "---\ncli: claude\nmodel: claude-sonnet-4-5\nunattended_flags:\n  - '--dangerously-skip-permissions'\noutput_flags:\n  - '--output-format'\n  - json\nprompt_style: flag\nsafety:\n  max_turns: 20\n  max_budget_usd: 3\nprovider: anthropic\n---\n\n"
 } as const;

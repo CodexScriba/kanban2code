@@ -116,6 +116,7 @@ describe('sendMessage', () => {
 
   afterEach(() => {
     delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
   });
 
   test('streams Anthropic tokens and sends system prompt with task+skill summaries', async () => {
@@ -211,5 +212,47 @@ describe('sendMessage', () => {
     expect(tokens).toHaveLength(1);
     expect(tokens[0]).toContain('[ERROR: Anthropic API error 429');
     expect(tokens[0]).toContain('Retry-After: 10s.');
+  });
+
+  test('routes minimax providers through OpenAI-compatible stream with MiniMax endpoint', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      text: vi.fn(async () => ''),
+      body: streamFromChunks([
+        'data: {"choices":[{"delta":{"content":"Mini"}}]}\n',
+        'data: {"choices":[{"delta":{"content":"Max"}}]}\n',
+        'data: [DONE]\n',
+      ]),
+    } as Response);
+
+    const tokens = await collectTokens(
+      sendMessage({
+        kanbanRoot: '/unused',
+        provider: 'minimax',
+        providerConfig: {
+          cli: 'minimax',
+          model: 'kimi-k2-5',
+          unattended_flags: [],
+          output_flags: [],
+          prompt_style: 'flag',
+          provider: 'minimax',
+        },
+        messages: [{ role: 'user', content: 'Say hello' }],
+        workspaceSnapshot: createSnapshot(),
+        selectedSkills: [],
+      }),
+    );
+
+    expect(tokens).toEqual(['Mini', 'Max']);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.minimax.chat/v1/chat/completions');
   });
 });

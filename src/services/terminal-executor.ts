@@ -51,7 +51,7 @@ export async function executeTaskInTerminal(
       );
     }
 
-    const xmlPrompt = await buildXMLPrompt(task, workspaceRoot);
+    const xmlPrompt = await buildXMLPrompt(task, kanbanRoot);
     if (xmlPrompt.length > PROMPT_WARN_THRESHOLD) {
       console.warn(
         `Prompt for task "${task.id}" exceeds ${PROMPT_WARN_THRESHOLD} chars (${xmlPrompt.length}).`,

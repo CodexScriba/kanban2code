@@ -58,7 +58,10 @@ describe('terminal-executor', () => {
 
     expect(findTaskById).toHaveBeenCalledWith('/kanban', 'task-1');
     expect(resolveProviderConfig).toHaveBeenCalledWith('/kanban', 'opus');
-    expect(buildXMLPrompt).toHaveBeenCalled();
+    expect(buildXMLPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'task-1', title: 'Task Title' }),
+      '/kanban',
+    );
     expect(getAdapterForCli).toHaveBeenCalledWith('claude');
     expect((vscode.window as unknown as { createTerminal: Mock }).createTerminal).toHaveBeenCalledWith({
       name: 'Task Title',
@@ -105,6 +108,57 @@ describe('terminal-executor', () => {
     );
     expect(showError).toHaveBeenCalledWith(
       'Failed to execute task in terminal: Task not found: missing-task',
+    );
+  });
+
+  test('shows error when task has no provider configured', async () => {
+    (findTaskById as Mock).mockResolvedValue({
+      id: 'task-1',
+      filePath: '/repo/.kanban2code/inbox/task-1.md',
+      title: 'Task Title',
+      stage: 'code',
+      content: 'Body',
+    });
+    const showError = vscode.window.showErrorMessage as Mock;
+
+    await expect(executeTaskInTerminal('/kanban', 'task-1', '/workspace')).rejects.toThrow(
+      'No provider configured for task "Task Title". Configure a provider first.',
+    );
+    expect(showError).toHaveBeenCalledWith(
+      'Failed to execute task in terminal: No provider configured for task "Task Title". Configure a provider first.',
+    );
+  });
+
+  test('shows error when configured provider cannot be resolved', async () => {
+    (resolveProviderConfig as Mock).mockResolvedValue(undefined);
+    const showError = vscode.window.showErrorMessage as Mock;
+
+    await expect(executeTaskInTerminal('/kanban', 'task-1', '/workspace')).rejects.toThrow(
+      'Provider not found: opus. Configure a valid provider in .kanban2code/_providers.',
+    );
+    expect(showError).toHaveBeenCalledWith(
+      'Failed to execute task in terminal: Provider not found: opus. Configure a valid provider in .kanban2code/_providers.',
+    );
+  });
+
+  test('shows error when CLI adapter is unsupported', async () => {
+    (resolveProviderConfig as Mock).mockResolvedValue({
+      cli: 'unknown-cli',
+      model: 'm',
+      unattended_flags: [],
+      output_flags: [],
+      prompt_style: 'flag',
+    });
+    (getAdapterForCli as Mock).mockImplementation(() => {
+      throw new Error('Unsupported CLI adapter: unknown-cli');
+    });
+    const showError = vscode.window.showErrorMessage as Mock;
+
+    await expect(executeTaskInTerminal('/kanban', 'task-1', '/workspace')).rejects.toThrow(
+      'Unsupported CLI adapter: unknown-cli',
+    );
+    expect(showError).toHaveBeenCalledWith(
+      'Failed to execute task in terminal: Unsupported CLI adapter: unknown-cli',
     );
   });
 });
