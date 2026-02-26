@@ -16,6 +16,13 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task8.1-new-messaging-protocol`
+  - files-updated: none
+  - new-files-created:
+    - `src/webview/messaging.ts` - Defines V2 host/webview message contracts with strict Zod payload schemas, typed envelope helpers, and discriminated union validation
+    - `tests/webview/messaging.test.ts` - Verifies round-trip serialization/validation for all V2 message types plus invalid version/type/payload rejection and type inference checks
+
+- date: 2026-02-26
   - task: `task6.1-task-file-generator`
   - files-updated: none
   - new-files-created:
