@@ -16,6 +16,17 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task13.3-fix-webview-typecheck-regressions`
+  - files-updated:
+    - `src/webview/messaging.ts` (aligned `WorkspaceSnapshotSchema` typing with `WorkspaceSnapshot`; retained discriminated envelope union typing for safe narrowing)
+    - `src/webview/SidebarProvider.ts` (message handlers now use typed payload imports for `SendMessage` and `SaveTask`)
+    - `src/webview/ui/App.tsx` (switch-based envelope narrowing for safe payload property access in UI message listener)
+    - `.kanban2code/projects/roadmap/task13.3-fix-webview-typecheck-regressions.md` (auditor review and stage transition)
+  - new-files-created: none
+  - notes:
+    - Webview messaging typecheck regressions are resolved with no protocol shape expansion and no runtime behavior change required.
+
+- date: 2026-02-26
   - task: `task13.2-restore-validation-scripts`
   - files-updated:
     - `package.json` (restored/confirmed `test:e2e` and `typecheck` script contracts)
