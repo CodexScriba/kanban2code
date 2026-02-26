@@ -16,6 +16,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task6.1-task-file-generator`
+  - files-updated: none
+  - new-files-created:
+    - `src/types/task-proposal.ts` - Defines `TaskProposal` payload shape for orchestrator-generated task metadata
+    - `src/services/task-generator.ts` - Parses YAML/JSON task proposals and writes validated task markdown files into inbox/project paths
+    - `tests/task-generator.test.ts` - Verifies proposal parsing, file generation, and successful `parseTaskFile()` round-trip
+
+- date: 2026-02-26
   - task: `task5.1-orchestrator-service`
   - files-updated: none
   - new-files-created:
