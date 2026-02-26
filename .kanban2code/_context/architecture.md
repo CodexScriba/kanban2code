@@ -16,6 +16,15 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task13.1-dogfooding-and-iteration`
+  - files-updated:
+    - `.kanban2code/projects/roadmap/task13.1-dogfooding-and-iteration.md` (captured dogfooding execution log, hardening checklist validation, and auditor review)
+  - new-files-created:
+    - `.kanban2code/projects/roadmap/task13.2-restore-validation-scripts.md` - Follow-up roadmap task to restore missing `test:e2e` and `typecheck` scripts
+    - `.kanban2code/projects/roadmap/task13.3-fix-webview-typecheck-regressions.md` - Follow-up roadmap task for webview TypeScript typing regressions
+    - `.kanban2code/projects/roadmap/task13.4-fix-build-node-builtin-bundling.md` - Follow-up roadmap task for build failures from Node built-ins in webview bundling
+
+- date: 2026-02-26
   - task: `task11.1-minimax-adapter-provider-expansion`
   - files-updated:
     - `src/runner/adapter-factory.ts` (registered `minimax` adapter case)
