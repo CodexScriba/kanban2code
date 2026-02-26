@@ -4,13 +4,9 @@ import matter from 'gray-matter';
 import { PROVIDERS_FOLDER } from '../core/constants';
 import { ensureSafePath } from '../workspace/validation';
 import { ProviderConfigSchema, type ProviderConfig } from '../types/provider';
+import type { ProviderConfigFile } from '../types/workspace-entities';
 
-export interface ProviderConfigFile {
-  id: string;
-  name: string;
-  path: string;
-  config?: ProviderConfig;
-}
+export type { ProviderConfigFile } from '../types/workspace-entities';
 
 export async function listAvailableProviders(kanbanRoot: string): Promise<ProviderConfigFile[]> {
   const providersDir = path.join(kanbanRoot, PROVIDERS_FOLDER);

@@ -3,35 +3,12 @@ import * as path from 'path';
 import type { Dirent } from 'fs';
 import matter from 'gray-matter';
 import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER } from '../core/constants';
+import type { Agent, ContextFile, SkillFile } from '../types/workspace-entities';
 import { ensureSafePath } from '../workspace/validation';
 
 type NullableString = string | null | undefined;
 
-export interface ContextFile {
-  id: string;
-  name: string;
-  description: string;
-  path: string;
-  scope?: 'global' | 'project';
-}
-
-export interface SkillFile {
-  id: string;
-  name: string;
-  description: string;
-  path: string;
-  framework?: string;
-  priority?: 'high' | 'medium' | 'low';
-  alwaysAttach?: boolean;
-  triggers?: string[];
-}
-
-export interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  path: string;
-}
+export type { Agent, ContextFile, SkillFile } from '../types/workspace-entities';
 
 /**
  * List all available context files from the _context/ directory, excluding skills.

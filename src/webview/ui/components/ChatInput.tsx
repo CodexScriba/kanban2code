@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import type { ProviderConfigFile } from '../../../services/provider-service';
+import type { ProviderConfigFile } from '../../../types/workspace-entities';
 import { SendIcon, XIcon } from './Icons';
 
 interface ChatInputProps {

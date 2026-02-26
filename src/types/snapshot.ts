@@ -1,7 +1,6 @@
 import type { Kanban2CodeConfig } from './config';
-import type { Agent, ContextFile, SkillFile } from '../services/context';
-import type { ProviderConfigFile } from '../services/provider-service';
 import type { Stage, Task } from './task';
+import type { Agent, ContextFile, ProviderConfigFile, SkillFile } from './workspace-entities';
 
 export interface WorkspaceSnapshotTasks {
   inbox: Task[];

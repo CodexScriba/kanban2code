@@ -1,8 +1,8 @@
 import React from 'react';
-import type { ProviderConfigFile } from '../../../services/provider-service';
 import type { ChatMessage as ChatMessageModel } from '../../../types/orchestrator';
 import type { TaskProposal } from '../../../types/task-proposal';
 import type { WorkspaceSnapshot } from '../../../types/snapshot';
+import type { ProviderConfigFile } from '../../../types/workspace-entities';
 import { WorkspaceBar } from './WorkspaceBar';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';

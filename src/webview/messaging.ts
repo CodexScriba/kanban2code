@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import type { Agent, ContextFile, SkillFile } from '../services/context';
-import type { ProviderConfigFile } from '../services/provider-service';
 import type { Kanban2CodeConfig } from '../types/config';
 import { ProviderConfigSchema, type ProviderConfig } from '../types/provider';
 import type { WorkspaceSnapshot } from '../types/snapshot';
 import type { Stage, Task } from '../types/task';
+import type { Agent, ContextFile, ProviderConfigFile, SkillFile } from '../types/workspace-entities';
 
 export const MESSAGE_VERSION = 2 as const;
 

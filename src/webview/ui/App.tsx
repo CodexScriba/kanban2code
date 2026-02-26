@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { ProviderConfigFile } from '../../services/provider-service';
 import type { WorkspaceSnapshot } from '../../types/snapshot';
 import type { Task } from '../../types/task';
 import type { TaskProposal } from '../../types/task-proposal';
+import type { ProviderConfigFile } from '../../types/workspace-entities';
 import { createEnvelope, validateEnvelope } from '../messaging';
 import { EmptyState } from './components/EmptyState';
 import { Chat } from './components/Chat';

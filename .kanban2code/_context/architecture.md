@@ -16,6 +16,22 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-26
+  - task: `task13.4-fix-build-node-builtin-bundling`
+  - files-updated:
+    - `src/services/context.ts` (moved `Agent`/`ContextFile`/`SkillFile` definitions to shared types and re-exported for compatibility)
+    - `src/services/provider-service.ts` (moved `ProviderConfigFile` definition to shared types and re-exported for compatibility)
+    - `src/types/snapshot.ts` (now imports workspace entity types from `src/types/workspace-entities.ts`)
+    - `src/webview/messaging.ts` (now imports workspace entity types from `src/types/workspace-entities.ts`)
+    - `src/webview/ui/App.tsx` (now imports `ProviderConfigFile` from shared types)
+    - `src/webview/ui/components/Chat.tsx` (now imports `ProviderConfigFile` from shared types)
+    - `src/webview/ui/components/ChatInput.tsx` (now imports `ProviderConfigFile` from shared types)
+    - `.kanban2code/projects/roadmap/task13.4-fix-build-node-builtin-bundling.md` (auditor review and stage transition)
+  - new-files-created:
+    - `src/types/workspace-entities.ts` - Shared extension/webview-safe type definitions for providers, contexts, skills, and agents
+  - notes:
+    - Fix prevents Node.js builtins from entering browser-targeted webview bundle graphs via type import chains.
+
+- date: 2026-02-26
   - task: `task13.3-fix-webview-typecheck-regressions`
   - files-updated:
     - `src/webview/messaging.ts` (aligned `WorkspaceSnapshotSchema` typing with `WorkspaceSnapshot`; retained discriminated envelope union typing for safe narrowing)
