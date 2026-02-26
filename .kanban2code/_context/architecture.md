@@ -15,6 +15,74 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 
 ## Accepted Task Updates
 
+- date: 2026-02-26
+  - task: `task2.1-port-runner`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/cli-adapter.ts` - Base CLI adapter interface and shared response/command types
+    - `src/runner/adapter-factory.ts` - Adapter resolver by CLI executable
+    - `src/runner/adapters/claude-adapter.ts` - Claude CLI adapter with JSON parsing
+    - `src/runner/adapters/codex-adapter.ts` - Codex CLI adapter with JSONL stream parsing
+    - `src/runner/adapters/kimi-adapter.ts` - KIMI CLI adapter with plain-text parsing
+    - `src/runner/adapters/kilo-adapter.ts` - Kilo CLI adapter with JSONL stream parsing
+    - `src/runner/output-parser.ts` - Structured output marker extraction helpers
+    - `src/runner/runner-state.ts` - Runner runtime state event helpers
+    - `src/runner/runner-log.ts` - Markdown run report generation and persistence
+    - `src/runner/git-ops.ts` - Git cleanliness and auto-commit operations for runner flows
+    - `src/runner/runner-engine.ts` - Core stage pipeline execution engine
+    - `tests/runner-log.test.ts` - Unit coverage for runner log output/persistence
+    - `tests/runner-engine.test.ts` - Unit coverage for runner pipeline behavior
+    - `tests/e2e/setup.ts` - E2E workspace utilities for workflow tests
+    - `tests/e2e/core-workflows.test.ts` - E2E workflow coverage for core lifecycle behavior
+
+- date: 2026-02-26
+  - task: `task1.1-port-core-types-and-services`
+  - files-updated:
+    - `package.json` (added `fast-glob`, `gray-matter`, `zod`)
+  - new-files-created:
+    - `src/types/*.ts` (task, provider, config, errors, filters, context, copy)
+    - `src/core/*.ts` (constants, rules)
+    - `src/utils/text.ts`
+    - `src/workspace/*.ts` (state, validation)
+    - `src/services/scanner.ts` - Task file scanning and sorting
+    - `src/services/frontmatter.ts` - Frontmatter parsing/serialization
+    - `src/services/stage-manager.ts` - Task stage transitions
+    - `src/services/task-content.ts` - Task content reading/writing
+    - `src/services/task-watcher.ts` - File system watcher for tasks
+    - `src/services/projects.ts` - Project/phase management
+    - `src/services/archive.ts` - Archiving logic
+    - `src/services/delete-task.ts` - Task deletion
+    - `src/services/copy.ts` - Clipboard operations
+    - `src/services/fs-move.ts` - File system move helper
+    - `src/services/scaffolder.ts` - Workspace initialization
+    - `src/services/config.ts` - Configuration service
+    - `src/services/logging.ts` - Structured logging
+    - `src/services/error-recovery.ts` - Error handling
+    - `src/services/prompt-builder.ts` - Context assembly for prompts
+    - `src/services/context.ts` - Context file management
+    - `src/services/provider-service.ts` - Provider config management
+    - `src/assets/*.ts` (agents, providers, contexts, seed-content)
+    - `tests/setup.ts` - Global test setup
+    - `tests/vscode-stub.ts` - VS Code API stub
+    - `tests/*.test.ts` - Unit tests for all services
+
+- date: 2026-02-26
+  - task: `task0.1-clean-slate-bootstrap`
+  - files-updated:
+    - `build.ts` (simplified esbuild bootstrap for extension and webview bundles)
+    - `src/extension.ts` (minimal activation/deactivation with Output Channel logging)
+    - `vitest.config.ts` (baseline test config with VS Code alias and coverage defaults)
+    - `docs/architecture.md` (initialized architecture document with directory structure)
+  - new-files-created:
+    - `package.json` - Minimal VS Code extension manifest, activation events, and Bun scripts
+    - `tsconfig.json` - TypeScript compiler configuration for extension/webview sources
+    - `vitest.e2e.config.ts` - E2E test runner configuration baseline
+    - `.vscodeignore` - VSIX packaging exclusions
+    - `.prettierrc` - Project formatting rules
+    - `eslint.config.mjs` - Project linting configuration
+    - `src/webview/ui/main.tsx` - Minimal React entry that renders `Loading...`
+    - `src/webview/ui/vscodeApi.ts` - Singleton VS Code webview API accessor
+
 - date: 2026-02-11
   - task: `task1.1-add-agent-and-attempts-fields-to-task-interface`
   - files-updated:

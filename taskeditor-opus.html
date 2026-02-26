@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kanban2Code — Task Editor (Opus)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void: #050709;
+      --deep: #0a0d14;
+      --layer-1: #0e1219;
+      --layer-2: #131820;
+      --layer-3: #1a2030;
+      --glass: rgba(14, 18, 25, 0.85);
+      --glass-hover: rgba(26, 32, 48, 0.9);
+      --rule: rgba(255, 255, 255, 0.06);
+      --rule-mid: rgba(255, 255, 255, 0.1);
+      --rule-hi: rgba(255, 255, 255, 0.18);
+      --text-primary: #e0e6f0;
+      --text-secondary: #8090b0;
+      --text-ghost: #3e4c66;
+      --blue: #4d8ef7;
+      --blue-dim: rgba(77, 142, 247, 0.12);
+      --blue-glow: rgba(77, 142, 247, 0.35);
+      --violet: #a06cf0;
+      --violet-dim: rgba(160, 108, 240, 0.12);
+      --violet-glow: rgba(160, 108, 240, 0.3);
+      --amber: #e8a740;
+      --amber-dim: rgba(232, 167, 64, 0.12);
+      --amber-glow: rgba(232, 167, 64, 0.3);
+      --green: #3cc98a;
+      --green-dim: rgba(60, 201, 138, 0.12);
+      --green-glow: rgba(60, 201, 138, 0.3);
+      --red: #e85454;
+      --red-dim: rgba(232, 84, 84, 0.1);
+      --neutral: #6b7a96;
+      --neutral-dim: rgba(107, 122, 150, 0.1);
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --sans: Inter, system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--void);
+      overflow: hidden;
+    }
+
+    body { display: flex; }
+
+    /* ---- SIDEBAR (compact summary) ---- */
+    .sidebar {
+      width: 300px;
+      min-width: 300px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--deep);
+      border-right: 1px solid var(--rule);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sb-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .sb-logo {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #4d8ef7 0%, #a06cf0 100%);
+      display: flex; align-items: center; justify-content: center;
+      font: 700 14px/1 var(--mono);
+      color: #fff;
+      letter-spacing: -0.04em;
+      box-shadow: 0 0 12px rgba(77,142,247,0.25);
+    }
+
+    .sb-brand-text { flex: 1; }
+    .sb-brand-name { font: 700 14px/1.2 var(--sans); letter-spacing: -0.02em; }
+    .sb-brand-sub { font-size: 11px; color: var(--text-ghost); margin-top: 2px; }
+
+    .sb-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .sb-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.12s;
+      border: 1px solid transparent;
+    }
+
+    .sb-nav-item:hover { background: var(--glass-hover); color: var(--text-primary); }
+    .sb-nav-item.active {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border-color: rgba(77,142,247,0.2);
+    }
+
+    .sb-nav-icon { font-size: 14px; width: 18px; text-align: center; }
+    .sb-nav-count {
+      margin-left: auto;
+      font: 600 11px/1 var(--mono);
+      color: var(--text-ghost);
+      background: var(--layer-2);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .sb-tasks-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 6px;
+    }
+
+    .sb-tasks-label {
+      font: 600 10px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-ghost);
+    }
+
+    .sb-task-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px 8px;
+    }
+
+    .sb-task-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+      border: 1px solid transparent;
+    }
+
+    .sb-task-item:hover { background: var(--glass-hover); }
+    .sb-task-item.active {
+      background: var(--layer-2);
+      border-color: var(--rule-mid);
+    }
+
+    .sb-task-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sb-task-dot.stage-capture { background: var(--neutral); }
+    .sb-task-dot.stage-plan { background: var(--blue); }
+    .sb-task-dot.stage-code { background: var(--amber); }
+    .sb-task-dot.stage-audit { background: var(--violet); }
+    .sb-task-dot.stage-done { background: var(--green); }
+
+    .sb-task-info { flex: 1; min-width: 0; }
+    .sb-task-title {
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-primary);
+    }
+    .sb-task-meta {
+      font-size: 10px;
+      color: var(--text-ghost);
+      margin-top: 2px;
+    }
+
+    .sb-chat-trigger {
+      margin: auto 8px 8px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--rule-mid);
+      background: var(--layer-1);
+      color: var(--text-ghost);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.14s;
+    }
+
+    .sb-chat-trigger:hover {
+      border-color: var(--blue-glow);
+      color: var(--text-secondary);
+      background: var(--blue-dim);
+    }
+
+    .sb-chat-trigger span { font-size: 16px; }
+
+
+    /* ---- MAIN EDITOR ---- */
+    .main {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--void);
+    }
+
+    /* Top bar — breadcrumb + actions */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      height: 46px;
+      border-bottom: 1px solid var(--rule);
+      background: var(--deep);
+      flex-shrink: 0;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-ghost);
+    }
+
+    .breadcrumb a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .breadcrumb a:hover { color: var(--text-primary); }
+    .breadcrumb .sep { color: var(--text-ghost); }
+    .breadcrumb .current { color: var(--text-primary); font-weight: 600; }
+
+    .topbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font: 500 12px/1 var(--sans);
+      cursor: pointer;
+      transition: all 0.14s;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .btn-ghost {
+      border-color: var(--rule-mid);
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover {
+      background: var(--glass-hover);
+      border-color: var(--rule-hi);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      border-color: var(--blue-glow);
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+    .btn-primary:hover {
+      background: rgba(77, 142, 247, 0.2);
+      border-color: var(--blue);
+    }
+
+    .btn-run {
+      border-color: var(--green-glow);
+      background: var(--green-dim);
+      color: var(--green);
+      font-weight: 600;
+    }
+    .btn-run:hover {
+      background: rgba(60, 201, 138, 0.2);
+      border-color: var(--green);
+    }
+
+    .btn-run-all {
+      border-color: var(--amber-glow);
+      background: var(--amber-dim);
+      color: var(--amber);
+      font-weight: 600;
+    }
+    .btn-run-all:hover {
+      background: rgba(232, 167, 64, 0.2);
+      border-color: var(--amber);
+    }
+
+    .btn-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--rule-mid);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.14s;
+      padding: 0;
+    }
+    .btn-icon:hover {
+      background: var(--glass-hover);
+      border-color: var(--rule-hi);
+      color: var(--text-primary);
+    }
+
+
+    /* ---- EDITOR BODY: 2-column (content + inspector) ---- */
+    .editor-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left: Content area */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Pipeline strip — horizontal stage visualization */
+    .pipeline-strip {
+      display: flex;
+      align-items: center;
+      padding: 14px 24px;
+      gap: 0;
+      border-bottom: 1px solid var(--rule);
+      background: var(--deep);
+      flex-shrink: 0;
+    }
+
+    .pipeline-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font: 500 12px/1 var(--sans);
+      color: var(--text-ghost);
+      position: relative;
+      transition: all 0.14s;
+      cursor: default;
+    }
+
+    .pipeline-node .node-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--text-ghost);
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .pipeline-connector {
+      width: 40px;
+      height: 2px;
+      background: var(--rule-mid);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .pipeline-node.completed .node-dot {
+      border-color: var(--green);
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green-glow);
+    }
+    .pipeline-node.completed { color: var(--green); }
+
+    .pipeline-node.active {
+      background: var(--amber-dim);
+      color: var(--amber);
+    }
+    .pipeline-node.active .node-dot {
+      border-color: var(--amber);
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber-glow);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 6px var(--amber-glow); }
+      50% { box-shadow: 0 0 14px var(--amber-glow), 0 0 24px rgba(232,167,64,0.15); }
+    }
+
+    .pipeline-node.pending .node-dot {
+      border-color: var(--text-ghost);
+    }
+
+    .pipeline-connector.done { background: var(--green); opacity: 0.4; }
+    .pipeline-connector.active {
+      background: linear-gradient(90deg, var(--green) 0%, var(--amber) 100%);
+      opacity: 0.5;
+    }
+
+    .pipeline-stats {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pipeline-stat {
+      font: 500 11px/1 var(--mono);
+      color: var(--text-ghost);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pipeline-stat .stat-val { color: var(--text-secondary); }
+
+
+    /* Tab bar */
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--rule);
+      background: var(--layer-1);
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: 10px 18px;
+      font: 500 12px/1 var(--sans);
+      color: var(--text-ghost);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.14s;
+      position: relative;
+    }
+
+    .tab:hover { color: var(--text-secondary); }
+    .tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--blue);
+    }
+
+    .tab .tab-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    /* Content pane (markdown / frontmatter / notes) */
+    .content-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: var(--void);
+    }
+
+    .content-pane::-webkit-scrollbar { width: 6px; }
+    .content-pane::-webkit-scrollbar-track { background: transparent; }
+    .content-pane::-webkit-scrollbar-thumb { background: var(--rule-mid); border-radius: 3px; }
+    .content-pane::-webkit-scrollbar-thumb:hover { background: var(--rule-hi); }
+
+    /* Task title (editable) */
+    .task-title-input {
+      font: 700 22px/1.3 var(--sans);
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 100%;
+      padding: 0 0 4px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.14s;
+    }
+    .task-title-input:focus { border-bottom-color: var(--blue-glow); }
+    .task-title-input::placeholder { color: var(--text-ghost); }
+
+    .task-subtitle {
+      font-size: 12px;
+      color: var(--text-ghost);
+      margin-top: 6px;
+      font-family: var(--mono);
+    }
+
+    /* Markdown body */
+    .md-body {
+      margin-top: 24px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .md-body h2 {
+      font: 600 15px/1.4 var(--sans);
+      color: var(--text-primary);
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .md-body h2:first-child { margin-top: 0; }
+
+    .md-body p { margin: 8px 0; }
+
+    .md-body ul, .md-body ol {
+      margin: 8px 0 8px 20px;
+    }
+
+    .md-body li {
+      margin: 4px 0;
+      padding-left: 4px;
+    }
+
+    .md-body li::marker { color: var(--text-ghost); }
+
+    .md-body code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--layer-2);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: var(--blue);
+    }
+
+    .md-body pre {
+      margin: 12px 0;
+      background: var(--layer-1);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+    }
+
+    .md-body pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .md-body .checklist {
+      list-style: none;
+      margin-left: 0;
+      padding: 0;
+    }
+
+    .md-body .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .md-body .checklist li::before {
+      content: "";
+      display: inline-block;
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--rule-hi);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .md-body .checklist li.checked::before {
+      background: var(--green-dim);
+      border-color: var(--green);
+    }
+
+    .md-body .checklist li.checked::after {
+      content: "✓";
+      position: absolute;
+      margin-left: -20px;
+      margin-top: 1px;
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    /* Frontmatter view */
+    .frontmatter-block {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      background: var(--layer-1);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .fm-key { color: var(--violet); }
+    .fm-val { color: var(--text-secondary); }
+    .fm-str { color: var(--green); }
+    .fm-sep { color: var(--text-ghost); }
+
+
+    /* ---- RIGHT INSPECTOR PANEL ---- */
+    .inspector {
+      width: 320px;
+      min-width: 320px;
+      height: 100%;
+      border-left: 1px solid var(--rule);
+      background: var(--deep);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .insp-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font: 600 12px/1 var(--sans);
+      color: var(--text-secondary);
+    }
+
+    .insp-header .insp-close {
+      margin-left: auto;
+      width: 24px; height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--text-ghost);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: all 0.12s;
+    }
+    .insp-header .insp-close:hover { color: var(--text-primary); background: var(--layer-2); }
+
+    .insp-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .insp-body::-webkit-scrollbar { width: 5px; }
+    .insp-body::-webkit-scrollbar-track { background: transparent; }
+    .insp-body::-webkit-scrollbar-thumb { background: var(--rule-mid); border-radius: 3px; }
+
+    .insp-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .insp-section-title {
+      font: 600 10px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-ghost);
+      margin-bottom: 12px;
+    }
+
+    /* Metadata fields */
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .field-row:last-child { margin-bottom: 0; }
+
+    .field-label {
+      width: 70px;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--text-ghost);
+      text-align: right;
+    }
+
+    .field-value {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .field-select,
+    .field-input {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--rule-mid);
+      background: var(--layer-2);
+      color: var(--text-primary);
+      font: 400 12px/1.3 var(--sans);
+      outline: none;
+      transition: border-color 0.14s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .field-select:focus,
+    .field-input:focus {
+      border-color: var(--blue-glow);
+    }
+
+    .field-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7a96' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    .field-select option {
+      background: var(--layer-2);
+      color: var(--text-primary);
+    }
+
+    /* Stage badge (inline) */
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 4px;
+      font: 600 11px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stage-badge .badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+
+    .stage-badge.code {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid var(--amber-glow);
+    }
+    .stage-badge.code .badge-dot { background: var(--amber); }
+
+    .stage-badge.plan {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid var(--blue-glow);
+    }
+    .stage-badge.plan .badge-dot { background: var(--blue); }
+
+    .stage-badge.audit {
+      background: var(--violet-dim);
+      color: var(--violet);
+      border: 1px solid var(--violet-glow);
+    }
+    .stage-badge.audit .badge-dot { background: var(--violet); }
+
+    .stage-badge.capture {
+      background: var(--neutral-dim);
+      color: var(--neutral);
+      border: 1px solid rgba(107,122,150,0.25);
+    }
+    .stage-badge.capture .badge-dot { background: var(--neutral); }
+
+    .stage-badge.completed {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid var(--green-glow);
+    }
+    .stage-badge.completed .badge-dot { background: var(--green); }
+
+    /* Priority badge */
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font: 600 11px/1 var(--sans);
+    }
+
+    .priority-badge.high {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(232,84,84,0.25);
+    }
+
+    .priority-badge.medium {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid rgba(232,167,64,0.25);
+    }
+
+    .priority-badge .pri-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Tags */
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font: 500 11px/1 var(--sans);
+      background: var(--layer-3);
+      color: var(--text-secondary);
+      border: 1px solid var(--rule);
+      cursor: default;
+      transition: all 0.12s;
+    }
+
+    .tag:hover { border-color: var(--rule-hi); color: var(--text-primary); }
+
+    .tag-add {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font: 500 11px/1 var(--sans);
+      background: transparent;
+      color: var(--text-ghost);
+      border: 1px dashed var(--rule-mid);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .tag-add:hover {
+      border-color: var(--blue-glow);
+      color: var(--blue);
+      background: var(--blue-dim);
+    }
+
+    /* Context & Skills toggles */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+    }
+
+    .toggle-check {
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--rule-hi);
+      background: var(--layer-2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.14s;
+      font-size: 10px;
+      color: transparent;
+    }
+
+    .toggle-check.on {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toggle-auto {
+      font: 500 10px/1 var(--mono);
+      color: var(--text-ghost);
+      background: var(--layer-3);
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    /* Execution rail */
+    .exec-section { padding: 14px 16px; }
+
+    .exec-run {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--layer-2);
+      border: 1px solid var(--rule);
+      margin-bottom: 8px;
+      transition: all 0.14s;
+    }
+
+    .exec-run:last-child { margin-bottom: 0; }
+
+    .exec-run-status {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .exec-run-status.success { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+    .exec-run-status.running { background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); animation: pulse-dot 2s ease-in-out infinite; }
+    .exec-run-status.failed { background: var(--red); box-shadow: 0 0 6px rgba(232,84,84,0.3); }
+
+    .exec-run-info { flex: 1; min-width: 0; }
+    .exec-run-title { font-size: 12px; color: var(--text-primary); }
+    .exec-run-meta { font: 400 10px/1 var(--mono); color: var(--text-ghost); margin-top: 3px; }
+
+    .exec-run-action {
+      font: 500 10px/1 var(--mono);
+      color: var(--text-ghost);
+      background: var(--layer-3);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .exec-run-action:hover {
+      color: var(--text-primary);
+      border-color: var(--rule-hi);
+    }
+
+    /* Provider analytics mini-card */
+    .analytics-card {
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--layer-1);
+      border: 1px solid var(--rule);
+      margin-top: 10px;
+    }
+
+    .analytics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .analytics-title {
+      font: 600 11px/1 var(--sans);
+      color: var(--text-secondary);
+    }
+
+    .analytics-provider {
+      font: 500 10px/1 var(--mono);
+      color: var(--blue);
+      background: var(--blue-dim);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .analytics-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .analytics-stat-label {
+      font: 400 10px/1 var(--mono);
+      color: var(--text-ghost);
+    }
+
+    .analytics-stat-value {
+      font: 600 16px/1 var(--sans);
+      color: var(--text-primary);
+    }
+
+    .analytics-stat-value.good { color: var(--green); }
+    .analytics-stat-value.warn { color: var(--amber); }
+
+    .analytics-bar {
+      grid-column: 1 / -1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--layer-3);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .analytics-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+      transition: width 0.3s ease;
+    }
+
+
+    /* ---- SCROLLBAR GLOBAL ---- */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--rule-mid); }
+
+    /* Token budget bar */
+    .token-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .token-track {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--layer-3);
+      overflow: hidden;
+    }
+
+    .token-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--blue);
+      transition: width 0.2s;
+    }
+
+    .token-label {
+      font: 400 10px/1 var(--mono);
+      color: var(--text-ghost);
+      white-space: nowrap;
+    }
+
+    /* Unsaved indicator */
+    .unsaved-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      display: inline-block;
+      margin-right: 6px;
+      box-shadow: 0 0 6px var(--amber-glow);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">K2</div>
+      <div class="sb-brand-text">
+        <div class="sb-brand-name">Kanban2Code</div>
+        <div class="sb-brand-sub">review-system</div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-nav-item">
+        <span class="sb-nav-icon">◉</span> Board
+        <span class="sb-nav-count">12</span>
+      </div>
+      <div class="sb-nav-item active">
+        <span class="sb-nav-icon">◧</span> Editor
+      </div>
+      <div class="sb-nav-item">
+        <span class="sb-nav-icon">⚙</span> Providers
+        <span class="sb-nav-count">4</span>
+      </div>
+    </nav>
+
+    <div class="sb-tasks-header">
+      <span class="sb-tasks-label">Project Tasks</span>
+    </div>
+
+    <div class="sb-task-list">
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-done"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">Review schema + migrations</div>
+          <div class="sb-task-meta">completed &middot; sonnet</div>
+        </div>
+      </div>
+      <div class="sb-task-item active">
+        <span class="sb-task-dot stage-code"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">Review System — Backend API</div>
+          <div class="sb-task-meta">code &middot; sonnet</div>
+        </div>
+      </div>
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-plan"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">Auth: JWT refresh rotation</div>
+          <div class="sb-task-meta">plan &middot; haiku</div>
+        </div>
+      </div>
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-plan"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">Notification delivery pipeline</div>
+          <div class="sb-task-meta">plan &middot; haiku</div>
+        </div>
+      </div>
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-capture"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">Dashboard metrics caching</div>
+          <div class="sb-task-meta">capture &middot; —</div>
+        </div>
+      </div>
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-capture"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">API rate limiting middleware</div>
+          <div class="sb-task-meta">capture &middot; —</div>
+        </div>
+      </div>
+      <div class="sb-task-item">
+        <span class="sb-task-dot stage-capture"></span>
+        <div class="sb-task-info">
+          <div class="sb-task-title">CSV export for analytics</div>
+          <div class="sb-task-meta">capture &middot; —</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-chat-trigger">
+      <span>💬</span>
+      Ask the orchestrator...
+    </div>
+  </aside>
+
+
+  <!-- ===== MAIN EDITOR ===== -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <nav class="breadcrumb">
+        <a href="#">review-system</a>
+        <span class="sep">/</span>
+        <a href="#">phase-1-backend</a>
+        <span class="sep">/</span>
+        <span class="current">Review-System-Backend-API.md</span>
+      </nav>
+      <div class="topbar-actions">
+        <span class="unsaved-dot" title="Unsaved changes"></span>
+        <button class="btn btn-ghost">Save</button>
+        <button class="btn btn-primary">▶ Run Stage</button>
+        <button class="btn btn-run-all">▶▶ Run All</button>
+        <button class="btn-icon" title="Open in editor">↗</button>
+        <button class="btn-icon" title="More actions">⋯</button>
+      </div>
+    </header>
+
+    <div class="editor-body">
+
+      <!-- ===== CONTENT AREA ===== -->
+      <div class="content-area">
+
+        <!-- Pipeline visualization -->
+        <div class="pipeline-strip">
+          <div class="pipeline-node completed">
+            <span class="node-dot"></span>
+            Capture
+          </div>
+          <div class="pipeline-connector done"></div>
+          <div class="pipeline-node completed">
+            <span class="node-dot"></span>
+            Plan
+          </div>
+          <div class="pipeline-connector active"></div>
+          <div class="pipeline-node active">
+            <span class="node-dot"></span>
+            Code
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-node pending">
+            <span class="node-dot"></span>
+            Audit
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-node pending">
+            <span class="node-dot"></span>
+            Done
+          </div>
+
+          <div class="pipeline-stats">
+            <div class="pipeline-stat">
+              returns <span class="stat-val">0</span>
+            </div>
+            <div class="pipeline-stat">
+              runs <span class="stat-val">2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <div class="tab active">Task Body</div>
+          <div class="tab">
+            Frontmatter
+            <span class="tab-badge"></span>
+          </div>
+          <div class="tab">Run Notes</div>
+          <div class="tab">Command Preview</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content-pane">
+          <input class="task-title-input" value="Review System — Backend API" />
+          <div class="task-subtitle">task-id: rev-backend-api &middot; created 2026-02-23 &middot; last run 12m ago</div>
+
+          <div class="md-body">
+            <h2>Objective</h2>
+            <p>Build review schema, migrations, and REST endpoints for the core review system. The API must support CRUD operations for reviews, with pagination, filtering by product/user, and rating aggregation.</p>
+
+            <h2>Implementation Steps</h2>
+            <ol>
+              <li>Create <code>reviews</code> table migration with Drizzle ORM — columns: id, product_id, user_id, rating (1-5), title, body, created_at, updated_at</li>
+              <li>Add composite index on <code>(product_id, created_at)</code> for listing queries</li>
+              <li>Implement <code>GET /api/reviews</code> — paginated list, filterable by product_id and rating range</li>
+              <li>Implement <code>POST /api/reviews</code> — validated input, authenticated user_id from JWT</li>
+              <li>Implement <code>PATCH /api/reviews/:id</code> — author-only update with ownership check</li>
+              <li>Implement <code>DELETE /api/reviews/:id</code> — soft delete (set deleted_at)</li>
+              <li>Add <code>GET /api/reviews/stats/:product_id</code> — average rating, count, distribution histogram</li>
+            </ol>
+
+            <h2>Architecture Notes</h2>
+            <p>Schema follows the patterns established in <code>review-system-architecture.md</code>. Use the shared <code>withPagination()</code> helper from <code>src/lib/db/pagination.ts</code>. All endpoints go through the existing auth middleware — no new auth logic needed.</p>
+
+            <pre><code>// Expected file tree (modify/create only)
+src/db/schema/reviews.ts          create
+src/db/migrations/0003_reviews.sql create
+src/app/api/reviews/route.ts      create
+src/app/api/reviews/[id]/route.ts create
+src/app/api/reviews/stats/[productId]/route.ts create
+src/lib/reviews/queries.ts        create
+src/lib/reviews/validation.ts     create</code></pre>
+
+            <h2>Scope Boundaries</h2>
+            <ul>
+              <li>Do NOT modify the auth middleware or user schema</li>
+              <li>Do NOT add UI components — this is backend only</li>
+              <li>Do NOT implement email notifications for new reviews (separate task)</li>
+            </ul>
+
+            <h2>Testing</h2>
+            <ul class="checklist">
+              <li>Integration test for review CRUD endpoints</li>
+              <li>Unit test for rating aggregation query</li>
+              <li class="checked">Schema migration runs cleanly on empty DB</li>
+              <li>Verify JWT auth rejection for unauthenticated requests</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ===== INSPECTOR ===== -->
+      <aside class="inspector">
+        <div class="insp-header">
+          Task Inspector
+          <button class="insp-close" title="Close inspector">✕</button>
+        </div>
+
+        <div class="insp-body">
+
+          <!-- Metadata -->
+          <div class="insp-section">
+            <div class="insp-section-title">Metadata</div>
+
+            <div class="field-row">
+              <span class="field-label">Stage</span>
+              <div class="field-value">
+                <span class="stage-badge code"><span class="badge-dot"></span>Code</span>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Priority</span>
+              <div class="field-value">
+                <span class="priority-badge high"><span class="pri-dot"></span>High</span>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Agent</span>
+              <div class="field-value">
+                <select class="field-select">
+                  <option selected>coder</option>
+                  <option>planner</option>
+                  <option>auditor</option>
+                  <option>architect</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Provider</span>
+              <div class="field-value">
+                <select class="field-select">
+                  <option selected>claude-sonnet-4-6</option>
+                  <option>claude-haiku-4-5</option>
+                  <option>claude-opus-4-6</option>
+                  <option>kimi-k2</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Location</span>
+              <div class="field-value">
+                <select class="field-select">
+                  <option selected>review-system / phase-1-backend</option>
+                  <option>review-system / phase-2-frontend</option>
+                  <option>capture (no project)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Tags</span>
+              <div class="field-value">
+                <div class="tags-row">
+                  <span class="tag">api</span>
+                  <span class="tag">backend</span>
+                  <span class="tag">feature</span>
+                  <span class="tag-add">+ add</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Context Files -->
+          <div class="insp-section">
+            <div class="insp-section-title">Context</div>
+
+            <div class="toggle-row">
+              <span class="toggle-check on">✓</span>
+              <span class="toggle-label">force-summary.md</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check on">✓</span>
+              <span class="toggle-label">review-system-architecture.md</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check"></span>
+              <span class="toggle-label">architecture.md</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check"></span>
+              <span class="toggle-label">api-architecture.md</span>
+            </div>
+
+            <div class="token-bar">
+              <div class="token-track">
+                <div class="token-fill" style="width: 38%"></div>
+              </div>
+              <span class="token-label">~12k / 32k tokens</span>
+            </div>
+          </div>
+
+          <!-- Skills -->
+          <div class="insp-section">
+            <div class="insp-section-title">Skills</div>
+
+            <div class="toggle-row">
+              <span class="toggle-check on">✓</span>
+              <span class="toggle-label">nextjs-core-skills</span>
+              <span class="toggle-auto">auto</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check on">✓</span>
+              <span class="toggle-label">skill-drizzle-orm</span>
+              <span class="toggle-auto">auto</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check on">✓</span>
+              <span class="toggle-label">skill-server-actions</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check"></span>
+              <span class="toggle-label">skill-caching-data-fetching</span>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-check"></span>
+              <span class="toggle-label">skill-auth-patterns</span>
+            </div>
+          </div>
+
+          <!-- Execution History -->
+          <div class="insp-section">
+            <div class="insp-section-title">Execution</div>
+
+            <div class="exec-run">
+              <span class="exec-run-status running"></span>
+              <div class="exec-run-info">
+                <div class="exec-run-title">Code — sonnet</div>
+                <div class="exec-run-meta">started 12m ago &middot; running</div>
+              </div>
+              <button class="exec-run-action">view</button>
+            </div>
+
+            <div class="exec-run">
+              <span class="exec-run-status success"></span>
+              <div class="exec-run-info">
+                <div class="exec-run-title">Plan — haiku</div>
+                <div class="exec-run-meta">2m 14s &middot; 18k tokens</div>
+              </div>
+              <button class="exec-run-action">log</button>
+            </div>
+
+            <!-- Provider Analytics -->
+            <div class="analytics-card">
+              <div class="analytics-header">
+                <span class="analytics-title">Provider Performance</span>
+                <span class="analytics-provider">sonnet</span>
+              </div>
+              <div class="analytics-grid">
+                <div class="analytics-stat">
+                  <span class="analytics-stat-label">1st audit pass</span>
+                  <span class="analytics-stat-value good">82%</span>
+                </div>
+                <div class="analytics-stat">
+                  <span class="analytics-stat-label">avg returns</span>
+                  <span class="analytics-stat-value">1.1</span>
+                </div>
+                <div class="analytics-stat">
+                  <span class="analytics-stat-label">tasks done</span>
+                  <span class="analytics-stat-value">14</span>
+                </div>
+                <div class="analytics-stat">
+                  <span class="analytics-stat-label">fail rate</span>
+                  <span class="analytics-stat-value warn">8%</span>
+                </div>
+                <div class="analytics-bar">
+                  <div class="analytics-bar-fill" style="width: 82%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+</body>
+</html>

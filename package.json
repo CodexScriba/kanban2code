@@ -1,0 +1,74 @@
+{
+  "name": "kanban2code",
+  "publisher": "cynic",
+  "displayName": "Kanban2Code",
+  "description": "Kanban board for coding tasks",
+  "version": "2.0.0",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Productivity"
+  ],
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
+  "activationEvents": [
+    "workspaceContains:.kanban2code",
+    "onView:kanban2code.sidebar"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kanban2code-sidebar",
+          "title": "Kanban2Code",
+          "icon": "media/kanban2code.svg"
+        }
+      ]
+    },
+    "views": {
+      "kanban2code-sidebar": [
+        {
+          "type": "webview",
+          "id": "kanban2code.sidebar",
+          "name": "Kanban2Code"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "bun run package",
+    "build": "bun run build.ts",
+    "compile": "bun run build.ts",
+    "watch": "bun run build.ts --watch",
+    "package": "bun run build.ts --production",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.10.4",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/vscode": "1.98.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "esbuild": "^0.27.2",
+    "prettier": "^3.7.4",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.50.0",
+    "vitest": "^4.0.16"
+  }
+}

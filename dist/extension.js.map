@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/extension.ts"],
+  "sourcesContent": ["import * as vscode from 'vscode';\n\nexport function activate(context: vscode.ExtensionContext) {\n  const output = vscode.window.createOutputChannel('Kanban2Code');\n  context.subscriptions.push(output);\n\n  output.appendLine('Kanban2Code V2 activated');\n  output.show(true);\n  console.log('Kanban2Code V2 activated');\n}\n\nexport function deactivate() {}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA,aAAwB;AAEjB,SAAS,SAAS,SAAkC;AACzD,QAAM,SAAgB,cAAO,oBAAoB,aAAa;AAC9D,UAAQ,cAAc,KAAK,MAAM;AAEjC,SAAO,WAAW,0BAA0B;AAC5C,SAAO,KAAK,IAAI;AAChB,UAAQ,IAAI,0BAA0B;AACxC;AAEO,SAAS,aAAa;AAAC;",
+  "names": []
+}
