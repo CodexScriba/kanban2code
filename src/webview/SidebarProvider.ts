@@ -62,6 +62,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    if (rawMessage.type === 'ShowKanbanBoard') {
+      vscode.commands.executeCommand('kanban2code.openBoard');
+      return;
+    }
+
     const allTasks = await this.getWorkspaceTasks();
     let selectedTaskId = rawMessage.payload.selectedTaskId;
     let selectedTask = selectedTaskId

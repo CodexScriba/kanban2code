@@ -12,10 +12,17 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:kanban2code-sidebar"
+    "onView:kanban2code-sidebar",
+    "onCommand:kanban2code.openBoard"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "kanban2code.openBoard",
+        "title": "Kanban2Code: Open Board"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

@@ -10,6 +10,10 @@ export interface RequestTaskSnapshotMessage {
   type: 'RequestTaskSnapshot';
 }
 
+export interface ShowKanbanBoardMessage {
+  type: 'ShowKanbanBoard';
+}
+
 export interface SendChatMessage {
   type: 'SendChatMessage';
   payload: {
@@ -19,7 +23,7 @@ export interface SendChatMessage {
   };
 }
 
-export type WebviewToHostMessage = RequestTaskSnapshotMessage | SendChatMessage;
+export type WebviewToHostMessage = RequestTaskSnapshotMessage | ShowKanbanBoardMessage | SendChatMessage;
 
 export interface TaskSnapshotMessage {
   type: 'TaskSnapshot';
@@ -55,7 +59,7 @@ export const isWebviewToHostMessage = (value: unknown): value is WebviewToHostMe
     return false;
   }
 
-  if (value.type === 'RequestTaskSnapshot') {
+  if (value.type === 'RequestTaskSnapshot' || value.type === 'ShowKanbanBoard') {
     return true;
   }
 

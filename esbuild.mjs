@@ -15,14 +15,17 @@ const extensionConfig = {
 };
 
 const webviewConfig = {
-  entryPoints: ['src/webview/ui/index.tsx'],
+  entryPoints: {
+    webview: 'src/webview/ui/index.tsx',
+    board: 'src/webview/ui/board.tsx'
+  },
   outdir: 'dist',
   bundle: true,
   platform: 'browser',
   format: 'iife',
   target: 'es2020',
   sourcemap: true,
-  entryNames: 'webview',
+  entryNames: '[name]',
   assetNames: 'assets/[name]-[hash]',
   logLevel: 'info'
 };

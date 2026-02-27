@@ -552,18 +552,7 @@ taskPicker.addEventListener('change', () => {
 });
 
 kanbanBtn.addEventListener('click', () => {
-  const isKanban = kanbanView.classList.contains('active');
-
-  if (isKanban) {
-    kanbanView.classList.remove('active');
-    chatView.classList.remove('hidden');
-    kanbanBtn.classList.remove('active');
-    return;
-  }
-
-  kanbanView.classList.add('active');
-  chatView.classList.add('hidden');
-  kanbanBtn.classList.add('active');
+  vscodeApi?.postMessage({ type: 'ShowKanbanBoard' });
 });
 
 root.addEventListener('click', (event) => {

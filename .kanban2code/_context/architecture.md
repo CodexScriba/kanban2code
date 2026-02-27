@@ -321,3 +321,17 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/webview/ui/styles.css` (ported complete `sidebar-codex-blue` stylesheet using hardcoded dark-theme CSS custom properties)
     - `src/webview/SidebarProvider.ts` (webview HTML body now mounts only `#app`; keeps CSP/nonce/script/style loading contract)
   - new-files-created: none
+
+- date: 2026-02-27
+  - task: `1772232626685-board-shell`
+  - files-updated:
+    - `esbuild.mjs` (webview bundling now emits named `webview` and `board` entries)
+    - `package.json` (registered `kanban2code.openBoard` command + activation event)
+    - `src/extension.ts` (registers open-board command wired to `KanbanPanel.createOrShow`)
+    - `src/webview/SidebarProvider.ts` (handles `ShowKanbanBoard` message by executing open-board command)
+    - `src/webview/messaging.ts` (added `ShowKanbanBoard` webview-to-host envelope type)
+    - `src/webview/ui/index.tsx` (Kanban button now posts `ShowKanbanBoard`)
+  - new-files-created:
+    - `src/webview/KanbanPanel.ts` - Singleton `WebviewPanel` host for editor-area Kanban board with CSP, nonce, and bundled asset loading
+    - `src/webview/ui/board.tsx` - Static board shell DOM and placeholder interactions ported from design reference
+    - `src/webview/ui/board.css` - Board shell stylesheet ported from design reference
