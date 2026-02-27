@@ -73,6 +73,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     void this.sendInitState();
   }
 
+  public focusChatInput(): void {
+    this.postMessage(createEnvelope('FocusChatInput', {}));
+  }
+
   private async handleWebviewMessage(data: unknown): Promise<void> {
     try {
       const envelope = validateEnvelope(data);

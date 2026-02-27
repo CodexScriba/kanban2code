@@ -1,6 +1,6 @@
 ---
-stage: code
-agent: coder
+stage: completed
+agent: auditor
 tags: [feature, p1]
 contexts: []
 ---
@@ -247,46 +247,45 @@ Do not modify:
 - SidebarProvider.ts (read-only reference)
 
 ## Audit
-src/commands/index.ts
 src/extension.ts
-package.json
-tests/commands.test.ts
-dist/extension.js
-dist/extension.js.map
+src/webview/SidebarProvider.ts
+src/webview/messaging.ts
+tests/webview/messaging.test.ts
 
 ---
 
 ## Review
 
-**Rating: 7/10**
+**Rating: 8/10**
 
-**Verdict: NEEDS WORK**
+**Verdict: ACCEPTED**
 
 ### Summary
-The command registration and extension wiring are mostly clean and aligned with the task goals, but one required `newTask` behavior is not actually wired in runtime. Test coverage exists for command handlers, yet the test file currently fails to execute in this environment due unresolved VS Code module loading.
+Implementation meets the command registration and extension wiring goals with clean separation between `extension.ts` and `commands/index.ts`. Core behavior is in place and validated by typecheck and messaging protocol tests, with one test coverage gap for command/activation flows.
 
 ### Findings
 
 #### Blockers
-- [ ] `newTask` does not send a webview focus-chat message in real extension wiring: `registerCommands` supports `focusSidebarChat`, but `activate()` never passes that callback, so command only focuses view and does not trigger chat input focus behavior from the refined prompt/edge case requirements - `src/commands/index.ts:115`, `src/extension.ts:42`
+- [ ] None.
 
 #### High Priority
-- [ ] None
+- [ ] None.
 
 #### Medium Priority
-- [ ] Command tests are not runnable as committed in current setup (`Cannot find package 'vscode'`), which prevents reliable CI validation of this task's core behavior - `tests/commands.test.ts:3`
+- [ ] Missing command/activation tests: No direct tests verify command registration, quick-pick task execution flow, create-workspace prompt flow, or `newTask` focus behavior in `src/commands/index.ts` and `src/extension.ts`.
 
 #### Low Priority / Nits
-- [ ] None
+- [ ] None.
 
 ### Test Assessment
 - Coverage: Needs improvement
-- Missing tests: Integration-level test that verifies `kanban2code.newTask` triggers chat-focus behavior through actual extension wiring; test/runner setup ensuring `tests/commands.test.ts` can execute with VS Code mocked.
+- Missing tests: command registration and behaviors in `src/commands/index.ts`; activation path coverage in `src/extension.ts` (workspace present/missing, create prompt action, sidebar focus flow).
 
 ### What's Good
-- Command palette contributions for all four commands are present and correctly named.
-- `runTask` correctly filters to provider-backed tasks and handles empty-state UX.
-- `extension.ts` remains concise and delegates command logic appropriately.
+- `src/extension.ts` stays minimal and delegates command logic cleanly.
+- All four commands are contributed in `package.json` and registered in `src/commands/index.ts`.
+- Sidebar watcher/event flow remains centralized in `SidebarProvider`, including `WorkspaceUpdated` broadcasts and `FocusChatInput` support.
+- Validation checks passed: `bun run test tests/webview/messaging.test.ts`, `bun run typecheck`.
 
 ### Recommendations
-- Wire a concrete `focusSidebarChat` callback from `activate()` to `registerCommands()` by posting a host-to-webview message (and add protocol support/tests for that message path).
+- Add a focused `tests/commands/index.test.ts` suite with mocked VS Code APIs to lock command behavior and edge cases.

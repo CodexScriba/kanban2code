@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, test } from 'vitest';
 import {
   type CancelStreamPayload,
   type ErrorPayload,
+  type FocusChatInputPayload,
   type GenerateTaskPayload,
   type InitStatePayload,
   type MessagePayloadMap,
@@ -76,6 +77,7 @@ describe('webview messaging protocol v2', () => {
       Error: {
         message: 'oops',
       },
+      FocusChatInput: {},
       RequestState: {},
       SendMessage: {
         role: 'user',
@@ -173,6 +175,7 @@ describe('webview messaging protocol v2', () => {
     const taskGeneratedPayload: TaskGeneratedPayload = { path: 'a.md', title: 'A' };
     const workspaceUpdatedPayload: WorkspaceUpdatedPayload = { workspaceSnapshot: baseSnapshot };
     const errorPayload: ErrorPayload = { message: 'error' };
+    const focusChatInputPayload: FocusChatInputPayload = {};
     const requestStatePayload: RequestStatePayload = {};
     const runTaskPayload: RunTaskPayload = { taskFilePath: 'a.md', allRemaining: true };
     const saveTaskPayload: SaveTaskPayload = {
@@ -188,6 +191,7 @@ describe('webview messaging protocol v2', () => {
     expect(taskGeneratedPayload.title).toBe('A');
     expect(workspaceUpdatedPayload.workspaceSnapshot).toEqual(baseSnapshot);
     expect(errorPayload.message).toBe('error');
+    expect(focusChatInputPayload).toEqual({});
     expect(requestStatePayload).toEqual({});
     expect(runTaskPayload.taskFilePath).toBe('a.md');
     expect(runTaskPayload.allRemaining).toBe(true);

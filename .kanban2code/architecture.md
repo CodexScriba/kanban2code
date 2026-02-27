@@ -5,6 +5,20 @@ Primary architecture reference: `docs/architecture.md`
 ## Accepted Task Updates
 
 - date: 2026-02-27
+  - task: `task10.1-extension-entry-point-command-registration`
+  - files-updated:
+    - `src/extension.ts` (minimal activation flow now discovers Kanban root, registers sidebar provider, and wires command dependencies/state hooks)
+    - `src/commands/index.ts` (registers `createWorkspace`, `runTask`, `newTask`, and `openSettings` commands with workspace/kanban edge-case handling)
+    - `package.json` (contributes the four command palette commands and activation events)
+    - `src/webview/messaging.ts` (includes `FocusChatInput` protocol envelope/payload support used by command-triggered chat focus)
+    - `tests/webview/messaging.test.ts` (covers protocol round-trip/validation including `FocusChatInput`)
+    - `.kanban2code/projects/roadmap/task10.1-extension-entry-point-command-registration.md` (auditor review and stage transition)
+  - new-files-created: none
+  - notes:
+    - Extension entry point is now command-first and delegates command behavior to `src/commands/index.ts` to keep activation logic small and maintainable.
+    - Sidebar refresh behavior remains event-driven through `TaskWatcher` inside `SidebarProvider`, preserving `WorkspaceUpdated` broadcasts.
+
+- date: 2026-02-27
   - task: `task9.1-chat-board-webview-ui`
   - files-updated:
     - `src/webview/SidebarProvider.ts` (host-side webview message orchestration for chat, generate, save, run, and workspace refresh broadcasting)

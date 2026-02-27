@@ -45,6 +45,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     onWorkspaceCreated: (createdKanbanRoot, createdWorkspaceRoot) => {
       registerSidebarProvider(createdKanbanRoot, createdWorkspaceRoot);
     },
+    focusSidebarChat: () => {
+      sidebarProvider?.focusChatInput();
+    },
   });
 
   if (workspaceRoot && !kanbanRoot) {

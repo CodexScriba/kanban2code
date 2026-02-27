@@ -85,6 +85,9 @@ export const ErrorPayloadSchema = z.object({
 }).strict();
 export type ErrorPayload = z.infer<typeof ErrorPayloadSchema>;
 
+export const FocusChatInputPayloadSchema = z.object({}).strict();
+export type FocusChatInputPayload = z.infer<typeof FocusChatInputPayloadSchema>;
+
 export const RequestStatePayloadSchema = z.object({}).strict();
 export type RequestStatePayload = z.infer<typeof RequestStatePayloadSchema>;
 
@@ -137,6 +140,7 @@ export const HostToWebviewMessageTypes = [
   'TaskGenerated',
   'WorkspaceUpdated',
   'Error',
+  'FocusChatInput',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
@@ -159,6 +163,7 @@ export type MessagePayloadMap = {
   TaskGenerated: TaskGeneratedPayload;
   WorkspaceUpdated: WorkspaceUpdatedPayload;
   Error: ErrorPayload;
+  FocusChatInput: FocusChatInputPayload;
   RequestState: RequestStatePayload;
   SendMessage: SendMessagePayload;
   GenerateTask: GenerateTaskPayload;
@@ -213,6 +218,12 @@ const ErrorEnvelopeSchema = z.object({
   payload: ErrorPayloadSchema,
 }).strict();
 
+const FocusChatInputEnvelopeSchema = z.object({
+  version: z.literal(MESSAGE_VERSION),
+  type: z.literal('FocusChatInput'),
+  payload: FocusChatInputPayloadSchema,
+}).strict();
+
 const RequestStateEnvelopeSchema = z.object({
   version: z.literal(MESSAGE_VERSION),
   type: z.literal('RequestState'),
@@ -256,6 +267,7 @@ export const EnvelopeSchema = z.discriminatedUnion('type', [
   TaskGeneratedEnvelopeSchema,
   WorkspaceUpdatedEnvelopeSchema,
   ErrorEnvelopeSchema,
+  FocusChatInputEnvelopeSchema,
   RequestStateEnvelopeSchema,
   SendMessageEnvelopeSchema,
   GenerateTaskEnvelopeSchema,
