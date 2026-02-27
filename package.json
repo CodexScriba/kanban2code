@@ -29,7 +29,8 @@
       "kanban2code": [
         {
           "id": "kanban2code-sidebar",
-          "name": "Kanban2Code"
+          "name": "Kanban2Code",
+          "type": "webview"
         }
       ]
     }

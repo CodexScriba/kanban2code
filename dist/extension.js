@@ -38,14 +38,40 @@ var vscode2 = __toESM(require("vscode"));
 
 // src/webview/SidebarProvider.ts
 var vscode = __toESM(require("vscode"));
+var path = __toESM(require("node:path"));
+
+// src/webview/messaging.ts
+var isObject = (value) => typeof value === "object" && value !== null;
+var isWebviewToHostMessage = (value) => {
+  if (!isObject(value) || typeof value.type !== "string") {
+    return false;
+  }
+  if (value.type === "RequestTaskSnapshot") {
+    return true;
+  }
+  if (value.type !== "SendChatMessage" || !isObject(value.payload)) {
+    return false;
+  }
+  if (typeof value.payload.message !== "string" || typeof value.payload.provider !== "string") {
+    return false;
+  }
+  if ("selectedTaskId" in value.payload && value.payload.selectedTaskId !== void 0 && typeof value.payload.selectedTaskId !== "string") {
+    return false;
+  }
+  return true;
+};
+
+// src/webview/SidebarProvider.ts
 var SidebarProvider = class {
   constructor(extensionUri) {
     this.extensionUri = extensionUri;
+    this.webviewView = null;
   }
   static {
     this.viewType = "kanban2code-sidebar";
   }
   resolveWebviewView(webviewView) {
+    this.webviewView = webviewView;
     const { webview } = webviewView;
     webview.options = {
       enableScripts: true,
@@ -68,11 +94,109 @@ var SidebarProvider = class {
     <title>Kanban2Code</title>
   </head>
   <body>
-    <h1>Kanban2Code</h1>
-    <div id="app">Loading...</div>
+    <div id="app"></div>
     <script nonce="${nonce}" src="${scriptUri}"></script>
   </body>
 </html>`;
+    webview.onDidReceiveMessage((message) => {
+      void this.handleWebviewMessage(message);
+    });
+  }
+  async handleWebviewMessage(rawMessage) {
+    if (!this.webviewView || !isWebviewToHostMessage(rawMessage)) {
+      return;
+    }
+    if (rawMessage.type === "RequestTaskSnapshot") {
+      await this.postTaskSnapshot();
+      return;
+    }
+    const allTasks = await this.getWorkspaceTasks();
+    let selectedTaskId = rawMessage.payload.selectedTaskId;
+    let selectedTask = selectedTaskId ? allTasks.find((task) => task.id === selectedTaskId) ?? null : null;
+    if (selectedTaskId && !selectedTask) {
+      selectedTaskId = void 0;
+      const resetMessage = {
+        type: "TaskSelectionReset",
+        payload: {
+          reason: "Selected task is no longer available. Scope reset to general chat."
+        }
+      };
+      void this.webviewView.webview.postMessage(resetMessage);
+    }
+    const scopeLabel = selectedTask ? `${selectedTask.stage} \u2022 ${selectedTask.title}` : "general chat";
+    const responseMessage = {
+      type: "OrchestratorResponse",
+      payload: {
+        message: `Context received (${scopeLabel}) via provider ${rawMessage.payload.provider}.`
+      }
+    };
+    void this.webviewView.webview.postMessage(responseMessage);
+    await this.postTaskSnapshot(allTasks);
+  }
+  async postTaskSnapshot(preloadedTasks) {
+    if (!this.webviewView) {
+      return;
+    }
+    const tasks = preloadedTasks ?? await this.getWorkspaceTasks();
+    const snapshotMessage = {
+      type: "TaskSnapshot",
+      payload: { tasks }
+    };
+    void this.webviewView.webview.postMessage(snapshotMessage);
+  }
+  async getWorkspaceTasks() {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return [];
+    }
+    const taskUris = await Promise.all([
+      vscode.workspace.findFiles(
+        new vscode.RelativePattern(workspaceFolder, ".kanban2code/inbox/**/*.md")
+      ),
+      vscode.workspace.findFiles(
+        new vscode.RelativePattern(workspaceFolder, ".kanban2code/projects/**/*.md")
+      )
+    ]);
+    const allUris = [...taskUris[0], ...taskUris[1]];
+    const tasks = await Promise.all(allUris.map((uri) => this.readTaskSnapshotItem(uri, workspaceFolder)));
+    return tasks.filter((task) => task !== null).sort((left, right) => left.title.localeCompare(right.title));
+  }
+  async readTaskSnapshotItem(taskUri, workspaceFolder) {
+    const relativePath = path.posix.normalize(
+      path.relative(workspaceFolder.uri.fsPath, taskUri.fsPath).split(path.sep).join(path.posix.sep)
+    );
+    const raw = await vscode.workspace.fs.readFile(taskUri);
+    const content = Buffer.from(raw).toString("utf8");
+    const stage = this.parseStage(content);
+    const title = this.parseTitle(content, taskUri);
+    return {
+      id: relativePath,
+      title,
+      stage
+    };
+  }
+  parseTitle(content, taskUri) {
+    const headingMatch = content.match(/^#\s+(.+)$/m);
+    if (headingMatch && headingMatch[1].trim().length > 0) {
+      return headingMatch[1].trim();
+    }
+    const fileName = path.basename(taskUri.fsPath, path.extname(taskUri.fsPath));
+    return fileName.trim() || "Untitled task";
+  }
+  parseStage(content) {
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontmatterMatch) {
+      return "unknown";
+    }
+    const stageLine = frontmatterMatch[1].split("\n").find((line) => line.trimStart().startsWith("stage:"));
+    if (!stageLine) {
+      return "unknown";
+    }
+    const rawStage = stageLine.split(":").slice(1).join(":").trim().toLowerCase();
+    if (rawStage === "inbox" || rawStage === "capture" || rawStage === "plan" || rawStage === "code" || rawStage === "audit" || rawStage === "completed") {
+      return rawStage;
+    }
+    return "unknown";
   }
 };
 function getNonce() {

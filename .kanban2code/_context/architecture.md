@@ -313,3 +313,11 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/webview/ui/styles.css` - Base styles using VS Code theme variables
     - `media/kanban2code.svg` - Activity bar icon (kanban board columns)
     - `.vscodeignore` - Excludes source, config, and dev files from packaged extension
+
+- date: 2026-02-27
+  - task: `1772208286762-sidebar-ui-shell`
+  - files-updated:
+    - `src/webview/ui/index.tsx` (replaced stub with full static sidebar shell DOM, Kanban/chat toggle, textarea autosize, send stub, chip/dropdown interactions)
+    - `src/webview/ui/styles.css` (ported complete `sidebar-codex-blue` stylesheet using hardcoded dark-theme CSS custom properties)
+    - `src/webview/SidebarProvider.ts` (webview HTML body now mounts only `#app`; keeps CSP/nonce/script/style loading contract)
+  - new-files-created: none
