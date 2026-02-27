@@ -299,3 +299,17 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `.kanban2code/_providers/codex-low.md` - Codex provider preset with `model_reasoning_effort: low`
     - `.kanban2code/_providers/codex-high.md` - Codex provider preset with `model_reasoning_effort: high`
     - `.kanban2code/_providers/codex-xhigh.md` - Codex provider preset with `model_reasoning_effort: xhigh`
+
+- date: 2026-02-27
+  - task: `1772174345365-kanban2code` (Bootstrap VS Code extension scaffold)
+  - files-updated: none
+  - new-files-created:
+    - `package.json` - VS Code extension manifest with sidebar viewContainer, activationEvents, esbuild build scripts
+    - `tsconfig.json` - TypeScript config targeting ES2020, NodeNext modules, JSX support
+    - `esbuild.mjs` - Dual-entry esbuild config (extension host CJS + webview IIFE) with watch mode
+    - `src/extension.ts` - Thin activation: registers SidebarProvider as WebviewViewProvider
+    - `src/webview/SidebarProvider.ts` - WebviewViewProvider with CSP, nonce, asWebviewUri asset loading
+    - `src/webview/ui/index.tsx` - Stub webview entry point with CSS import
+    - `src/webview/ui/styles.css` - Base styles using VS Code theme variables
+    - `media/kanban2code.svg` - Activity bar icon (kanban board columns)
+    - `.vscodeignore` - Excludes source, config, and dev files from packaged extension

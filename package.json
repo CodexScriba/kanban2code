@@ -1,0 +1,48 @@
+{
+  "name": "kanban2code",
+  "displayName": "Kanban2Code",
+  "description": "Kanban2Code VS Code extension",
+  "version": "0.0.1",
+  "publisher": "kanban2code",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:kanban2code-sidebar"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kanban2code",
+          "title": "Kanban2Code",
+          "icon": "media/kanban2code.svg"
+        }
+      ]
+    },
+    "views": {
+      "kanban2code": [
+        {
+          "id": "kanban2code-sidebar",
+          "name": "Kanban2Code"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.10",
+    "typescript": "^5.9.2"
+  }
+}

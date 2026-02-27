@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/webview/ui/styles.css"],
+  "sourcesContent": [":root {\n  color-scheme: light dark;\n}\n\nbody {\n  font-family: var(--vscode-font-family);\n  color: var(--vscode-foreground);\n  background: var(--vscode-editor-background);\n  padding: 12px;\n}\n\nh1 {\n  font-size: 16px;\n  margin: 0 0 12px;\n}\n\n#app {\n  font-size: 13px;\n}\n"],
+  "mappings": ";AAAA;AACE,gBAAc,MAAM;AACtB;AAEA;AACE,eAAa,IAAI;AACjB,SAAO,IAAI;AACX,cAAY,IAAI;AAChB,WAAS;AACX;AAEA;AACE,aAAW;AACX,UAAQ,EAAE,EAAE;AACd;AAEA,CAAC;AACC,aAAW;AACb;",
+  "names": []
+}

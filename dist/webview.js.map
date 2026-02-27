@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/webview/ui/index.tsx"],
+  "sourcesContent": ["import './styles.css';\n\nconst root = document.getElementById('app');\n\nif (root) {\n  root.textContent = 'Hello from the Kanban2Code sidebar webview.';\n}\n"],
+  "mappings": ";;;AAEA,MAAM,OAAO,SAAS,eAAe,KAAK;AAE1C,MAAI,MAAM;AACR,SAAK,cAAc;AAAA,EACrB;",
+  "names": []
+}

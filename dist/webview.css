@@ -1,0 +1,18 @@
+/* src/webview/ui/styles.css */
+:root {
+  color-scheme: light dark;
+}
+body {
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  padding: 12px;
+}
+h1 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+#app {
+  font-size: 13px;
+}
+/*# sourceMappingURL=webview.css.map */
