@@ -12,6 +12,7 @@ Primary architecture reference: `docs/architecture.md`
     - `package.json` (contributes the four command palette commands and activation events)
     - `src/webview/messaging.ts` (includes `FocusChatInput` protocol envelope/payload support used by command-triggered chat focus)
     - `tests/webview/messaging.test.ts` (covers protocol round-trip/validation including `FocusChatInput`)
+    - `tests/commands.test.ts` (covers four-command registration plus create/run/new/settings command behavior)
     - `.kanban2code/projects/roadmap/task10.1-extension-entry-point-command-registration.md` (auditor review and stage transition)
   - new-files-created: none
   - notes:

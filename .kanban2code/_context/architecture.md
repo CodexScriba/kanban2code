@@ -15,6 +15,21 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 
 ## Accepted Task Updates
 
+- date: 2026-02-27
+  - task: `task10.1-extension-entry-point-command-registration`
+  - files-updated:
+    - `src/extension.ts` (activate flow now discovers workspace/kanban roots, registers sidebar provider, and wires command callbacks/state)
+    - `src/commands/index.ts` (registers and implements create workspace, run task, new task, and open settings commands)
+    - `package.json` (adds command palette contributions and command activation events)
+    - `src/webview/messaging.ts` (supports `FocusChatInput` envelope for command-triggered chat focus)
+    - `tests/commands.test.ts` (command behavior coverage for registration, runnable filtering, quick-pick execution, and focus/reveal flows)
+    - `tests/webview/messaging.test.ts` (protocol validation coverage including `FocusChatInput`)
+    - `.kanban2code/projects/roadmap/task10.1-extension-entry-point-command-registration.md` (auditor review and stage transition)
+  - new-files-created: none
+  - notes:
+    - Entry point and command responsibilities are now cleanly split between `extension.ts` and `src/commands/index.ts`.
+    - Sidebar updates continue to flow from `TaskWatcher` events through `WorkspaceUpdated` messages.
+
 - date: 2026-02-26
   - task: `task13.4-fix-build-node-builtin-bundling`
   - files-updated:

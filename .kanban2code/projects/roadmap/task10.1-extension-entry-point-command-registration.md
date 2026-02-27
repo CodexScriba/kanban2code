@@ -261,7 +261,7 @@ tests/webview/messaging.test.ts
 **Verdict: ACCEPTED**
 
 ### Summary
-Implementation meets the command registration and extension wiring goals with clean separation between `extension.ts` and `commands/index.ts`. Core behavior is in place and validated by typecheck and messaging protocol tests, with one test coverage gap for command/activation flows.
+Implementation meets the command registration and extension wiring goals with clean separation between `extension.ts` and `commands/index.ts`. Core behavior is validated by command tests, messaging protocol tests, and typecheck, with a remaining integration-level coverage gap around activation/watcher wiring.
 
 ### Findings
 
@@ -272,20 +272,21 @@ Implementation meets the command registration and extension wiring goals with cl
 - [ ] None.
 
 #### Medium Priority
-- [ ] Missing command/activation tests: No direct tests verify command registration, quick-pick task execution flow, create-workspace prompt flow, or `newTask` focus behavior in `src/commands/index.ts` and `src/extension.ts`.
+- [ ] Missing extension integration coverage: There is no direct test around `activate()` wiring for initial kanban root discovery, sidebar provider registration lifecycle, and create-workspace prompt flow in `src/extension.ts`.
 
 #### Low Priority / Nits
 - [ ] None.
 
 ### Test Assessment
 - Coverage: Needs improvement
-- Missing tests: command registration and behaviors in `src/commands/index.ts`; activation path coverage in `src/extension.ts` (workspace present/missing, create prompt action, sidebar focus flow).
+- Missing tests: activation path coverage in `src/extension.ts` (workspace present/missing, create prompt action, sidebar registration/watcher lifecycle behavior).
 
 ### What's Good
 - `src/extension.ts` stays minimal and delegates command logic cleanly.
 - All four commands are contributed in `package.json` and registered in `src/commands/index.ts`.
+- Command behavior is covered by `tests/commands.test.ts` (6/6 passing), including runnable-task filtering, quick-pick selection, new-task focus callback, and settings reveal.
 - Sidebar watcher/event flow remains centralized in `SidebarProvider`, including `WorkspaceUpdated` broadcasts and `FocusChatInput` support.
-- Validation checks passed: `bun run test tests/webview/messaging.test.ts`, `bun run typecheck`.
+- Validation checks passed: `bun run test tests/commands.test.ts`, `bun run test tests/webview/messaging.test.ts`, `bun run typecheck`.
 
 ### Recommendations
-- Add a focused `tests/commands/index.test.ts` suite with mocked VS Code APIs to lock command behavior and edge cases.
+- Add an activation-focused test suite (or lightweight integration test) for `src/extension.ts` to verify startup wiring and create-workspace prompt behavior.
