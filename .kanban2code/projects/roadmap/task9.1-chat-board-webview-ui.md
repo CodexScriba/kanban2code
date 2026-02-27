@@ -1,6 +1,6 @@
 ---
-stage: code
-agent: coder
+stage: completed
+agent: auditor
 tags: [feature, p1]
 contexts: [react-core-skills]
 ---
@@ -322,11 +322,16 @@ Files SidebarProvider.ts imports from:
 - Icons from Icons.tsx (ported from v1)
 
 ## Audit
-src/webview/messaging.ts
-src/webview/ui/hooks/useChat.ts
-src/webview/ui/App.tsx
+src/webview/run-task.ts
 src/webview/SidebarProvider.ts
-tests/webview/messaging.test.ts
+src/webview/ui/App.tsx
+src/webview/ui/components/ChatMessage.tsx
+src/webview/ui/components/TaskEditorPanel.tsx
+tests/webview/app.test.ts
+tests/webview/chat.test.tsx
+tests/webview/run-task.test.ts
+tests/webview/task-editor-panel.test.tsx
+.kanban2code/projects/roadmap/task9.1-chat-board-webview-ui.md
 
 ### Test Patterns
 Source: `tests/webview/messaging.test.ts` - vitest pattern:
@@ -398,3 +403,42 @@ Core chat+board rendering and message flow are in place, but a few behavior gaps
 
 ### Recommendations
 - Implement `allRemaining` handling end-to-end in the host execution path and add interaction tests that assert different effects for `▶` and `▶▶`.
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+Re-audit confirms the previously reported blockers are resolved: `RunTask` now distinguishes `▶` vs `▶▶`, dirty-close confirmation is consistently applied, parse failures are surfaced in chat, and invalid envelopes are logged safely.
+
+### Findings
+
+#### Blockers
+- [x] None.
+
+#### High Priority
+- [x] None.
+
+#### Medium Priority
+- [x] None.
+
+#### Low Priority / Nits
+- [ ] Optional hardening: add an integration-level host/webview test that covers full `SidebarProvider` message flow (`RequestState` -> `InitState`, `RunTask`, `SaveTask`) to catch regressions across wiring seams - `src/webview/SidebarProvider.ts:1`
+
+### Test Assessment
+- Coverage: Adequate
+- Missing tests:
+  - End-to-end integration test for `SidebarProvider` orchestration and watcher-triggered board refresh behavior
+
+### What's Good
+- `allRemaining` execution path is implemented and verified with dedicated tests in `tests/webview/run-task.test.ts`.
+- `TaskEditorPanel` close/cancel confirmation behavior and draft/save flow are covered in `tests/webview/task-editor-panel.test.tsx`.
+- Invalid message envelope handling is explicitly tested (`tests/webview/app.test.ts`) and parse-failure UX is covered (`tests/webview/chat.test.tsx`).
+- Validation run is clean: `bun run test tests/webview` (9 files / 26 tests passed) and `bun run typecheck` passed.
+
+### Recommendations
+- Keep the current component-level tests and add one host/webview integration scenario for watcher-driven refresh + save/run round-trips.

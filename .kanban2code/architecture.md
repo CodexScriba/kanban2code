@@ -4,6 +4,37 @@ Primary architecture reference: `docs/architecture.md`
 
 ## Accepted Task Updates
 
+- date: 2026-02-27
+  - task: `task9.1-chat-board-webview-ui`
+  - files-updated:
+    - `src/webview/SidebarProvider.ts` (host-side webview message orchestration for chat, generate, save, run, and workspace refresh broadcasting)
+    - `src/webview/ui/App.tsx` (split-shell chat + board composition, envelope handling, and task editor lifecycle wiring)
+    - `src/webview/ui/main.tsx` (mounts unified App with VS Code API singleton)
+    - `tests/webview/chat.test.tsx` (adds proposal-parse failure feedback assertion)
+    - `tests/webview/task-editor-panel.test.tsx` (adds dirty-close confirmation coverage)
+  - new-files-created:
+    - `src/webview/run-task.ts`
+    - `src/webview/ui/components/Chat.tsx`
+    - `src/webview/ui/components/ChatMessage.tsx`
+    - `src/webview/ui/components/TaskProposalCard.tsx`
+    - `src/webview/ui/components/WorkspaceBar.tsx`
+    - `src/webview/ui/components/ChatInput.tsx`
+    - `src/webview/ui/components/BoardPanel.tsx`
+    - `src/webview/ui/components/BoardToolbar.tsx`
+    - `src/webview/ui/components/Column.tsx`
+    - `src/webview/ui/components/TaskCard.tsx`
+    - `src/webview/ui/components/TaskEditorPanel.tsx`
+    - `src/webview/ui/components/EmptyState.tsx`
+    - `src/webview/ui/components/Icons.tsx`
+    - `src/webview/ui/hooks/useChat.ts`
+    - `src/webview/ui/hooks/useTaskEditor.ts`
+    - `tests/webview/app.test.ts`
+    - `tests/webview/run-task.test.ts`
+  - notes:
+    - Added the unified V2 sidebar UX: live chat stream, task proposal generation, always-visible kanban board, and inline task editor backed by shared workspace snapshot state.
+    - Added explicit run-mode branching (`current stage` vs `all remaining stages`) through `RunTask` payload handling and test coverage.
+    - Established UI-side validation/error surfacing for invalid message envelopes and unparseable task proposals.
+
 - date: 2026-02-26
   - task: `task13.4-fix-build-node-builtin-bundling`
   - files-updated:

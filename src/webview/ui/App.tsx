@@ -3,7 +3,7 @@ import type { WorkspaceSnapshot } from '../../types/snapshot';
 import type { Task } from '../../types/task';
 import type { TaskProposal } from '../../types/task-proposal';
 import type { ProviderConfigFile } from '../../types/workspace-entities';
-import { createEnvelope, validateEnvelope } from '../messaging';
+import { createEnvelope, validateEnvelope, type AnyMessageEnvelope } from '../messaging';
 import { EmptyState } from './components/EmptyState';
 import { Chat } from './components/Chat';
 import { BoardPanel } from './components/BoardPanel';
@@ -13,6 +13,17 @@ import type { TaskEditorSavePayload } from './hooks/useTaskEditor';
 
 interface AppProps {
   vscode?: VsCodePoster;
+}
+
+const INVALID_ENVELOPE_LOG = '[Kanban2Code] Ignoring invalid webview message envelope';
+
+export function parseIncomingEnvelope(data: unknown): AnyMessageEnvelope | null {
+  try {
+    return validateEnvelope(data);
+  } catch (error) {
+    console.warn(INVALID_ENVELOPE_LOG, error);
+    return null;
+  }
 }
 
 function findTask(snapshot: WorkspaceSnapshot, filePath: string): Task | null {
@@ -39,44 +50,44 @@ export const App: React.FC<AppProps> = ({ vscode }) => {
 
   useEffect(() => {
     const listener = (event: MessageEvent<unknown>) => {
-      try {
-        const envelope = validateEnvelope(event.data);
-        switch (envelope.type) {
-          case 'InitState': {
-            setKanbanRootExists(envelope.payload.kanbanRootExists);
-            setSnapshot(envelope.payload.workspaceSnapshot);
-            setProviders(envelope.payload.workspaceSnapshot.providers);
-            if (envelope.payload.activeProvider) {
-              const selected = envelope.payload.workspaceSnapshot.providers.find(
-                (provider) =>
-                  provider.config?.cli === envelope.payload.activeProvider?.cli
-                  && provider.config?.model === envelope.payload.activeProvider?.model,
-              );
-              if (selected) setSelectedProvider(selected.id);
-            }
-            break;
+      const envelope = parseIncomingEnvelope(event.data);
+      if (!envelope) {
+        return;
+      }
+
+      switch (envelope.type) {
+        case 'InitState': {
+          setKanbanRootExists(envelope.payload.kanbanRootExists);
+          setSnapshot(envelope.payload.workspaceSnapshot);
+          setProviders(envelope.payload.workspaceSnapshot.providers);
+          if (envelope.payload.activeProvider) {
+            const selected = envelope.payload.workspaceSnapshot.providers.find(
+              (provider) =>
+                provider.config?.cli === envelope.payload.activeProvider?.cli
+                && provider.config?.model === envelope.payload.activeProvider?.model,
+            );
+            if (selected) setSelectedProvider(selected.id);
           }
-          case 'WorkspaceUpdated':
-            setSnapshot(envelope.payload.workspaceSnapshot);
-            setProviders(envelope.payload.workspaceSnapshot.providers);
-            break;
-          case 'StreamChunk':
-            chat.handleStreamChunk(envelope.payload.token);
-            break;
-          case 'MessageComplete':
-            chat.handleMessageComplete();
-            break;
-          case 'Error':
-            chat.handleError(envelope.payload.message);
-            break;
-          case 'TaskGenerated':
-            chat.handleMessageComplete();
-            break;
-          default:
-            break;
+          break;
         }
-      } catch {
-        // Ignore unrecognized messages from VS Code internals
+        case 'WorkspaceUpdated':
+          setSnapshot(envelope.payload.workspaceSnapshot);
+          setProviders(envelope.payload.workspaceSnapshot.providers);
+          break;
+        case 'StreamChunk':
+          chat.handleStreamChunk(envelope.payload.token);
+          break;
+        case 'MessageComplete':
+          chat.handleMessageComplete();
+          break;
+        case 'Error':
+          chat.handleError(envelope.payload.message);
+          break;
+        case 'TaskGenerated':
+          chat.handleMessageComplete();
+          break;
+        default:
+          break;
       }
     };
 

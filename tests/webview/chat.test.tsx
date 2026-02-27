@@ -42,4 +42,24 @@ describe('Chat', () => {
     expect(html).toContain('Ship it');
     expect(html).toContain('Inbox: 1');
   });
+
+  test('shows parse feedback when assistant proposal cannot be parsed', () => {
+    const html = renderToStaticMarkup(
+      <Chat
+        snapshot={snapshot}
+        messages={[{ role: 'assistant', content: '```yaml\ntitle: Missing description only\n```' }]}
+        providers={[]}
+        selectedProvider=""
+        hasProvider={false}
+        isStreaming={false}
+        error={null}
+        onProviderChange={() => {}}
+        onSend={() => {}}
+        onCancel={() => {}}
+        onGenerateTask={() => {}}
+      />,
+    );
+
+    expect(html).toContain('Could not parse task proposal');
+  });
 });

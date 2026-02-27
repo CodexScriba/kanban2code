@@ -6,7 +6,6 @@ import { stringifyTaskFile } from '../services/frontmatter';
 import { resolveProviderConfig } from '../services/provider-service';
 import { findTaskById } from '../services/scanner';
 import { generateTaskFile } from '../services/task-generator';
-import { executeTaskInTerminal } from '../services/terminal-executor';
 import { TaskWatcher } from '../services/task-watcher';
 import { buildWorkspaceSnapshot } from '../services/workspace-snapshot';
 import type { ChatMessage } from '../types/orchestrator';
@@ -14,6 +13,7 @@ import type { ProviderConfig } from '../types/provider';
 import type { WorkspaceSnapshot } from '../types/snapshot';
 import type { Task } from '../types/task';
 import { ensureSafePath } from '../workspace/validation';
+import { executeRunTaskPayload } from './run-task';
 import {
   createEnvelope,
   validateEnvelope,
@@ -94,8 +94,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case 'RunTask': {
-          const taskId = path.basename(envelope.payload.taskFilePath, '.md');
-          await executeTaskInTerminal(this.options.kanbanRoot, taskId, this.options.workspaceRoot);
+          await executeRunTaskPayload(
+            this.options.kanbanRoot,
+            this.options.workspaceRoot,
+            envelope.payload,
+          );
           break;
         }
         case 'SaveTask':

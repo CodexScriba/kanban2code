@@ -1,7 +1,7 @@
 import React from 'react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { TaskEditorPanel } from '../../src/webview/ui/components/TaskEditorPanel';
+import { TaskEditorPanel, confirmCloseIfDirty } from '../../src/webview/ui/components/TaskEditorPanel';
 import { createSavePayload } from '../../src/webview/ui/hooks/useTaskEditor';
 import type { Task } from '../../src/types/task';
 
@@ -43,5 +43,19 @@ describe('TaskEditorPanel', () => {
 
     expect(html).toContain('Edit Task');
     expect(html).toContain('Task body');
+  });
+
+  test('asks for confirmation when closing with unsaved changes', () => {
+    const confirmDiscard = vi.fn(() => false);
+    const shouldClose = confirmCloseIfDirty(true, confirmDiscard);
+    expect(shouldClose).toBe(false);
+    expect(confirmDiscard).toHaveBeenCalledTimes(1);
+  });
+
+  test('allows both close and cancel paths when clean', () => {
+    const confirmDiscard = vi.fn(() => true);
+    const shouldClose = confirmCloseIfDirty(false, confirmDiscard);
+    expect(shouldClose).toBe(true);
+    expect(confirmDiscard).not.toHaveBeenCalled();
   });
 });
