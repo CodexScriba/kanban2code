@@ -6,6 +6,7 @@ import type {
   TaskUpdateInput
 } from '../types/task';
 import type { QueueItem, RunState } from '../types/runner';
+import type { SettingsSection } from '../types/settings';
 export type { TaskSnapshotItem } from '../types/task';
 export type { QueueItem, RunResult, RunState } from '../types/runner';
 
@@ -97,6 +98,21 @@ export interface SaveSettingsMessage {
   };
 }
 
+export interface ResetSectionMessage {
+  type: 'ResetSection';
+  payload: {
+    section: SettingsSection;
+    projectSlug?: string;
+  };
+}
+
+export interface ResetToDefaultsMessage {
+  type: 'ResetToDefaults';
+  payload?: {
+    projectSlug?: string;
+  };
+}
+
 export interface RunStageMessage {
   type: 'RunStage';
   payload: {
@@ -153,6 +169,8 @@ export type WebviewToHostMessage =
   | SaveTaskMessage
   | OpenSettingsMessage
   | SaveSettingsMessage
+  | ResetSectionMessage
+  | ResetToDefaultsMessage
   | RunStageMessage
   | RunAllStagesMessage
   | QueueStageMessage
@@ -245,6 +263,19 @@ const TASK_STAGES: TaskStage[] = ['inbox', 'capture', 'plan', 'code', 'audit', '
 const PRIORITIES = ['low', 'medium', 'high'] as const;
 const RUN_STATES: RunState[] = ['queued', 'running', 'success', 'failed', 'cancelled'];
 const QUEUE_SCOPES = ['stage', 'all'] as const;
+const SETTINGS_SECTIONS: SettingsSection[] = [
+  'general',
+  'taskDefaults',
+  'pipelineDefaults',
+  'stageRuntimeMapping',
+  'providersAndModels',
+  'agentBehavior',
+  'roles',
+  'queueAndExecution',
+  'projectOverrides',
+  'notifications',
+  'telemetryAndLogs'
+];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -263,6 +294,9 @@ const isRunState = (value: unknown): value is RunState =>
 
 const isQueueScope = (value: unknown): value is QueueItem['scope'] =>
   typeof value === 'string' && QUEUE_SCOPES.includes(value as (typeof QUEUE_SCOPES)[number]);
+
+const isSettingsSection = (value: unknown): value is SettingsSection =>
+  typeof value === 'string' && SETTINGS_SECTIONS.includes(value as SettingsSection);
 
 const isQueueItem = (value: unknown): value is QueueItem => {
   return (
@@ -512,6 +546,29 @@ export const isWebviewToHostMessage = (value: unknown): value is WebviewToHostMe
     return (
       isObject(value.payload) &&
       isObject(value.payload.settings) &&
+      (!('projectSlug' in value.payload) ||
+        value.payload.projectSlug === undefined ||
+        typeof value.payload.projectSlug === 'string')
+    );
+  }
+
+  if (value.type === 'ResetSection') {
+    return (
+      isObject(value.payload) &&
+      isSettingsSection(value.payload.section) &&
+      (!('projectSlug' in value.payload) ||
+        value.payload.projectSlug === undefined ||
+        typeof value.payload.projectSlug === 'string')
+    );
+  }
+
+  if (value.type === 'ResetToDefaults') {
+    if (value.payload === undefined) {
+      return true;
+    }
+
+    return (
+      isObject(value.payload) &&
       (!('projectSlug' in value.payload) ||
         value.payload.projectSlug === undefined ||
         typeof value.payload.projectSlug === 'string')

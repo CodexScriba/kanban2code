@@ -18,7 +18,8 @@ const webviewConfig = {
   entryPoints: {
     webview: 'src/webview/ui/index.tsx',
     board: 'src/webview/ui/board.tsx',
-    taskeditor: 'src/webview/ui/taskeditor.tsx'
+    taskeditor: 'src/webview/ui/taskeditor.tsx',
+    settings: 'src/webview/ui/settings.tsx'
   },
   outdir: 'dist',
   bundle: true,

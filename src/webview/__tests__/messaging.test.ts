@@ -93,6 +93,21 @@ test('isWebviewToHostMessage accepts task editor + settings operations', () => {
     }),
     true
   );
+  assert.equal(
+    isWebviewToHostMessage({
+      type: 'ResetSection',
+      payload: { section: 'general', projectSlug: 'roadmap' }
+    }),
+    true
+  );
+  assert.equal(
+    isWebviewToHostMessage({
+      type: 'ResetToDefaults',
+      payload: { projectSlug: 'roadmap' }
+    }),
+    true
+  );
+  assert.equal(isWebviewToHostMessage({ type: 'ResetToDefaults' }), true);
 });
 
 test('isWebviewToHostMessage accepts runner command operations', () => {
@@ -152,6 +167,20 @@ test('isWebviewToHostMessage rejects invalid payloads', () => {
     isWebviewToHostMessage({
       type: 'SaveSettings',
       payload: { settings: 'not-an-object' }
+    }),
+    false
+  );
+  assert.equal(
+    isWebviewToHostMessage({
+      type: 'ResetSection',
+      payload: { section: 'not-a-section' }
+    }),
+    false
+  );
+  assert.equal(
+    isWebviewToHostMessage({
+      type: 'ResetToDefaults',
+      payload: { projectSlug: 123 }
     }),
     false
   );

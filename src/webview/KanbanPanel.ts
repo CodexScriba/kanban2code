@@ -246,6 +246,11 @@ export class KanbanPanel {
       return;
     }
 
+    if (rawMessage.type === 'OpenSettings') {
+      await vscode.commands.executeCommand('kanban2code.openSettings', rawMessage.payload);
+      return;
+    }
+
     if (rawMessage.type === 'ReorderTask') {
       await this.taskService.updateTask(rawMessage.payload.taskId, {
         order: rawMessage.payload.newOrder

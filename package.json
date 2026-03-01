@@ -14,7 +14,8 @@
   "activationEvents": [
     "onView:kanban2code-sidebar",
     "onCommand:kanban2code.openBoard",
-    "onCommand:kanban2code.openTaskEditor"
+    "onCommand:kanban2code.openTaskEditor",
+    "onCommand:kanban2code.openSettings"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -26,6 +27,10 @@
       {
         "command": "kanban2code.openTaskEditor",
         "title": "Kanban2Code: Open Task Editor"
+      },
+      {
+        "command": "kanban2code.openSettings",
+        "title": "Kanban2Code: Open Settings"
       }
     ],
     "viewsContainers": {

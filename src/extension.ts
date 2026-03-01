@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { SidebarProvider } from './webview/SidebarProvider';
 import { KanbanPanel } from './webview/KanbanPanel';
 import { TaskEditorPanel } from './webview/TaskEditorPanel';
+import { SettingsPanel } from './webview/SettingsPanel';
 import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
 import { TaskService } from './services/task-service';
 import { SettingsService } from './services/settings-service';
@@ -79,6 +80,25 @@ export function activate(context: vscode.ExtensionContext): void {
             : undefined;
 
       TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('kanban2code.openSettings', (arg?: unknown) => {
+      if (!workspaceRoot) {
+        void vscode.window.showWarningMessage('Open a workspace folder to configure Kanban2Code settings.');
+        return;
+      }
+
+      const projectSlug =
+        arg &&
+        typeof arg === 'object' &&
+        'projectSlug' in arg &&
+        typeof (arg as { projectSlug?: unknown }).projectSlug === 'string'
+          ? (arg as { projectSlug: string }).projectSlug
+          : undefined;
+
+      SettingsPanel.createOrShow(context.extensionUri, settingsService, projectSlug);
     })
   );
 }

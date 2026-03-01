@@ -91,6 +91,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
       return;
     }
 
+    if (rawMessage.type === 'OpenSettings') {
+      vscode.commands.executeCommand('kanban2code.openSettings', rawMessage.payload);
+      return;
+    }
+
     if (rawMessage.type !== 'SendChatMessage') {
       return;
     }
