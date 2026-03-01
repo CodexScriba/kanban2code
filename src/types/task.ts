@@ -5,6 +5,7 @@ export type Priority = 'low' | 'medium' | 'high';
 export interface TaskFrontmatter {
   title?: string;
   stage: TaskStage;
+  order?: number;
   role?: string;
   agent?: string; // Legacy field
   provider?: string;
@@ -29,6 +30,7 @@ export interface TaskSnapshotItem {
   title: string;
   description?: string;
   stage: TaskStage;
+  order?: number;
   priority?: Priority;
   role?: string;
   project?: string;
@@ -40,6 +42,7 @@ export interface TaskCreateInput {
   title?: string;
   body?: string;
   stage?: TaskStage;
+  order?: number;
   role?: string;
   agent?: string;
   provider?: string;
@@ -58,6 +61,7 @@ export interface TaskUpdateInput {
   title?: string;
   body?: string;
   stage?: TaskStage;
+  order?: number;
   role?: string;
   agent?: string;
   provider?: string;

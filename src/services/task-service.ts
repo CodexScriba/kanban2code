@@ -80,6 +80,7 @@ export class TaskService {
     const task: Task = {
       frontmatter: {
         stage,
+        order: data.order,
         title,
         role: data.role,
         agent: data.agent,
@@ -117,6 +118,7 @@ export class TaskService {
     const nextFrontmatter = cloneFrontmatter(existing.frontmatter);
 
     if (changes.stage !== undefined) nextFrontmatter.stage = changes.stage;
+    if (changes.order !== undefined) nextFrontmatter.order = changes.order;
     if (changes.title !== undefined) nextFrontmatter.title = changes.title;
     if (changes.role !== undefined) nextFrontmatter.role = changes.role;
     if (changes.agent !== undefined) nextFrontmatter.agent = changes.agent;
@@ -157,7 +159,8 @@ export class TaskService {
     const nextTask: Task = {
       frontmatter: {
         ...cloneFrontmatter(task.frontmatter),
-        stage: newStage
+        stage: newStage,
+        order: task.frontmatter.order
       },
       body: task.body
     };

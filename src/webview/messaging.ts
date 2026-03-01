@@ -349,6 +349,7 @@ const isTaskSnapshotItem = (task: unknown): task is TaskSnapshotItem => {
     typeof task.title === 'string' &&
     (task.description === undefined || typeof task.description === 'string') &&
     isTaskStage(task.stage) &&
+    (task.order === undefined || (typeof task.order === 'number' && Number.isFinite(task.order))) &&
     isStringArray(task.tags) &&
     typeof task.createdAt === 'number' &&
     Number.isFinite(task.createdAt) &&

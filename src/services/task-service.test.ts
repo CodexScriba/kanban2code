@@ -120,6 +120,30 @@ test('updates single field without clobbering others', async () => {
   assert.equal(updated.body, 'Original body\n');
 });
 
+test('persists order updates in frontmatter', async () => {
+  const workspaceRoot = await createWorkspace();
+  const relativePath = path.join('.kanban2code', 'inbox', '1772200002555-order-test.md');
+  const absolutePath = path.join(workspaceRoot, relativePath);
+
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(
+    absolutePath,
+    `---\nstage: plan\ntitle: Order test\norder: 10\ntags: []\ncontexts: []\nskills: []\n---\nBody\n`
+  );
+
+  const service = new TaskService(workspaceRoot, {
+    fs: createNodeFsAdapter(),
+    toFileUri
+  });
+
+  await service.updateTask(relativePath, {
+    order: 42
+  });
+
+  const persisted = await service.readTask(relativePath);
+  assert.equal(persisted.frontmatter.order, 42);
+});
+
 test('deletes file from disk', async () => {
   const workspaceRoot = await createWorkspace();
   const relativePath = path.join('.kanban2code', 'inbox', '1772200003333-delete-test.md');

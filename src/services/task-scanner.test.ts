@@ -181,6 +181,7 @@ Body
     '.kanban2code/projects/roadmap/1772200001000-implement-scanner.md',
     `---
 stage: code
+order: 17
 priority: medium
 tags: [backend]
 ---
@@ -207,6 +208,7 @@ tags: [backend]
   const projectTask = tasks.find((task) => task.stage === 'code');
   assert.ok(projectTask);
   assert.equal(projectTask.title, 'Implement scanner');
+  assert.equal(projectTask.order, 17);
   assert.equal(projectTask.project, 'roadmap');
   assert.equal(projectTask.createdAt, 1772200001000);
 });

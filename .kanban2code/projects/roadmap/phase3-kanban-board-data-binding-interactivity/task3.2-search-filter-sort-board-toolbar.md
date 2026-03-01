@@ -1,5 +1,5 @@
 ---
-stage: code
+stage: completed
 tags: [feature, p1]
 agent: coder
 contexts: [skill-frontend-design]
@@ -13,12 +13,12 @@ Add a toolbar to the board with search, priority filter, sort options, and proje
 
 ## Definition of Done
 
-- [ ] Search filters cards (case-insensitive partial match on title/tags/taskId) with 200ms debounce
-- [ ] Priority filter: All/Low/Medium/High (single-select, AND logic)
-- [ ] Sort: Newest first (default) / Oldest first, stable tiebreaker on taskId
-- [ ] Project filter: All projects + discovered project slugs (single-select, AND)
-- [ ] `Showing:` status line updates dynamically
-- [ ] Filter state persists for board session
+- [x] Search filters cards (case-insensitive partial match on title/tags/taskId) with 200ms debounce
+- [x] Priority filter: All/Low/Medium/High (single-select, AND logic)
+- [x] Sort: Newest first (default) / Oldest first, stable tiebreaker on taskId
+- [x] Project filter: All projects + discovered project slugs (single-select, AND)
+- [x] `Showing:` status line updates dynamically
+- [x] Filter state persists for board session
 
 ## Files
 
@@ -27,11 +27,25 @@ Add a toolbar to the board with search, priority filter, sort options, and proje
 
 ## Tests
 
-- [ ] Search matches title substring
-- [ ] Priority filter shows only matching cards
-- [ ] Sort reverses card order
-- [ ] Project filter shows only matching project tasks
-- [ ] Status line reflects current filters
+- [x] Search matches title substring
+- [x] Priority filter shows only matching cards
+- [x] Sort reverses card order
+- [x] Project filter shows only matching project tasks
+- [x] Status line reflects current filters
+
+## Audit Result
+
+- Rating: 9.0/10
+- Verdict: Pass
+- Verified:
+  - Priority filter dropdown includes `All/Low/Medium/High` and is wired (`src/webview/ui/board.tsx`).
+  - Sort dropdown includes `Newest first/Oldest first` and is wired (`src/webview/ui/board.tsx`).
+  - Project filter includes `All` and discovered project values from task snapshot (`src/webview/ui/board.tsx`).
+  - Search input uses `setTimeout/clearTimeout` with `200ms` debounce (`src/webview/ui/board.tsx`).
+  - Filters are applied with AND logic in `filterTasks` (`src/webview/ui/board.tsx`).
+  - Status line renders `Showing X of Y tasks` (`src/webview/ui/board.tsx`).
+  - Sorting uses `createdAt` and `taskId` as deterministic tiebreaker (`src/webview/ui/board.tsx`).
+  - Test suite passes: `npm test` => 6 passed, 0 failed.
 
 ## Context
 

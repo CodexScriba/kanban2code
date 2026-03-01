@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
+import * as path from 'node:path';
 import { TaskScanner } from '../services/task-scanner';
+import { TaskService } from '../services/task-service';
+import { SettingsService } from '../services/settings-service';
 import {
   isWebviewToHostMessage,
+  type SettingsLoadedMessage,
   type TaskSnapshotMessage,
   type TaskSnapshotItem
 } from './messaging';
@@ -14,11 +18,23 @@ export class KanbanPanel {
   private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
   private readonly taskScanner: TaskScanner;
+  private readonly taskService: TaskService;
+  private readonly settingsService: SettingsService;
+  private readonly workspaceRoot: string;
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, taskScanner: TaskScanner) {
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    taskScanner: TaskScanner,
+    taskService: TaskService,
+    settingsService: SettingsService
+  ) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this.taskScanner = taskScanner;
+    this.taskService = taskService;
+    this.settingsService = settingsService;
+    this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 
     this._disposables.push(
       this.taskScanner.onDidRefresh(() => {
@@ -38,7 +54,12 @@ export class KanbanPanel {
     );
   }
 
-  public static createOrShow(extensionUri: vscode.Uri, taskScanner: TaskScanner): void {
+  public static createOrShow(
+    extensionUri: vscode.Uri,
+    taskScanner: TaskScanner,
+    taskService: TaskService,
+    settingsService: SettingsService
+  ): void {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
@@ -59,7 +80,13 @@ export class KanbanPanel {
       }
     );
 
-    KanbanPanel.currentPanel = new KanbanPanel(panel, extensionUri, taskScanner);
+    KanbanPanel.currentPanel = new KanbanPanel(
+      panel,
+      extensionUri,
+      taskScanner,
+      taskService,
+      settingsService
+    );
   }
 
   private _update(): void {
@@ -81,11 +108,96 @@ export class KanbanPanel {
   }
 
   private async handleWebviewMessage(rawMessage: unknown): Promise<void> {
-    if (!isWebviewToHostMessage(rawMessage) || rawMessage.type !== 'RequestTaskSnapshot') {
+    if (!isWebviewToHostMessage(rawMessage)) {
       return;
     }
 
-    await this.postTaskSnapshot();
+    if (rawMessage.type === 'RequestTaskSnapshot') {
+      await this.postTaskSnapshot();
+      await this.postSettings();
+      return;
+    }
+
+    if (rawMessage.type === 'MoveTask') {
+      await this.taskService.updateTask(rawMessage.payload.taskId, {
+        stage: rawMessage.payload.targetStage,
+        order: rawMessage.payload.order
+      });
+      this.taskScanner.invalidateCache();
+      await this.postTaskSnapshot();
+      return;
+    }
+
+    if (rawMessage.type === 'CreateTask') {
+      const title = rawMessage.payload.title?.trim();
+      if (!title) {
+        void vscode.window.showWarningMessage('Task title is required.');
+        return;
+      }
+
+      await this.taskService.createTask({
+        ...rawMessage.payload,
+        title
+      });
+      this.taskScanner.invalidateCache();
+      await this.postTaskSnapshot();
+      return;
+    }
+
+    if (rawMessage.type === 'DeleteTask') {
+      const resolvedTask = await this.resolveTask(rawMessage.payload.taskId);
+      if (!resolvedTask) {
+        void vscode.window.showWarningMessage(`Task not found: ${rawMessage.payload.taskId}`);
+        return;
+      }
+
+      try {
+        await this.taskService.deleteTask(resolvedTask.id);
+        this.taskScanner.invalidateCache();
+        await this.postTaskSnapshot();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showErrorMessage(`Failed to delete task: ${message}`);
+      }
+      return;
+    }
+
+    if (rawMessage.type === 'OpenTaskEditor') {
+      const taskIdentifier = rawMessage.payload?.taskId;
+      if (!taskIdentifier) {
+        void vscode.window.showWarningMessage('Task identifier is required to open the task editor.');
+        return;
+      }
+
+      const resolvedTask = await this.resolveTask(taskIdentifier);
+      if (!resolvedTask) {
+        void vscode.window.showWarningMessage(`Task not found: ${taskIdentifier}`);
+        return;
+      }
+
+      if (!this.workspaceRoot) {
+        void vscode.window.showWarningMessage('Open a workspace folder to edit tasks.');
+        return;
+      }
+
+      try {
+        const taskUri = vscode.Uri.file(path.join(this.workspaceRoot, resolvedTask.id));
+        const document = await vscode.workspace.openTextDocument(taskUri);
+        await vscode.window.showTextDocument(document, { preview: false });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showErrorMessage(`Failed to open task editor: ${message}`);
+      }
+      return;
+    }
+
+    if (rawMessage.type === 'ReorderTask') {
+      await this.taskService.updateTask(rawMessage.payload.taskId, {
+        order: rawMessage.payload.newOrder
+      });
+      this.taskScanner.invalidateCache();
+      await this.postTaskSnapshot();
+    }
   }
 
   private async postTaskSnapshot(preloadedTasks?: TaskSnapshotItem[]): Promise<void> {
@@ -95,6 +207,23 @@ export class KanbanPanel {
       payload: { tasks }
     };
     void this._panel.webview.postMessage(snapshotMessage);
+  }
+
+  private async postSettings(): Promise<void> {
+    const settings = await this.settingsService.getSettings();
+    const settingsMessage: SettingsLoadedMessage = {
+      type: 'SettingsLoaded',
+      payload: {
+        settings: settings as unknown as Record<string, unknown>
+      }
+    };
+    void this._panel.webview.postMessage(settingsMessage);
+  }
+
+  private async resolveTask(taskIdentifier: string): Promise<TaskSnapshotItem | null> {
+    const tasks = await this.taskScanner.scan();
+    const task = tasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+    return task ?? null;
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {

@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { SidebarProvider } from './webview/SidebarProvider';
 import { KanbanPanel } from './webview/KanbanPanel';
 import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
+import { TaskService } from './services/task-service';
+import { SettingsService } from './services/settings-service';
 
 export function activate(context: vscode.ExtensionContext): void {
   const scannerRuntime: TaskScannerRuntime = {
@@ -13,6 +15,9 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const taskScanner = new TaskScanner(scannerRuntime);
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const taskService = new TaskService(workspaceRoot ?? '');
+  const settingsService = new SettingsService(workspaceRoot ?? '');
   const sidebarProvider = new SidebarProvider(context.extensionUri, taskScanner);
 
   context.subscriptions.push(taskScanner, sidebarProvider);
@@ -23,7 +28,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('kanban2code.openBoard', () => {
-      KanbanPanel.createOrShow(context.extensionUri, taskScanner);
+      if (!workspaceRoot) {
+        void vscode.window.showWarningMessage(
+          'Open a workspace folder to use Kanban board drag-and-drop persistence.'
+        );
+        return;
+      }
+
+      KanbanPanel.createOrShow(context.extensionUri, taskScanner, taskService, settingsService);
     })
   );
 }

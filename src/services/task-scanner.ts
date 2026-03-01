@@ -58,6 +58,14 @@ const normalizePriority = (value: unknown): Priority | undefined => {
   return undefined;
 };
 
+const normalizeOrder = (value: unknown): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  return value;
+};
+
 const toSearchable = (value: string): string => value.trim().toLowerCase();
 
 const getTitleFromBody = (body: string): string | undefined => {
@@ -156,8 +164,12 @@ export class TaskScanner implements DisposableLike {
     this.refreshEmitter.dispose();
   }
 
-  private handleWorkspaceMutation(): void {
+  invalidateCache(): void {
     this.cachedTasks = null;
+  }
+
+  private handleWorkspaceMutation(): void {
+    this.invalidateCache();
     this.refreshEmitter.fire();
   }
 
@@ -229,6 +241,7 @@ export class TaskScanner implements DisposableLike {
         title,
         description: getDescriptionFromBody(parsed.body),
         stage: parsed.frontmatter.stage,
+        order: normalizeOrder(parsed.frontmatter.order),
         priority: normalizePriority(parsed.frontmatter.priority),
         role:
           typeof parsed.frontmatter.role === 'string'
