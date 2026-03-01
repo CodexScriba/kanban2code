@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Kanban2Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      /* Palette from sidebar-codex-blue.html */
+      --bg-base: #060b14;
+      --bg-surface: #0b1220;
+      --bg-elevated: #121b2d;
+      --bg-hover: #18243a;
+      --bg-active: #223252;
+
+      --border-subtle: #1a2740;
+      --border-default: #263554;
+      --border-strong: #36496f;
+
+      --text-primary: #f3f7ff;
+      --text-secondary: #b8c3d9;
+      --text-muted: #7f8ca8;
+      --text-disabled: #5e6b86;
+
+      --accent-primary: #3b82f6;
+      --accent-primary-hover: #60a5fa;
+      --accent-primary-muted: rgba(59, 130, 246, 0.20);
+
+      --accent-blue: #38bdf8;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #34d399;
+      --accent-violet: #fb7185;
+      --accent-cyan: #22d3ee;
+      --accent-rose: #f43f5e;
+
+      --sidebar-width: 280px;
+      --header-height: 80px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-base);
+      background: radial-gradient(circle at top right, #17233a 0%, var(--bg-base) 42%);
+      color: var(--text-secondary);
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    code, kbd, pre, .mono {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12px;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar-nav {
+      width: var(--sidebar-width);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .nav-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent-primary-muted);
+      color: var(--accent-primary-hover);
+      font-weight: 500;
+    }
+
+    .nav-item i {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sticky-header {
+      height: var(--header-height);
+      background: rgba(6, 11, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .header-info h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      border: 1px solid transparent;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+
+    .btn-scope {
+      background: var(--bg-elevated);
+      border-color: var(--border-default);
+      color: var(--text-primary);
+      min-width: 140px;
+      justify-content: center;
+    }
+
+    .btn-scope.project {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      background: rgba(34, 211, 238, 0.05);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Panels Container */
+    .panels-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+      scroll-behavior: smooth;
+    }
+
+    .panel {
+      display: none;
+      max-width: 900px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Settings Group / Card */
+    .settings-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-description {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .control-row.start {
+      align-items: flex-start;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-primary-muted);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.5;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-active);
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-secondary);
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: var(--accent-primary);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+      background-color: white;
+    }
+
+    /* Mapping Grid */
+    .mapping-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 160px 1fr 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+    }
+
+    .mapping-header {
+      display: grid;
+      grid-template-columns: 160px 1fr 1fr 1fr 1fr;
+      gap: 12px;
+      padding: 0 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stage-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .stage-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Lists and Cards Items */
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: var(--transition);
+    }
+
+    .list-item:hover {
+      border-color: var(--border-default);
+      background: var(--bg-hover);
+    }
+
+    .item-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .item-title {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .item-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* Pills Selection */
+    .pill-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 6px 14px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-default);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .pill.active {
+      background: var(--accent-primary-muted);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary-hover);
+    }
+
+    /* Footer */
+    .panel-footer {
+      padding: 24px 40px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: rgba(6, 11, 20, 0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    #save-feedback {
+      font-size: 13px;
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+
+    #save-feedback.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Tool Tags */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .tool-card {
+      padding: 8px 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: default;
+    }
+
+    .tool-card i {
+      color: var(--accent-blue);
+    }
+
+    /* Checkbox Group */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .checkbox-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-primary);
+    }
+
+    /* Multi-select styling */
+    select[multiple] {
+      height: auto;
+      min-height: 120px;
+    }
+
+    /* Utility */
+    .mt-4 { margin-top: 16px; }
+    .mb-0 { margin-bottom: 0; }
+    .w-auto { width: auto; }
+    .flex-1 { flex: 1; }
+    .danger { color: var(--accent-rose) !important; }
+    
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar-nav">
+      <div class="sidebar-header">
+        <div class="logo-box">
+          <i data-lucide="layout-dashboard"></i>
+        </div>
+        <span class="brand-name">Kanban2Code</span>
+      </div>
+      <nav class="nav-list" id="sidebar-nav">
+        <a class="nav-item active" data-panel="general">
+          <i data-lucide="settings-2"></i>
+          <span>General</span>
+        </a>
+        <a class="nav-item" data-panel="task-defaults">
+          <i data-lucide="clipboard-list"></i>
+          <span>Task Defaults</span>
+        </a>
+        <a class="nav-item" data-panel="pipeline-defaults">
+          <i data-lucide="git-branch"></i>
+          <span>Pipeline Defaults</span>
+        </a>
+        <a class="nav-item" data-panel="runtime-mapping">
+          <i data-lucide="cpu"></i>
+          <span>Stage Runtime Mapping</span>
+        </a>
+        <a class="nav-item" data-panel="providers-models">
+          <i data-lucide="database"></i>
+          <span>Providers & Models</span>
+        </a>
+        <a class="nav-item" data-panel="agent-behavior">
+          <i data-lucide="brain-circuit"></i>
+          <span>Agent Behavior</span>
+        </a>
+        <a class="nav-item" data-panel="roles">
+          <i data-lucide="users"></i>
+          <span>Roles</span>
+        </a>
+        <a class="nav-item" data-panel="queue">
+          <i data-lucide="layers"></i>
+          <span>Queue & Execution</span>
+        </a>
+        <a class="nav-item" data-panel="overrides">
+          <i data-lucide="folder-cog"></i>
+          <span>Project Overrides</span>
+        </a>
+        <a class="nav-item" data-panel="notifications">
+          <i data-lucide="bell"></i>
+          <span>Notifications</span>
+        </a>
+        <a class="nav-item" data-panel="telemetry">
+          <i data-lucide="activity"></i>
+          <span>Telemetry & Logs</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="sticky-header">
+        <div class="header-info">
+          <h1 id="panel-title">General</h1>
+          <p id="panel-description">Global extension settings and workspace configuration.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-scope" id="scope-toggle">
+            <i data-lucide="globe"></i>
+            <span>Global Scope</span>
+          </button>
+          <button class="btn btn-primary save-trigger">
+            <i data-lucide="save"></i>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="panels-container">
+        <!-- General Panel -->
+        <div id="panel-general" class="panel active">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="monitor"></i> Display</div>
+            <div class="card-description">Customize the visual appearance of the extension.</div>
+            <div class="form-group">
+              <label class="form-label">Timezone</label>
+              <select>
+                <option selected>UTC (System Default)</option>
+                <option>America/Los_Angeles</option>
+                <option>Europe/London</option>
+                <option>Asia/Tokyo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date/Time Format</label>
+              <select>
+                <option selected>YYYY-MM-DD HH:mm</option>
+                <option>DD/MM/YYYY HH:mm</option>
+                <option>MM/DD/YYYY hh:mm A</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Compact sidebar view</span>
+                  <p class="item-sub">Hide secondary labels and metadata in the extension sidebar.</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox">
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Show stage counts</span>
+                  <p class="item-sub">Display task counts next to each stage pill.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="zap"></i> Behavior</div>
+            <div class="card-description">Configure core extension operational parameters.</div>
+            <div class="form-group">
+              <label class="form-label">UI Density</label>
+              <select>
+                <option selected>Comfortable</option>
+                <option>Compact</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auto-save interval (seconds)</label>
+              <input type="number" value="30" placeholder="30">
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Confirm destructive actions</span>
+                  <p class="item-sub">Prompt for confirmation before deleting tasks or boards.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Defaults Panel -->
+        <div id="panel-task-defaults" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="clipboard"></i> Creation Defaults</div>
+            <div class="form-group">
+              <label class="form-label">Default Task Title Template</label>
+              <input type="text" value="[{{phase}}] {{title}}" placeholder="e.g. [{{phase}}] {{title}}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Smart Summary Behavior</label>
+              <select>
+                <option selected>Manual only</option>
+                <option>AI-assist (propose summary on create)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Assignee (human)</label>
+              <select>
+                <option>None (Unassigned)</option>
+                <option selected>Me (cynicus)</option>
+                <option>Project Lead</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="bar-chart"></i> Routing & Importance</div>
+            <div class="form-group">
+              <label class="form-label">Default Priority</label>
+              <div class="pill-group">
+                <div class="pill active">Low</div>
+                <div class="pill">Medium</div>
+                <div class="pill">High</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="tags"></i> Seed Lists</div>
+            <div class="card-description">Default tags, contexts, and skills to seed new tasks.</div>
+            <div class="form-group">
+              <label class="form-label">Default Tags (comma separated)</label>
+              <input type="text" placeholder="e.g. feature, p1, bug">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Contexts (one per line)</label>
+              <textarea placeholder="e.g. architecture.md"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Skills (comma separated)</label>
+              <input type="text" placeholder="e.g. nextjs-core-skills, skill-drizzle-orm">
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline Defaults Panel -->
+        <div id="panel-pipeline-defaults" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="layout"></i> Pipeline Template</div>
+            <div class="card-description">Select the default workflow structure for new boards.</div>
+            <div class="pill-group" id="pipeline-pills">
+              <div class="pill active" data-type="simple">
+                <i data-lucide="circle-dot"></i> Simple: capture &rarr; plan &rarr; code &rarr; audit
+              </div>
+              <div class="pill" data-type="complex">
+                <i data-lucide="layout-grid"></i> Complex: capture &rarr; architecture &rarr; split &rarr; code &rarr; audit
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="settings"></i> Workflow Config</div>
+            <div class="form-group">
+              <label class="form-label">Default Current Stage on Create</label>
+              <select>
+                <option selected>capture</option>
+                <option>plan</option>
+                <option>architecture</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Audit Bounce Cap</label>
+              <input type="number" value="2" min="1" max="10">
+              <p class="item-sub">Number of times a task can be returned to code before forcing intervention.</p>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Auto-transition tasks</span>
+                  <p class="item-sub">Move tasks to next stage automatically upon stage success.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage Runtime Mapping Panel -->
+        <div id="panel-runtime-mapping" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="link"></i> Default Stage Runtimes</div>
+            <div class="card-description">Assign provider, model, and profile for each stage.</div>
+            
+            <div class="mapping-header">
+              <div>Stage</div>
+              <div>Role</div>
+              <div>Provider</div>
+              <div>Model</div>
+              <div>Profile</div>
+            </div>
+
+            <!-- Plan Stage -->
+            <div class="mapping-row">
+              <div class="stage-pill">
+                <span class="stage-dot" style="background: var(--accent-blue);"></span>
+                Plan
+              </div>
+              <select><option>planner</option><option>architect</option></select>
+              <select class="provider-selector" data-target="model-plan">
+                <option value="anthropic">Anthropic</option>
+                <option value="google">Google</option>
+                <option value="openai">OpenAI</option>
+              </select>
+              <select id="model-plan">
+                <option>claude-3-5-sonnet</option>
+                <option>claude-3-opus</option>
+              </select>
+              <select><option>balanced</option><option>precise</option></select>
+            </div>
+
+            <!-- Architecture Stage -->
+            <div class="mapping-row">
+              <div class="stage-pill">
+                <span class="stage-dot" style="background: var(--accent-cyan);"></span>
+                Architecture
+              </div>
+              <select><option selected>architect</option><option>planner</option></select>
+              <select class="provider-selector" data-target="model-arch">
+                <option value="anthropic">Anthropic</option>
+                <option value="google">Google</option>
+              </select>
+              <select id="model-arch">
+                <option>claude-3-5-sonnet</option>
+                <option>claude-3-opus</option>
+              </select>
+              <select><option>precise</option><option>balanced</option></select>
+            </div>
+
+            <!-- Code Stage -->
+            <div class="mapping-row">
+              <div class="stage-pill">
+                <span class="stage-dot" style="background: var(--accent-amber);"></span>
+                Code
+              </div>
+              <select><option selected>coder</option><option>architect</option></select>
+              <select class="provider-selector" data-target="model-code">
+                <option value="anthropic">Anthropic</option>
+                <option value="google">Google</option>
+                <option value="deepseek">DeepSeek</option>
+              </select>
+              <select id="model-code">
+                <option>claude-3-5-sonnet</option>
+                <option>claude-3-haiku</option>
+              </select>
+              <select><option>balanced</option><option>precise</option></select>
+            </div>
+
+            <!-- Audit Stage -->
+            <div class="mapping-row">
+              <div class="stage-pill">
+                <span class="stage-dot" style="background: var(--accent-violet);"></span>
+                Audit
+              </div>
+              <select><option selected>auditor</option><option>coder</option></select>
+              <select class="provider-selector" data-target="model-audit">
+                <option value="anthropic">Anthropic</option>
+                <option value="openai">OpenAI</option>
+              </select>
+              <select id="model-audit">
+                <option>claude-3-5-sonnet</option>
+                <option>gpt-4o</option>
+              </select>
+              <select><option>precise</option><option>balanced</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Providers & Models Panel -->
+        <div id="panel-providers-models" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="cloud"></i> Active Providers</div>
+            <div class="card-description">Manage API providers and their configuration.</div>
+            
+            <div class="list-item">
+              <div class="item-main">
+                <i data-lucide="check-circle-2" style="color: var(--accent-emerald)"></i>
+                <div>
+                  <div class="item-title">Anthropic</div>
+                  <div class="item-sub">3 models configured · status: online</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="edit-3"></i></button>
+                <button class="btn-ghost"><i data-lucide="eye-off"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="trash-2"></i></button>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-main">
+                <i data-lucide="check-circle-2" style="color: var(--accent-emerald)"></i>
+                <div>
+                  <div class="item-title">Google AI</div>
+                  <div class="item-sub">2 models configured · status: online</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="edit-3"></i></button>
+                <button class="btn-ghost"><i data-lucide="eye-off"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="trash-2"></i></button>
+              </div>
+            </div>
+
+            <button class="btn btn-outline mt-4 w-auto"><i data-lucide="plus"></i> Add Provider</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="cpu"></i> Model Catalog</div>
+            <div class="card-description">Register specific models available through your providers.</div>
+            
+            <div class="list-item">
+              <div class="item-main">
+                <div>
+                  <div class="item-title">claude-3-5-sonnet</div>
+                  <div class="item-sub">Anthropic · 200k context · Latest</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="settings"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="x"></i></button>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-main">
+                <div>
+                  <div class="item-title">gemini-1.5-pro</div>
+                  <div class="item-sub">Google · 1M+ context · Vision support</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="settings"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="x"></i></button>
+              </div>
+            </div>
+
+            <button class="btn btn-outline mt-4 w-auto"><i data-lucide="plus"></i> Add Model</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="key"></i> Provider Profile / Config</div>
+            <div class="form-group">
+              <label class="form-label">Endpoint URL</label>
+              <input type="text" value="https://api.anthropic.com/v1" placeholder="https://api.example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <input type="password" value="sk-ant-xxxxxxxxxxxxxxxxxx" placeholder="sk-...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent Behavior Panel -->
+        <div id="panel-agent-behavior" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="user-check"></i> Mode Setup</div>
+            <div class="control-row mb-12">
+              <select class="flex-1">
+                <option>Default Orchestrator</option>
+                <option>Creative Pair</option>
+                <option>Surgical Auditor</option>
+              </select>
+              <button class="btn btn-outline w-auto"><i data-lucide="plus"></i></button>
+              <button class="btn btn-outline w-auto danger"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div class="form-group mt-4">
+              <label class="form-label">Provider Profile</label>
+              <select>
+                <option>Anthropic (Primary)</option>
+                <option>Google (Secondary)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="align-left"></i> Descriptions & Instructions</div>
+            <div class="form-group">
+              <label class="form-label">Role Definition</label>
+              <textarea>You are a senior orchestrator. Your primary goal is technical planning and task breakdown.</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <input type="text" value="Primary technical orchestrator for board-level planning.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">"When to use" Guidance</label>
+              <textarea>Employ this mode for initial project mapping and complex feature breakdown.</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mode-specific Instructions (Mono)</label>
+              <textarea class="mono"># SYSTEM RULES
+- Minimize token usage
+- Verify file existence before reading</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Global Instructions (Appended to all modes)</label>
+              <textarea class="mono"># GLOBAL RULES
+- Always follow project style guides.</textarea>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="wrench"></i> Tools & Inheritance</div>
+            <div class="card-description">Capabilities available to agents in this mode.</div>
+            <div class="tool-grid">
+              <div class="tool-card"><i data-lucide="file-text"></i> read_file</div>
+              <div class="tool-card"><i data-lucide="search"></i> grep_search</div>
+              <div class="tool-card"><i data-lucide="edit"></i> replace</div>
+              <div class="tool-card"><i data-lucide="terminal"></i> shell_exec</div>
+              <div class="tool-card"><i data-lucide="plus"></i> Add Tool</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roles Panel -->
+        <div id="panel-roles" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="users"></i> Manage Roles</div>
+            <div class="card-description">Configure system roles and their availability.</div>
+            
+            <div class="list-item">
+              <div class="item-main">
+                <div>
+                  <div class="item-title">architect</div>
+                  <div class="item-sub">Availability: pipeline, assignments</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="edit"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="trash-2"></i></button>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-main">
+                <div>
+                  <div class="item-title">coder</div>
+                  <div class="item-sub">Availability: pipeline, assignments</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost"><i data-lucide="edit"></i></button>
+                <button class="btn-ghost danger"><i data-lucide="trash-2"></i></button>
+              </div>
+            </div>
+
+            <button class="btn btn-outline mt-4 w-auto"><i data-lucide="plus"></i> Add Role</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="settings-2"></i> Role Availability</div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Allow human assignment</span>
+                  <p class="item-sub">Roles can be assigned to human team members.</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Include in pipeline mapping</span>
+                  <p class="item-sub">Roles appear in the Stage Runtime Mapping selector.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Queue & Execution Panel -->
+        <div id="panel-queue" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="list-ordered"></i> Queue & Policy</div>
+            <div class="form-group">
+              <label class="form-label">Default Queue Mode</label>
+              <select>
+                <option selected>stage (run current step only)</option>
+                <option>all stages (run entire remaining pipeline)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Scheduling Policy</label>
+              <input type="text" value="FIFO (First-In-First-Out)" disabled>
+              <p class="item-sub">Standard policy for v1 execution.</p>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="zap"></i> Performance</div>
+            <div class="form-group">
+              <label class="form-label">Max Concurrent Tasks</label>
+              <input type="number" value="1" min="1" max="10">
+              <p class="item-sub">Number of tasks allowed to run in parallel.</p>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Serialized pipeline mode</span>
+                  <p class="item-sub">Ensure each stage finishes before starting the next in a sequence.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="terminal"></i> Terminal Integration</div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Auto-open terminal on run</span>
+                  <p class="item-sub">Automatically focus the VS Code terminal panel when a run starts.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Overrides Panel -->
+        <div id="panel-overrides" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="folder-cog"></i> Workspace Overrides</div>
+            <div class="card-description">Settings configured for the current project only.</div>
+            <div class="form-group">
+               <div style="padding: 12px; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--accent-cyan); margin-bottom: 20px;">
+                  <span class="form-label mb-0" style="color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;"><i data-lucide="info"></i> Precedence Note</span>
+                  <p class="item-sub" style="color: var(--text-secondary); margin-top: 4px;"><b>Project overrides always take precedence over global defaults</b> for all extension parameters. Deleting an override restores the global value.</p>
+               </div>
+            </div>
+            <div class="list-item">
+              <div class="item-main">
+                <i data-lucide="alert-circle" style="color: var(--accent-cyan)"></i>
+                <div>
+                  <div class="item-title">custom-instruction-set</div>
+                  <div class="item-sub">Category: Agent Behavior</div>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="btn-ghost danger"><i data-lucide="x-circle"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div id="panel-notifications" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="bell-ring"></i> General Settings</div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked id="master-notif">
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Master Notification Switch</span>
+                  <p class="item-sub">Global control for all extension notifications.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="send"></i> Delivery Channels</div>
+            <div class="form-group">
+              <div class="checkbox-group">
+                <label class="checkbox-item">
+                  <input type="checkbox" checked> <span>In-app Toast Alerts</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox"> <span>Telegram Bot Updates</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" checked> <span>System Sound Alerts</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="filter"></i> Status Trigger Selector</div>
+            <div class="form-group">
+              <label class="form-label">Notify me when:</label>
+              <select multiple>
+                <option selected>Task Created</option>
+                <option selected>Task Stage Changed</option>
+                <option selected>Task Completed</option>
+                <option selected>Error Encountered</option>
+                <option>Agent Paused / Waiting</option>
+              </select>
+              <p class="item-sub mt-4">Hold Ctrl/Cmd to select multiple triggers.</p>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="calendar"></i> Schedules</div>
+            <div class="form-group">
+              <label class="form-label">Quiet Hours (24h format)</label>
+              <div class="control-row">
+                <input type="text" value="22:00" placeholder="From" style="width: 100px;">
+                <span>to</span>
+                <input type="text" value="08:00" placeholder="To" style="width: 100px;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Digest Frequency</label>
+              <select>
+                <option>Real-time (Immediate)</option>
+                <option>Hourly Summary</option>
+                <option>Daily Digest</option>
+                <option>Never</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Panel -->
+        <div id="panel-telemetry" class="panel">
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="file-text"></i> Logging & Retention</div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Enable run logging</span>
+                  <p class="item-sub">Store execution traces and audit logs for all tasks.</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div class="flex-1">
+                  <span class="form-label mb-0">Redact sensitive fields</span>
+                  <p class="item-sub">Automatically mask API keys and personal data in logs.</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Minimum Log Level</label>
+              <select>
+                <option>Error Only</option>
+                <option>Warning</option>
+                <option selected>Information</option>
+                <option>Debug (Verbose)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Log Retention Policy</label>
+              <select>
+                <option>7 days</option>
+                <option selected>30 days</option>
+                <option>90 days</option>
+                <option>Indefinite</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title"><i data-lucide="bar-chart-2"></i> Usage Data</div>
+            <div class="form-group">
+              <div class="control-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <div>
+                  <span class="form-label mb-0">Anonymous Telemetry</span>
+                  <p class="item-sub">Share non-identifiable usage stats to improve features.</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+              <div style="padding: 12px; background: rgba(127, 140, 168, 0.1); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <span class="form-label mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Provider-run Telemetry Note</span>
+                <p class="item-sub" style="margin-top: 6px; font-size: 11px; line-height: 1.4;">The following fields are captured for audit analytics: <code>timestamp, taskId, stage, role, provider, model, profile, status, duration, retries, error</code>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bar -->
+      <footer class="panel-footer">
+        <button class="btn btn-primary save-trigger">
+          <i data-lucide="save"></i>
+          <span>Save Changes</span>
+        </button>
+        <button class="btn btn-outline">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Reset to Defaults</span>
+        </button>
+        <div id="save-feedback">
+          <i data-lucide="check-circle"></i>
+          <span>Changes saved successfully!</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Panel Management
+    const navItems = document.querySelectorAll('.nav-item');
+    const panels = document.querySelectorAll('.panel');
+    const panelTitle = document.getElementById('panel-title');
+    const panelDesc = document.getElementById('panel-description');
+
+    const panelMeta = {
+      'general': { title: 'General', desc: 'Global extension settings and workspace configuration.' },
+      'task-defaults': { title: 'Task Defaults', desc: 'Default properties and behaviors for new tasks.' },
+      'pipeline-defaults': { title: 'Pipeline Defaults', desc: 'Configure stages and automation for your workflow.' },
+      'runtime-mapping': { title: 'Stage Runtime Mapping', desc: 'Assign roles, providers, and models to specific pipeline stages.' },
+      'providers-models': { title: 'Providers & Models', desc: 'Manage your LLM providers, model catalog, and API credentials.' },
+      'agent-behavior': { title: 'Agent Behavior', desc: 'Fine-tune agent personas, instructions, and available toolsets.' },
+      'roles': { title: 'Roles', desc: 'Define and manage functional roles within the system.' },
+      'queue': { title: 'Queue & Execution', desc: 'Control how tasks are prioritized and executed.' },
+      'overrides': { title: 'Project Overrides', desc: 'Local settings that take precedence over global configuration.' },
+      'notifications': { title: 'Notifications', desc: 'Configure how and when you receive alerts.' },
+      'telemetry': { title: 'Telemetry & Logs', desc: 'System monitoring and data collection preferences.' }
+    };
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const panelId = item.getAttribute('data-panel');
+        
+        // Update Nav
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+
+        // Update Panels
+        panels.forEach(p => p.classList.remove('active'));
+        const targetPanel = document.getElementById(`panel-${panelId}`);
+        targetPanel.classList.add('active');
+
+        // Update Header
+        const meta = panelMeta[panelId];
+        panelTitle.textContent = meta.title;
+        panelDesc.textContent = meta.desc;
+
+        // Re-init icons
+        lucide.createIcons();
+      });
+    });
+
+    // Save Feedback Logic (Top and Bottom)
+    const saveTriggers = document.querySelectorAll('.save-trigger');
+    const feedback = document.getElementById('save-feedback');
+
+    saveTriggers.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> <span>Saving...</span>`;
+        lucide.createIcons();
+
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalContent;
+          lucide.createIcons();
+          
+          feedback.classList.add('show');
+          setTimeout(() => {
+            feedback.classList.remove('show');
+          }, 3000);
+        }, 1000);
+      });
+    });
+
+    // Scope Toggle Logic
+    const scopeToggle = document.getElementById('scope-toggle');
+    scopeToggle.addEventListener('click', () => {
+      const isGlobal = !scopeToggle.classList.contains('project');
+      if (isGlobal) {
+        scopeToggle.classList.add('project');
+        scopeToggle.innerHTML = `<i data-lucide="folder-git-2"></i> <span>Project Scope</span>`;
+      } else {
+        scopeToggle.classList.remove('project');
+        scopeToggle.innerHTML = `<i data-lucide="globe"></i> <span>Global Scope</span>`;
+      }
+      lucide.createIcons();
+    });
+
+    // Pipeline Pills Toggle
+    const pipelinePills = document.querySelectorAll('#pipeline-pills .pill');
+    pipelinePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pipelinePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+
+    // Complexity Pills
+    const complexityPills = document.querySelectorAll('#panel-task-defaults .pill');
+    complexityPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        complexityPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+
+    // Provider-Model Filtering Mock
+    const providerSelectors = document.querySelectorAll('.provider-selector');
+    const modelOptions = {
+      anthropic: ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-haiku'],
+      google: ['gemini-1.5-pro', 'gemini-1.5-flash'],
+      openai: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      deepseek: ['deepseek-coder', 'deepseek-chat']
+    };
+
+    providerSelectors.forEach(select => {
+      select.addEventListener('change', (e) => {
+        const targetId = select.getAttribute('data-target');
+        const modelSelect = document.getElementById(targetId);
+        const models = modelOptions[e.target.value] || [];
+        
+        modelSelect.innerHTML = models.map(m => `<option>${m}</option>`).join('');
+      });
+    });
+  </script>
+</body>
+</html>
