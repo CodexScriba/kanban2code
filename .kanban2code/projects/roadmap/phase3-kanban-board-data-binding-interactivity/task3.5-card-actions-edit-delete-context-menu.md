@@ -1,8 +1,7 @@
 ---
-stage: audit
-agent: coder
+stage: completed
+agent: auditor
 tags: [feature, p1]
-agent: planner
 contexts: [skill-vscode]
 ---
 
@@ -278,3 +277,20 @@ Stay focused on card ACTIONS only. Do not add:
 - Full TaskEditorPanel implementation (out of scope)
 
 <!-- STAGE_TRANSITION: code -->
+
+## Audit Result (2026-03-01)
+
+Rating: **8.3/10** (meets completion threshold)
+
+- [x] 1. Hover-visible card actions are implemented (`.card-actions` hidden by default, visible on hover/focus) and include Edit/Delete/Menu controls.
+- [x] 2. Edit action posts `OpenTaskEditor` with `taskId` from both quick action and context menu.
+- [x] 3. Delete action uses `confirmDestructiveActions` from `SettingsLoaded`; when enabled it confirms with task title before posting `DeleteTask`.
+- [x] 4. Host handles `DeleteTask` by resolving task, deleting via `taskService.deleteTask(...)`, and refreshing snapshot.
+- [x] 5. Host handles `OpenTaskEditor` by opening the resolved task file in the VS Code editor.
+- [x] 6. Context menu supports required entries: Open, Run, Run all, Move submenu, Edit, Copy, Delete.
+- [x] 7. Context menu opens via right-click and three-dot menu, and closes on click-away/Escape/resize.
+- [ ] 8. Task-specific UI/host integration tests for edit/delete/context menu are not present yet (current automated suite only covers services).
+
+Verification notes:
+- `npm test` passes (6/6 service tests).
+- `Run` / `Run all` actions are posted from UI, but no host handlers are present in `KanbanPanel.ts` yet (likely handled in a separate task).
