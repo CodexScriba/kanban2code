@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { Settings, SettingsSection } from '../types/settings';
+import { Settings, SettingsSection, StageMapping } from '../types/settings';
 
 interface UriLike {
   fsPath: string;
@@ -96,7 +96,9 @@ const DEFAULT_SETTINGS: Settings = {
     schedulingPolicy: 'FIFO',
     serializedPipeline: true,
     maxParallelRuns: 1,
-    autoOpenTerminal: true
+    autoOpenTerminal: true,
+    promptMissingFields: true,
+    autoResumeOnSave: true
   },
   notifications: {
     enabled: true,
@@ -137,6 +139,19 @@ export class SettingsService {
     return this.mergeSettings(DEFAULT_SETTINGS, globalSettings, projectSettings);
   }
 
+  async getEffectiveMapping(stage: string, projectSlug?: string): Promise<StageMapping> {
+    const settings = await this.getSettings(projectSlug);
+    const stageMapping = settings.stageRuntimeMapping[stage];
+    const fallback = this.getFallbackMapping(stage);
+
+    return {
+      role: stageMapping?.role || fallback.role,
+      provider: stageMapping?.provider || fallback.provider,
+      model: stageMapping?.model || fallback.model,
+      profile: stageMapping?.profile || fallback.profile
+    };
+  }
+
   async updateSettings(settings: Partial<Settings>, projectSlug?: string): Promise<void> {
     const scopeFilePath = projectSlug ? this.getProjectPath(projectSlug) : this.getGlobalPath();
     const currentScopeSettings = await this.readSettingsFile(scopeFilePath);
@@ -171,10 +186,14 @@ export class SettingsService {
     await this.writeSettingsFile(this.getGlobalPath(), DEFAULT_SETTINGS);
   }
 
-  validateProviderModel(provider: string, model: string): ValidationResult {
-    const config = DEFAULT_SETTINGS.providersAndModels.providers[provider];
+  validateProviderModel(provider: string, model: string, settings?: Settings): ValidationResult {
+    const providers = settings?.providersAndModels.providers ?? DEFAULT_SETTINGS.providersAndModels.providers;
+    const config = providers[provider];
     if (!config) {
       return { valid: false, error: `Provider '${provider}' not found.` };
+    }
+    if (!config.enabled) {
+      return { valid: false, error: `Provider '${provider}' is disabled.` };
     }
     if (!config.models.includes(model)) {
       return { valid: false, error: `Model '${model}' not supported by provider '${provider}'.` };
@@ -182,8 +201,9 @@ export class SettingsService {
     return { valid: true };
   }
 
-  validateProfile(profile: string): ValidationResult {
-    if (!DEFAULT_SETTINGS.providersAndModels.profiles[profile]) {
+  validateProfile(profile: string, settings?: Settings): ValidationResult {
+    const profiles = settings?.providersAndModels.profiles ?? DEFAULT_SETTINGS.providersAndModels.profiles;
+    if (!profiles[profile]) {
       return { valid: false, error: `Profile '${profile}' not found.` };
     }
 
@@ -194,12 +214,12 @@ export class SettingsService {
     const errors: string[] = [];
 
     for (const [stage, mapping] of Object.entries(settings.stageRuntimeMapping)) {
-      const providerModelValidation = this.validateProviderModel(mapping.provider, mapping.model);
+      const providerModelValidation = this.validateProviderModel(mapping.provider, mapping.model, settings);
       if (!providerModelValidation.valid && providerModelValidation.error) {
         errors.push(`Stage '${stage}': ${providerModelValidation.error}`);
       }
 
-      const profileValidation = this.validateProfile(mapping.profile);
+      const profileValidation = this.validateProfile(mapping.profile, settings);
       if (!profileValidation.valid && profileValidation.error) {
         errors.push(`Stage '${stage}': ${profileValidation.error}`);
         continue;
@@ -224,6 +244,15 @@ export class SettingsService {
 
   validateMapping(provider: string, model: string): ValidationResult {
     return this.validateProviderModel(provider, model);
+  }
+
+  private getFallbackMapping(stage: string): StageMapping {
+    const fromDefaults = DEFAULT_SETTINGS.stageRuntimeMapping[stage];
+    if (fromDefaults) {
+      return fromDefaults;
+    }
+
+    return { role: 'planner', provider: 'claude', model: 'yolo', profile: 'default' };
   }
 
   private getGlobalPath(): string {

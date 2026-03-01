@@ -65,7 +65,10 @@
   root.innerHTML = `
   <div class="sidebar">
     <div class="header">
-      <div class="header-brand">Kanban2Code</div>
+      <div class="header-meta">
+        <div class="header-brand">Kanban2Code</div>
+        <div class="runner-indicator idle" id="runnerIndicator">Runner idle</div>
+      </div>
       <div class="header-actions">
         <button class="btn-capture" id="captureBtn" type="button">
           <span>+</span>
@@ -408,7 +411,8 @@
   var providerSelect = root.querySelector("#providerSelect");
   var taskPicker = root.querySelector("#taskPicker");
   var taskPickerNotice = root.querySelector("#taskPickerNotice");
-  if (!textarea || !sendBtn || !captureBtn || !kanbanBtn || !chatView || !kanbanView || !chatHistory || !providerSelect || !taskPicker || !taskPickerNotice) {
+  var runnerIndicator = root.querySelector("#runnerIndicator");
+  if (!textarea || !sendBtn || !captureBtn || !kanbanBtn || !chatView || !kanbanView || !chatHistory || !providerSelect || !taskPicker || !taskPickerNotice || !runnerIndicator) {
     throw new Error("Sidebar UI is missing required elements");
   }
   var vscodeApi = typeof acquireVsCodeApi === "function" ? acquireVsCodeApi() : null;
@@ -417,6 +421,9 @@
   var knownTasks = [];
   var activeDropdown = null;
   var noticeTimer = null;
+  var sidebarQueueCount = 0;
+  var sidebarActiveTaskId = null;
+  var sidebarRunStateByTaskId = /* @__PURE__ */ new Map();
   var truncateLabel = (value, maxLength) => {
     const safeChars = Array.from(value);
     if (safeChars.length <= maxLength) {
@@ -426,6 +433,38 @@
   };
   var updatePersistedState = () => {
     vscodeApi?.setState({ selectedTaskId });
+  };
+  var resolveTaskTitle = (taskIdentifier) => {
+    const task = knownTasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+    return task?.title ?? taskIdentifier;
+  };
+  var setRunStateForTask = (taskIdentifier, state) => {
+    sidebarRunStateByTaskId.set(taskIdentifier, state);
+    const task = knownTasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+    if (!task) {
+      return;
+    }
+    sidebarRunStateByTaskId.set(task.id, state);
+    sidebarRunStateByTaskId.set(task.taskId, state);
+  };
+  var renderRunnerIndicator = () => {
+    if (!runnerIndicator) {
+      return;
+    }
+    runnerIndicator.classList.remove("idle", "running", "queued");
+    if (sidebarActiveTaskId) {
+      const label = truncateLabel(resolveTaskTitle(sidebarActiveTaskId), 24);
+      runnerIndicator.textContent = `Running ${label}`;
+      runnerIndicator.classList.add("running");
+      return;
+    }
+    if (sidebarQueueCount > 0) {
+      runnerIndicator.textContent = `Queue ${sidebarQueueCount}`;
+      runnerIndicator.classList.add("queued");
+      return;
+    }
+    runnerIndicator.textContent = "Runner idle";
+    runnerIndicator.classList.add("idle");
   };
   var showTaskNotice = (message) => {
     taskPickerNotice.textContent = message;
@@ -618,6 +657,26 @@
     if (message.type === "TaskSnapshot") {
       knownTasks = message.payload.tasks;
       renderTaskOptions(knownTasks);
+      renderRunnerIndicator();
+      return;
+    }
+    if (message.type === "RunnerStateChanged") {
+      setRunStateForTask(message.payload.taskId, message.payload.state);
+      if (message.payload.state === "running") {
+        sidebarActiveTaskId = message.payload.taskId;
+      } else if (sidebarActiveTaskId === message.payload.taskId && message.payload.state !== "queued") {
+        sidebarActiveTaskId = null;
+      }
+      renderRunnerIndicator();
+      return;
+    }
+    if (message.type === "QueueSnapshot") {
+      sidebarQueueCount = message.payload.totalQueued;
+      sidebarActiveTaskId = message.payload.activeTaskId;
+      for (const item of message.payload.items) {
+        setRunStateForTask(item.taskId, item.state);
+      }
+      renderRunnerIndicator();
       return;
     }
     if (message.type === "TaskSelectionReset") {
@@ -643,6 +702,7 @@
     chatHistory.scrollTop = chatHistory.scrollHeight;
   });
   requestTaskSnapshot();
+  renderRunnerIndicator();
   chatHistory.scrollTop = chatHistory.scrollHeight;
 })();
 //# sourceMappingURL=webview.js.map

@@ -9,6 +9,8 @@ import {
 export class TaskEditorPanel {
   public static currentPanel: TaskEditorPanel | undefined;
   public static readonly viewType = 'kanban2code-task-editor';
+  private static readonly saveEmitter = new vscode.EventEmitter<{ taskPath: string }>();
+  public static readonly onDidSaveTask = TaskEditorPanel.saveEmitter.event;
 
   private readonly panel: vscode.WebviewPanel;
   private readonly extensionUri: vscode.Uri;
@@ -123,6 +125,7 @@ export class TaskEditorPanel {
 
     try {
       await this.taskService.updateTask(this.currentTaskPath, message.payload.task);
+      TaskEditorPanel.saveEmitter.fire({ taskPath: this.currentTaskPath });
       await this.loadTask(this.currentTaskPath);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

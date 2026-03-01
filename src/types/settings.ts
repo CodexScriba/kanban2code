@@ -86,6 +86,8 @@ export interface Settings {
     serializedPipeline: boolean;
     maxParallelRuns: number;
     autoOpenTerminal: boolean;
+    promptMissingFields: boolean;
+    autoResumeOnSave: boolean;
   };
   notifications: {
     enabled: boolean;

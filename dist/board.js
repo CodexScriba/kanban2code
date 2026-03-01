@@ -106,6 +106,7 @@
         <select class="filter-select" id="projectFilter" aria-label="Filter by project">
           <option value="all">Project: All</option>
         </select>
+        <span class="queue-chip" id="queueChip">Queue: 0</span>
         <span class="model-badge">live snapshot</span>
         <div class="toolbar-div"></div>
         <button class="capture-header-btn" type="button">+ Capture</button>
@@ -253,6 +254,7 @@
   var sortOrderSelect = document.getElementById("sortOrder");
   var projectFilter = document.getElementById("projectFilter");
   var taskCountLabel = document.getElementById("taskCountLabel");
+  var queueChip = document.getElementById("queueChip");
   var captureModal = document.getElementById("captureModal");
   var captureForm = document.getElementById("captureForm");
   var captureStageLabel = document.getElementById("captureStageLabel");
@@ -283,6 +285,9 @@
   var captureTags = [];
   var confirmDestructiveActions = true;
   var contextMenuTaskId = null;
+  var queuedTaskCount = 0;
+  var activeTaskId = null;
+  var runStateByTaskId = /* @__PURE__ */ new Map();
   var contextMenu = document.createElement("div");
   contextMenu.className = "ctx-menu";
   contextMenu.id = "cardContextMenu";
@@ -340,6 +345,46 @@
   var moveMenuLabel = (stage) => {
     return stage === "completed" ? "Done" : stage.charAt(0).toUpperCase() + stage.slice(1);
   };
+  var runStateLabel = {
+    queued: "Queued",
+    running: "Running",
+    success: "Success",
+    failed: "Failed",
+    cancelled: "Cancelled"
+  };
+  var getRunStateForTask = (task) => {
+    return runStateByTaskId.get(task.id) ?? runStateByTaskId.get(task.taskId) ?? null;
+  };
+  var getTaskIdentifier = (taskIdentifier) => {
+    const task = allTasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+    return task?.id ?? taskIdentifier;
+  };
+  var setTaskRunState = (taskIdentifier, state) => {
+    const resolvedId = getTaskIdentifier(taskIdentifier);
+    runStateByTaskId.set(resolvedId, state);
+    const task = allTasks.find((entry) => entry.id === resolvedId || entry.taskId === taskIdentifier);
+    if (task) {
+      runStateByTaskId.set(task.id, state);
+      runStateByTaskId.set(task.taskId, state);
+    }
+  };
+  var syncRunStateMapToTasks = () => {
+    for (const task of allTasks) {
+      const known = runStateByTaskId.get(task.id) ?? runStateByTaskId.get(task.taskId);
+      if (!known) {
+        continue;
+      }
+      runStateByTaskId.set(task.id, known);
+      runStateByTaskId.set(task.taskId, known);
+    }
+  };
+  var updateQueueChip = () => {
+    if (!queueChip) {
+      return;
+    }
+    queueChip.textContent = `Queue: ${queuedTaskCount}`;
+    queueChip.classList.toggle("active", queuedTaskCount > 0 || Boolean(activeTaskId));
+  };
   var closeContextMenu = () => {
     contextMenu.classList.remove("open");
     contextMenu.setAttribute("aria-hidden", "true");
@@ -366,12 +411,20 @@
       const label = moveMenuLabel(stage);
       return `<button class="cm-item" type="button" data-context-action="move" data-stage="${stage}">${label}</button>`;
     }).join("");
+    const runState = getRunStateForTask(task);
+    const canCancel = runState === "queued" || runState === "running";
+    const canRetry = runState === "failed";
+    const cancelItem = canCancel ? `<button class="cm-item" type="button" data-context-action="cancel">Cancel</button>` : "";
+    const retryItem = canRetry ? `<button class="cm-item" type="button" data-context-action="retry">Retry</button>` : "";
     contextMenuTaskId = taskId;
     contextMenu.innerHTML = `
     <div class="cm-section">
       <button class="cm-item" type="button" data-context-action="open">Open</button>
       <button class="cm-item" type="button" data-context-action="run">Run</button>
       <button class="cm-item" type="button" data-context-action="run-all">Run all</button>
+      <button class="cm-item" type="button" data-context-action="queue">Queue</button>
+      ${cancelItem}
+      ${retryItem}
     </div>
     <div class="cm-section">
       <div class="cm-item cm-item-submenu">
@@ -393,11 +446,14 @@
   var createCardMarkup = (task) => {
     const priorityClass = toPriorityClass(task.priority);
     const priorityLabel = task.priority ?? "unset";
+    const runState = getRunStateForTask(task);
     const roleChip = task.role ? `<span class="agent-chip">${escapeHtml(task.role)}</span>` : "";
     const projectChip = task.project ? `<span class="project-chip">${escapeHtml(task.project)}</span>` : "";
+    const runBadge = runState ? `<span class="run-state-badge run-state-${runState}" title="Run state: ${escapeHtml(runStateLabel[runState])}">${escapeHtml(runStateLabel[runState])}</span>` : "";
     const tagChips = task.tags.map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join("");
+    const cardStateClass = runState ? ` run-state-${runState}` : "";
     return `
-    <article class="card${toBoardColumn(task.stage) === "completed" ? " done" : ""}" draggable="true" data-task-id="${escapeHtml(task.id)}">
+    <article class="card${toBoardColumn(task.stage) === "completed" ? " done" : ""}${cardStateClass}" draggable="true" data-task-id="${escapeHtml(task.id)}">
       <div class="card-actions">
         <button class="card-action-btn edit-btn" type="button" data-card-action="edit" title="Edit task" aria-label="Edit task">
           \u270E
@@ -415,6 +471,7 @@
       </div>
       <p class="card-desc">${escapeHtml(getDescription(task))}</p>
       <div class="card-chips">
+        ${runBadge}
         ${roleChip}
         ${projectChip}
         ${tagChips}
@@ -935,6 +992,36 @@
     };
     vscode.postMessage(message);
   };
+  var postQueueStage = (taskId) => {
+    if (!vscode) {
+      return;
+    }
+    const message = {
+      type: "QueueStage",
+      payload: { taskId }
+    };
+    vscode.postMessage(message);
+  };
+  var postCancelRun = (taskId) => {
+    if (!vscode) {
+      return;
+    }
+    const message = {
+      type: "CancelRun",
+      payload: { taskId }
+    };
+    vscode.postMessage(message);
+  };
+  var postRetryRun = (taskId) => {
+    if (!vscode) {
+      return;
+    }
+    const message = {
+      type: "RetryRun",
+      payload: { taskId }
+    };
+    vscode.postMessage(message);
+  };
   var copyTaskToClipboard = async (taskId) => {
     const task = getTaskById(taskId);
     if (!task) {
@@ -964,6 +1051,21 @@ ${task.taskId}`;
     if (!isHostToWebviewMessage(event.data)) {
       return;
     }
+    if (event.data.type === "RunnerStateChanged") {
+      setTaskRunState(event.data.payload.taskId, event.data.payload.state);
+      renderBoard();
+      return;
+    }
+    if (event.data.type === "QueueSnapshot") {
+      activeTaskId = event.data.payload.activeTaskId;
+      queuedTaskCount = event.data.payload.totalQueued;
+      updateQueueChip();
+      for (const item of event.data.payload.items) {
+        setTaskRunState(item.taskId, item.state);
+      }
+      renderBoard();
+      return;
+    }
     if (event.data.type === "SettingsLoaded") {
       confirmDestructiveActions = parseConfirmDestructiveActions(event.data.payload.settings);
       return;
@@ -972,6 +1074,7 @@ ${task.taskId}`;
       return;
     }
     allTasks = event.data.payload.tasks;
+    syncRunStateMapToTasks();
     syncProjectFilterOptions(allTasks);
     syncCaptureProjectOptions(allTasks);
     renderBoard();
@@ -1039,6 +1142,21 @@ ${task.taskId}`;
     }
     if (action === "run-all") {
       postRunAllStages(taskId);
+      closeContextMenu();
+      return;
+    }
+    if (action === "queue") {
+      postQueueStage(taskId);
+      closeContextMenu();
+      return;
+    }
+    if (action === "cancel") {
+      postCancelRun(taskId);
+      closeContextMenu();
+      return;
+    }
+    if (action === "retry") {
+      postRetryRun(taskId);
       closeContextMenu();
       return;
     }
@@ -1186,6 +1304,7 @@ ${task.taskId}`;
   });
   setupDragAndDrop();
   renderBoard();
+  updateQueueChip();
   requestTaskSnapshot();
 })();
 //# sourceMappingURL=board.js.map

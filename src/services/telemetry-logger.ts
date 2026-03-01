@@ -33,6 +33,18 @@ export interface TelemetryLoggerOptions {
 }
 
 const LOG_DIRECTORY = path.join('.kanban2code', '_logs');
+export type RunnerTelemetryOutcome = 'success' | 'failed' | 'cancelled';
+
+export interface RunnerTelemetryEventPayload {
+  taskId: string;
+  stage: string;
+  scope: 'stage' | 'all';
+  provider?: string;
+  model?: string;
+  durationMs?: number;
+  outcome?: RunnerTelemetryOutcome;
+  error?: string;
+}
 
 export class TelemetryLogger {
   private runtimeDependencies?: TelemetryRuntimeDependencies;
@@ -63,6 +75,33 @@ export class TelemetryLogger {
     await this.logEvent(eventType, {
       filePath,
       ...(details ? { metadata: details } : {})
+    });
+  }
+
+  async logRunnerStarted(payload: RunnerTelemetryEventPayload): Promise<void> {
+    await this.logEvent('runner_run_started', {
+      taskId: payload.taskId,
+      metadata: {
+        stage: payload.stage,
+        scope: payload.scope,
+        provider: payload.provider,
+        model: payload.model
+      }
+    });
+  }
+
+  async logRunnerCompleted(payload: RunnerTelemetryEventPayload): Promise<void> {
+    await this.logEvent('runner_run_completed', {
+      taskId: payload.taskId,
+      metadata: {
+        stage: payload.stage,
+        scope: payload.scope,
+        provider: payload.provider,
+        model: payload.model,
+        durationMs: payload.durationMs,
+        outcome: payload.outcome,
+        error: payload.error
+      }
     });
   }
 

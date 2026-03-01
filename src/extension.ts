@@ -5,6 +5,7 @@ import { TaskEditorPanel } from './webview/TaskEditorPanel';
 import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
 import { TaskService } from './services/task-service';
 import { SettingsService } from './services/settings-service';
+import { QueueService } from './services/queue-service';
 
 export function activate(context: vscode.ExtensionContext): void {
   const scannerRuntime: TaskScannerRuntime = {
@@ -19,12 +20,26 @@ export function activate(context: vscode.ExtensionContext): void {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const taskService = new TaskService(workspaceRoot ?? '');
   const settingsService = new SettingsService(workspaceRoot ?? '');
-  const sidebarProvider = new SidebarProvider(context.extensionUri, taskScanner);
+  const queueService = new QueueService(workspaceRoot ?? '', taskService, settingsService, {
+    promptForValidation: async (taskPath, validation) => {
+      const firstError = validation.errors[0];
+      if (firstError) {
+        void vscode.window.showWarningMessage(firstError.message);
+      }
+      await vscode.commands.executeCommand('kanban2code.openTaskEditor', taskPath);
+    }
+  });
+  const sidebarProvider = new SidebarProvider(context.extensionUri, taskScanner, queueService);
 
-  context.subscriptions.push(taskScanner, sidebarProvider);
+  context.subscriptions.push(taskScanner, queueService, sidebarProvider);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
+  );
+  context.subscriptions.push(
+    TaskEditorPanel.onDidSaveTask(({ taskPath }) => {
+      void queueService.handleTaskSaved(taskPath);
+    })
   );
 
   context.subscriptions.push(
@@ -36,7 +51,13 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
-      KanbanPanel.createOrShow(context.extensionUri, taskScanner, taskService, settingsService);
+      KanbanPanel.createOrShow(
+        context.extensionUri,
+        taskScanner,
+        taskService,
+        settingsService,
+        queueService
+      );
     })
   );
 

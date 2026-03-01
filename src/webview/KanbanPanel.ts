@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 import { TaskScanner } from '../services/task-scanner';
 import { TaskService } from '../services/task-service';
 import { SettingsService } from '../services/settings-service';
+import { QueueService } from '../services/queue-service';
 import {
   isWebviewToHostMessage,
+  type QueueSnapshotMessage,
+  type RunnerStateChangedMessage,
   type SettingsLoadedMessage,
   type TaskSnapshotMessage,
   type TaskSnapshotItem
@@ -19,24 +22,41 @@ export class KanbanPanel {
   private readonly taskScanner: TaskScanner;
   private readonly taskService: TaskService;
   private readonly settingsService: SettingsService;
+  private readonly queueService: QueueService;
 
   private constructor(
     panel: vscode.WebviewPanel,
     extensionUri: vscode.Uri,
     taskScanner: TaskScanner,
     taskService: TaskService,
-    settingsService: SettingsService
+    settingsService: SettingsService,
+    queueService: QueueService
   ) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this.taskScanner = taskScanner;
     this.taskService = taskService;
     this.settingsService = settingsService;
+    this.queueService = queueService;
 
     this._disposables.push(
       this.taskScanner.onDidRefresh(() => {
         void this.postTaskSnapshot();
       })
+    );
+    this._disposables.push(
+      new vscode.Disposable(
+        this.queueService.onDidStateChange((taskId, state, timestamp) => {
+          this.postRunnerStateChanged(taskId, state, timestamp);
+        })
+      )
+    );
+    this._disposables.push(
+      new vscode.Disposable(
+        this.queueService.onDidQueueChange(() => {
+          this.postQueueSnapshot();
+        })
+      )
     );
 
     this._update();
@@ -55,7 +75,8 @@ export class KanbanPanel {
     extensionUri: vscode.Uri,
     taskScanner: TaskScanner,
     taskService: TaskService,
-    settingsService: SettingsService
+    settingsService: SettingsService,
+    queueService: QueueService
   ): void {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -82,7 +103,8 @@ export class KanbanPanel {
       extensionUri,
       taskScanner,
       taskService,
-      settingsService
+      settingsService,
+      queueService
     );
   }
 
@@ -112,6 +134,49 @@ export class KanbanPanel {
     if (rawMessage.type === 'RequestTaskSnapshot') {
       await this.postTaskSnapshot();
       await this.postSettings();
+      this.postQueueSnapshot();
+      return;
+    }
+
+    if (rawMessage.type === 'RunStage') {
+      await this.handleQueueIntent(rawMessage.payload.taskId, 'stage');
+      return;
+    }
+
+    if (rawMessage.type === 'RunAllStages') {
+      await this.handleQueueIntent(rawMessage.payload.taskId, 'all');
+      return;
+    }
+
+    if (rawMessage.type === 'QueueStage') {
+      await this.handleQueueIntent(rawMessage.payload.taskId, 'stage');
+      return;
+    }
+
+    if (rawMessage.type === 'QueueAllStages') {
+      await this.handleQueueIntent(rawMessage.payload.taskId, 'all');
+      return;
+    }
+
+    if (rawMessage.type === 'CancelRun') {
+      const cancelled = this.queueService.cancel(rawMessage.payload.taskId);
+      if (!cancelled) {
+        void vscode.window.showWarningMessage(`No queued/running task found: ${rawMessage.payload.taskId}`);
+      }
+      return;
+    }
+
+    if (rawMessage.type === 'RetryRun') {
+      const resolvedTask = await this.resolveTask(rawMessage.payload.taskId);
+      if (!resolvedTask) {
+        void vscode.window.showWarningMessage(`Task not found: ${rawMessage.payload.taskId}`);
+        return;
+      }
+
+      const result = await this.queueService.retry(resolvedTask.id);
+      if (!result.ok) {
+        void vscode.window.showWarningMessage('Retry is only available for failed runs.');
+      }
       return;
     }
 
@@ -210,10 +275,50 @@ export class KanbanPanel {
     void this._panel.webview.postMessage(settingsMessage);
   }
 
+  private postRunnerStateChanged(taskId: string, state: RunnerStateChangedMessage['payload']['state'], timestamp: number): void {
+    const message: RunnerStateChangedMessage = {
+      type: 'RunnerStateChanged',
+      payload: {
+        taskId,
+        state,
+        timestamp
+      }
+    };
+    void this._panel.webview.postMessage(message);
+  }
+
+  private postQueueSnapshot(): void {
+    const snapshot = this.queueService.getSnapshot();
+    const message: QueueSnapshotMessage = {
+      type: 'QueueSnapshot',
+      payload: snapshot
+    };
+    void this._panel.webview.postMessage(message);
+  }
+
   private async resolveTask(taskIdentifier: string): Promise<TaskSnapshotItem | null> {
     const tasks = await this.taskScanner.scan();
     const task = tasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
     return task ?? null;
+  }
+
+  private async handleQueueIntent(taskIdentifier: string, scope: 'stage' | 'all'): Promise<void> {
+    const resolvedTask = await this.resolveTask(taskIdentifier);
+    if (!resolvedTask) {
+      void vscode.window.showWarningMessage(`Task not found: ${taskIdentifier}`);
+      return;
+    }
+
+    const result = await this.queueService.enqueue(resolvedTask.id, scope);
+    if (!result.ok && result.reason === 'duplicate') {
+      void vscode.window.showWarningMessage('Task is already queued or running.');
+      return;
+    }
+
+    if (!result.ok && result.validation) {
+      const message = result.validation.errors[0]?.message ?? 'Task validation failed before run.';
+      void vscode.window.showWarningMessage(message);
+    }
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {

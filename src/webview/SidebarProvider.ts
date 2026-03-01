@@ -2,11 +2,14 @@ import * as vscode from 'vscode';
 import {
   isWebviewToHostMessage,
   type OrchestratorResponseMessage,
+  type QueueSnapshotMessage,
+  type RunnerStateChangedMessage,
   type TaskSnapshotMessage,
   type TaskSelectionResetMessage
 } from './messaging';
 import { TaskScanner } from '../services/task-scanner';
 import type { TaskSnapshotItem } from '../types/task';
+import { QueueService } from '../services/queue-service';
 
 export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'kanban2code-sidebar';
@@ -15,11 +18,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly taskScanner: TaskScanner
+    private readonly taskScanner: TaskScanner,
+    private readonly queueService: QueueService
   ) {
     this.disposables.push(
       this.taskScanner.onDidRefresh(() => {
         void this.postTaskSnapshot();
+      })
+    );
+    this.disposables.push(
+      this.queueService.onDidRunnerStateChange((event) => {
+        this.postRunnerStateChanged(event.taskId, event.state, event.timestamp);
+      })
+    );
+    this.disposables.push(
+      this.queueService.onDidQueueSnapshotChange(() => {
+        this.postQueueSnapshot();
       })
     );
   }
@@ -68,6 +82,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     if (rawMessage.type === 'RequestTaskSnapshot') {
       await this.postTaskSnapshot();
+      this.postQueueSnapshot();
       return;
     }
 
@@ -122,6 +137,38 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
       payload: { tasks }
     };
     void this.webviewView.webview.postMessage(snapshotMessage);
+  }
+
+  private postRunnerStateChanged(
+    taskId: string,
+    state: RunnerStateChangedMessage['payload']['state'],
+    timestamp: number
+  ): void {
+    if (!this.webviewView) {
+      return;
+    }
+
+    const message: RunnerStateChangedMessage = {
+      type: 'RunnerStateChanged',
+      payload: {
+        taskId,
+        state,
+        timestamp
+      }
+    };
+    void this.webviewView.webview.postMessage(message);
+  }
+
+  private postQueueSnapshot(): void {
+    if (!this.webviewView) {
+      return;
+    }
+
+    const message: QueueSnapshotMessage = {
+      type: 'QueueSnapshot',
+      payload: this.queueService.getSnapshot()
+    };
+    void this.webviewView.webview.postMessage(message);
   }
 
   dispose(): void {

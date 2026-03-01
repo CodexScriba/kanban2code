@@ -1,5 +1,5 @@
 import './styles.css';
-import { isHostToWebviewMessage, type TaskSnapshotItem } from '../messaging';
+import { isHostToWebviewMessage, type RunState, type TaskSnapshotItem } from '../messaging';
 
 const root = document.getElementById('app');
 
@@ -10,7 +10,10 @@ if (!root) {
 root.innerHTML = `
   <div class="sidebar">
     <div class="header">
-      <div class="header-brand">Kanban2Code</div>
+      <div class="header-meta">
+        <div class="header-brand">Kanban2Code</div>
+        <div class="runner-indicator idle" id="runnerIndicator">Runner idle</div>
+      </div>
       <div class="header-actions">
         <button class="btn-capture" id="captureBtn" type="button">
           <span>+</span>
@@ -354,6 +357,7 @@ const chatHistory = root.querySelector<HTMLElement>('#chatHistory');
 const providerSelect = root.querySelector<HTMLSelectElement>('#providerSelect');
 const taskPicker = root.querySelector<HTMLSelectElement>('#taskPicker');
 const taskPickerNotice = root.querySelector<HTMLElement>('#taskPickerNotice');
+const runnerIndicator = root.querySelector<HTMLElement>('#runnerIndicator');
 
 if (
   !textarea ||
@@ -365,7 +369,8 @@ if (
   !chatHistory ||
   !providerSelect ||
   !taskPicker ||
-  !taskPickerNotice
+  !taskPickerNotice ||
+  !runnerIndicator
 ) {
   throw new Error('Sidebar UI is missing required elements');
 }
@@ -390,6 +395,9 @@ let selectedTaskId: string | null = savedState?.selectedTaskId ?? null;
 let knownTasks: TaskSnapshotItem[] = [];
 let activeDropdown: HTMLElement | null = null;
 let noticeTimer: number | null = null;
+let sidebarQueueCount = 0;
+let sidebarActiveTaskId: string | null = null;
+const sidebarRunStateByTaskId = new Map<string, RunState>();
 
 const truncateLabel = (value: string, maxLength: number): string => {
   const safeChars = Array.from(value);
@@ -402,6 +410,45 @@ const truncateLabel = (value: string, maxLength: number): string => {
 
 const updatePersistedState = (): void => {
   vscodeApi?.setState({ selectedTaskId });
+};
+
+const resolveTaskTitle = (taskIdentifier: string): string => {
+  const task = knownTasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+  return task?.title ?? taskIdentifier;
+};
+
+const setRunStateForTask = (taskIdentifier: string, state: RunState): void => {
+  sidebarRunStateByTaskId.set(taskIdentifier, state);
+  const task = knownTasks.find((entry) => entry.id === taskIdentifier || entry.taskId === taskIdentifier);
+  if (!task) {
+    return;
+  }
+  sidebarRunStateByTaskId.set(task.id, state);
+  sidebarRunStateByTaskId.set(task.taskId, state);
+};
+
+const renderRunnerIndicator = (): void => {
+  if (!runnerIndicator) {
+    return;
+  }
+
+  runnerIndicator.classList.remove('idle', 'running', 'queued');
+
+  if (sidebarActiveTaskId) {
+    const label = truncateLabel(resolveTaskTitle(sidebarActiveTaskId), 24);
+    runnerIndicator.textContent = `Running ${label}`;
+    runnerIndicator.classList.add('running');
+    return;
+  }
+
+  if (sidebarQueueCount > 0) {
+    runnerIndicator.textContent = `Queue ${sidebarQueueCount}`;
+    runnerIndicator.classList.add('queued');
+    return;
+  }
+
+  runnerIndicator.textContent = 'Runner idle';
+  runnerIndicator.classList.add('idle');
 };
 
 const showTaskNotice = (message: string): void => {
@@ -640,6 +687,28 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   if (message.type === 'TaskSnapshot') {
     knownTasks = message.payload.tasks;
     renderTaskOptions(knownTasks);
+    renderRunnerIndicator();
+    return;
+  }
+
+  if (message.type === 'RunnerStateChanged') {
+    setRunStateForTask(message.payload.taskId, message.payload.state);
+    if (message.payload.state === 'running') {
+      sidebarActiveTaskId = message.payload.taskId;
+    } else if (sidebarActiveTaskId === message.payload.taskId && message.payload.state !== 'queued') {
+      sidebarActiveTaskId = null;
+    }
+    renderRunnerIndicator();
+    return;
+  }
+
+  if (message.type === 'QueueSnapshot') {
+    sidebarQueueCount = message.payload.totalQueued;
+    sidebarActiveTaskId = message.payload.activeTaskId;
+    for (const item of message.payload.items) {
+      setRunStateForTask(item.taskId, item.state);
+    }
+    renderRunnerIndicator();
     return;
   }
 
@@ -672,4 +741,5 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
 });
 
 requestTaskSnapshot();
+renderRunnerIndicator();
 chatHistory.scrollTop = chatHistory.scrollHeight;
