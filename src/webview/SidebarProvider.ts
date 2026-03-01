@@ -1,19 +1,28 @@
 import * as vscode from 'vscode';
-import * as path from 'node:path';
 import {
   isWebviewToHostMessage,
   type OrchestratorResponseMessage,
-  type TaskSnapshotItem,
   type TaskSnapshotMessage,
-  type TaskStage,
   type TaskSelectionResetMessage
 } from './messaging';
+import { TaskScanner } from '../services/task-scanner';
+import type { TaskSnapshotItem } from '../types/task';
 
-export class SidebarProvider implements vscode.WebviewViewProvider {
+export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'kanban2code-sidebar';
   private webviewView: vscode.WebviewView | null = null;
+  private readonly disposables: vscode.Disposable[] = [];
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly taskScanner: TaskScanner
+  ) {
+    this.disposables.push(
+      this.taskScanner.onDidRefresh(() => {
+        void this.postTaskSnapshot();
+      })
+    );
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.webviewView = webviewView;
@@ -67,7 +76,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const allTasks = await this.getWorkspaceTasks();
+    if (rawMessage.type !== 'SendChatMessage') {
+      return;
+    }
+
+    const allTasks = await this.taskScanner.scan();
     let selectedTaskId = rawMessage.payload.selectedTaskId;
     let selectedTask = selectedTaskId
       ? allTasks.find((task) => task.id === selectedTaskId) ?? null
@@ -103,7 +116,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const tasks = preloadedTasks ?? (await this.getWorkspaceTasks());
+    const tasks = preloadedTasks ?? (await this.taskScanner.scan());
     const snapshotMessage: TaskSnapshotMessage = {
       type: 'TaskSnapshot',
       payload: { tasks }
@@ -111,85 +124,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     void this.webviewView.webview.postMessage(snapshotMessage);
   }
 
-  private async getWorkspaceTasks(): Promise<TaskSnapshotItem[]> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return [];
+  dispose(): void {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
     }
-
-    const taskUris = await Promise.all([
-      vscode.workspace.findFiles(
-        new vscode.RelativePattern(workspaceFolder, '.kanban2code/inbox/**/*.md')
-      ),
-      vscode.workspace.findFiles(
-        new vscode.RelativePattern(workspaceFolder, '.kanban2code/projects/**/*.md')
-      )
-    ]);
-
-    const allUris = [...taskUris[0], ...taskUris[1]];
-    const tasks = await Promise.all(allUris.map((uri) => this.readTaskSnapshotItem(uri, workspaceFolder)));
-
-    return tasks
-      .filter((task): task is TaskSnapshotItem => task !== null)
-      .sort((left, right) => left.title.localeCompare(right.title));
-  }
-
-  private async readTaskSnapshotItem(
-    taskUri: vscode.Uri,
-    workspaceFolder: vscode.WorkspaceFolder
-  ): Promise<TaskSnapshotItem | null> {
-    const relativePath = path.posix.normalize(
-      path.relative(workspaceFolder.uri.fsPath, taskUri.fsPath).split(path.sep).join(path.posix.sep)
-    );
-
-    const raw = await vscode.workspace.fs.readFile(taskUri);
-    const content = Buffer.from(raw).toString('utf8');
-    const stage = this.parseStage(content);
-    const title = this.parseTitle(content, taskUri);
-
-    return {
-      id: relativePath,
-      title,
-      stage
-    };
-  }
-
-  private parseTitle(content: string, taskUri: vscode.Uri): string {
-    const headingMatch = content.match(/^#\s+(.+)$/m);
-    if (headingMatch && headingMatch[1].trim().length > 0) {
-      return headingMatch[1].trim();
-    }
-
-    const fileName = path.basename(taskUri.fsPath, path.extname(taskUri.fsPath));
-    return fileName.trim() || 'Untitled task';
-  }
-
-  private parseStage(content: string): TaskStage {
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!frontmatterMatch) {
-      return 'unknown';
-    }
-
-    const stageLine = frontmatterMatch[1]
-      .split('\n')
-      .find((line) => line.trimStart().startsWith('stage:'));
-    if (!stageLine) {
-      return 'unknown';
-    }
-
-    const rawStage = stageLine.split(':').slice(1).join(':').trim().toLowerCase();
-    if (
-      rawStage === 'inbox' ||
-      rawStage === 'capture' ||
-      rawStage === 'plan' ||
-      rawStage === 'code' ||
-      rawStage === 'audit' ||
-      rawStage === 'completed'
-    ) {
-      return rawStage;
-    }
-
-    return 'unknown';
   }
 }
 

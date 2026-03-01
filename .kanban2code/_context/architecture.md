@@ -335,3 +335,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/webview/KanbanPanel.ts` - Singleton `WebviewPanel` host for editor-area Kanban board with CSP, nonce, and bundled asset loading
     - `src/webview/ui/board.tsx` - Static board shell DOM and placeholder interactions ported from design reference
     - `src/webview/ui/board.css` - Board shell stylesheet ported from design reference
+
+- date: 2026-03-01
+  - task: `task1.1-frontmatter-service-parse-serialize-with-normalization`
+  - files-updated:
+    - `package.json` (added `gray-matter` dependency and `test` script for compiled service tests)
+    - `package-lock.json` (lockfile updates for frontmatter parsing dependency)
+  - new-files-created:
+    - `src/services/frontmatter-service.ts` - Pure frontmatter parse/normalize/serialize service using `gray-matter` with `agent -> role` normalization and safe defaults
+    - `src/services/frontmatter-service.test.ts` - Node test coverage for parse/serialize, malformed input handling, round-trip behavior, default-array safety, and Unicode escapes
+    - `src/types/task.ts` - Shared task domain types (`TaskStage`, `Priority`, `TaskFrontmatter`, `Task`)
+    - `src/types/gray-matter.d.ts` - Local module typings for `gray-matter` import and stringify usage

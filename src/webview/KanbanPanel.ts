@@ -1,4 +1,10 @@
 import * as vscode from 'vscode';
+import { TaskScanner } from '../services/task-scanner';
+import {
+  isWebviewToHostMessage,
+  type TaskSnapshotMessage,
+  type TaskSnapshotItem
+} from './messaging';
 
 export class KanbanPanel {
   public static currentPanel: KanbanPanel | undefined;
@@ -7,17 +13,32 @@ export class KanbanPanel {
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
+  private readonly taskScanner: TaskScanner;
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, taskScanner: TaskScanner) {
     this._panel = panel;
     this._extensionUri = extensionUri;
+    this.taskScanner = taskScanner;
+
+    this._disposables.push(
+      this.taskScanner.onDidRefresh(() => {
+        void this.postTaskSnapshot();
+      })
+    );
 
     this._update();
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.webview.onDidReceiveMessage(
+      (message: unknown) => {
+        void this.handleWebviewMessage(message);
+      },
+      null,
+      this._disposables
+    );
   }
 
-  public static createOrShow(extensionUri: vscode.Uri): void {
+  public static createOrShow(extensionUri: vscode.Uri, taskScanner: TaskScanner): void {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
@@ -38,7 +59,7 @@ export class KanbanPanel {
       }
     );
 
-    KanbanPanel.currentPanel = new KanbanPanel(panel, extensionUri);
+    KanbanPanel.currentPanel = new KanbanPanel(panel, extensionUri, taskScanner);
   }
 
   private _update(): void {
@@ -57,6 +78,23 @@ export class KanbanPanel {
         x.dispose();
       }
     }
+  }
+
+  private async handleWebviewMessage(rawMessage: unknown): Promise<void> {
+    if (!isWebviewToHostMessage(rawMessage) || rawMessage.type !== 'RequestTaskSnapshot') {
+      return;
+    }
+
+    await this.postTaskSnapshot();
+  }
+
+  private async postTaskSnapshot(preloadedTasks?: TaskSnapshotItem[]): Promise<void> {
+    const tasks = preloadedTasks ?? (await this.taskScanner.scan());
+    const snapshotMessage: TaskSnapshotMessage = {
+      type: 'TaskSnapshot',
+      payload: { tasks }
+    };
+    void this._panel.webview.postMessage(snapshotMessage);
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {

@@ -95,11 +95,11 @@ Foundation services that all views depend on. Must be solid before any UI work.
 #### Task 1.1: FrontmatterService — parse/serialize with normalization
 
 **Definition of Done:**
-- [ ] Parses YAML frontmatter from `.md` files using `gray-matter`
-- [ ] Normalizes `agent` → `role` on read
-- [ ] Serializes back to `.md` preserving body content
-- [ ] Preserves list fields: `tags`, `contexts`, `skills`
-- [ ] Handles missing/malformed frontmatter gracefully
+- [x] Parses YAML frontmatter from `.md` files using `gray-matter`
+- [x] Normalizes `agent` → `role` on read
+- [x] Serializes back to `.md` preserving body content
+- [x] Preserves list fields: `tags`, `contexts`, `skills`
+- [x] Handles missing/malformed frontmatter gracefully
 
 **Files:**
 - `src/services/frontmatter-service.ts` - create - frontmatter parse/serialize/normalize

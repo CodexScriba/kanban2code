@@ -651,6 +651,10 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     return;
   }
 
+  if (message.type !== 'OrchestratorResponse') {
+    return;
+  }
+
   const assistantMessage = document.createElement('div');
   assistantMessage.className = 'message assistant';
 
@@ -668,5 +672,4 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
 });
 
 requestTaskSnapshot();
-window.setInterval(requestTaskSnapshot, 4000);
 chatHistory.scrollTop = chatHistory.scrollHeight;

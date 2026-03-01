@@ -1,15 +1,34 @@
 "use strict";
 (() => {
   // src/webview/messaging.ts
+  var TASK_STAGES = ["inbox", "capture", "plan", "code", "audit", "completed", "unknown"];
+  var PRIORITIES = ["low", "medium", "high"];
+  var RUN_STATES = ["queued", "running", "success", "failed", "cancelled"];
+  var QUEUE_SCOPES = ["stage", "all"];
   var isObject = (value) => typeof value === "object" && value !== null;
+  var isStringArray = (value) => Array.isArray(value) && value.every((entry) => typeof entry === "string");
+  var isTaskStage = (value) => typeof value === "string" && TASK_STAGES.includes(value);
+  var isPriority = (value) => typeof value === "string" && PRIORITIES.includes(value);
+  var isRunState = (value) => typeof value === "string" && RUN_STATES.includes(value);
+  var isQueueScope = (value) => typeof value === "string" && QUEUE_SCOPES.includes(value);
+  var isQueueItem = (value) => {
+    return isObject(value) && typeof value.taskId === "string" && isQueueScope(value.scope) && isRunState(value.state) && typeof value.enqueuedAt === "number" && Number.isFinite(value.enqueuedAt);
+  };
+  var isTaskSnapshotItem = (task) => {
+    return isObject(task) && typeof task.id === "string" && typeof task.taskId === "string" && typeof task.title === "string" && (task.description === void 0 || typeof task.description === "string") && isTaskStage(task.stage) && isStringArray(task.tags) && typeof task.createdAt === "number" && Number.isFinite(task.createdAt) && (task.priority === void 0 || isPriority(task.priority)) && (task.role === void 0 || typeof task.role === "string") && (task.project === void 0 || typeof task.project === "string");
+  };
   var isHostToWebviewMessage = (value) => {
     if (!isObject(value) || typeof value.type !== "string") {
       return false;
     }
     if (value.type === "TaskSnapshot") {
-      return isObject(value.payload) && Array.isArray(value.payload.tasks) && value.payload.tasks.every(
-        (task) => isObject(task) && typeof task.id === "string" && typeof task.title === "string" && typeof task.stage === "string"
-      );
+      return isObject(value.payload) && Array.isArray(value.payload.tasks) && value.payload.tasks.every(isTaskSnapshotItem);
+    }
+    if (value.type === "TaskUpdated" || value.type === "TaskDeleted") {
+      return isObject(value.payload) && typeof value.payload.taskId === "string";
+    }
+    if (value.type === "SettingsLoaded") {
+      return isObject(value.payload) && isObject(value.payload.settings) && (!("projectSlug" in value.payload) || value.payload.projectSlug === void 0 || typeof value.payload.projectSlug === "string");
     }
     if (value.type === "TaskSelectionReset" || value.type === "OrchestratorResponse") {
       if (!isObject(value.payload)) {
@@ -19,6 +38,12 @@
         return typeof value.payload.reason === "string";
       }
       return typeof value.payload.message === "string";
+    }
+    if (value.type === "RunnerStateChanged") {
+      return isObject(value.payload) && typeof value.payload.taskId === "string" && isRunState(value.payload.state) && typeof value.payload.timestamp === "number" && Number.isFinite(value.payload.timestamp);
+    }
+    if (value.type === "QueueSnapshot") {
+      return isObject(value.payload) && Array.isArray(value.payload.items) && value.payload.items.every(isQueueItem) && (value.payload.activeTaskId === null || typeof value.payload.activeTaskId === "string") && typeof value.payload.totalQueued === "number" && Number.isFinite(value.payload.totalQueued);
     }
     return false;
   };
@@ -593,6 +618,9 @@
       showTaskNotice(message.payload.reason);
       return;
     }
+    if (message.type !== "OrchestratorResponse") {
+      return;
+    }
     const assistantMessage = document.createElement("div");
     assistantMessage.className = "message assistant";
     const author = document.createElement("div");
@@ -606,7 +634,6 @@
     chatHistory.scrollTop = chatHistory.scrollHeight;
   });
   requestTaskSnapshot();
-  window.setInterval(requestTaskSnapshot, 4e3);
   chatHistory.scrollTop = chatHistory.scrollHeight;
 })();
 //# sourceMappingURL=webview.js.map

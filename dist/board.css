@@ -36,9 +36,11 @@
   --p-med: #fbbf24;
   --p-med-bg: rgba(251, 191, 36, 0.1);
   --p-med-border: rgba(251, 191, 36, 0.26);
-  --p-low: #5e6b86;
-  --p-low-bg: rgba(94, 107, 134, 0.1);
-  --p-low-border: rgba(94, 107, 134, 0.22);
+  --p-low: #34d399;
+  --p-low-bg: rgba(52, 211, 153, 0.12);
+  --p-low-border: rgba(52, 211, 153, 0.3);
+  --p-none: #7f8ca8;
+  --p-none-bg: rgba(127, 140, 168, 0.18);
 }
 *,
 *::before,
@@ -839,13 +841,18 @@ body {
   background: var(--p-high);
   box-shadow: 0 0 6px var(--p-high-bg);
 }
-.priority-dot.med {
+.priority-dot.med,
+.priority-dot.medium {
   background: var(--p-med);
   box-shadow: 0 0 6px var(--p-med-bg);
 }
 .priority-dot.low {
   background: var(--p-low);
   box-shadow: 0 0 6px var(--p-low-bg);
+}
+.priority-dot.none {
+  background: var(--p-none);
+  box-shadow: 0 0 6px var(--p-none-bg);
 }
 .running-badge {
   display: inline-flex;
@@ -938,7 +945,7 @@ body {
   color: var(--text-muted);
   line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-bottom: 12px;
@@ -971,6 +978,28 @@ body {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-md);
   white-space: nowrap;
+}
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #c4b5fd;
+  background: var(--purple-soft);
+  border: 1px solid var(--purple-border);
+  white-space: nowrap;
+}
+.empty-state {
+  border: 1px dashed var(--border-md);
+  border-radius: 8px;
+  padding: 14px 12px;
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  background: rgba(255, 255, 255, 0.02);
 }
 .card-actions {
   display: flex;

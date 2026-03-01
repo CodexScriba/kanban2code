@@ -1,582 +1,334 @@
 import './board.css';
+import {
+  isHostToWebviewMessage,
+  type RequestTaskSnapshotMessage,
+  type TaskSnapshotItem
+} from '../messaging';
+
+type BoardColumnId = 'capture' | 'plan' | 'code' | 'audit' | 'completed';
+
+interface VscodeApi {
+  postMessage(message: unknown): void;
+}
+
+declare const acquireVsCodeApi: (() => VscodeApi) | undefined;
 
 const app = document.getElementById('app');
-if (app) {
-  app.innerHTML = `
+
+if (!app) {
+  throw new Error('Board root element not found');
+}
+
+app.innerHTML = `
 <div class="board-area">
-    <div class="openclaw-banner" id="openclawBanner">
-      <div class="openclaw-banner-icon"></div>
-      <span class="openclaw-banner-text">Connect to <strong>OpenClaw</strong> for shared boards, team sync, and CI hooks</span>
-      <button class="openclaw-connect-btn" type="button" onclick="showToast('Opening OpenClaw connection flow…')">Connect</button>
-      <button class="openclaw-dismiss" type="button" title="Dismiss" onclick="document.getElementById('openclawBanner').style.display='none'">×</button>
-    </div>
-    <div class="board-header-wrap">
-      <div class="board-toolbar">
-        <div class="toolbar-left">
-          <span class="toolbar-brand">Kanban2Code</span>
-          <div class="toolbar-div"></div>
-          <button class="bc-scope" type="button" id="projectBtn">review-system <span class="bc-caret">▼</span></button>
-        </div>
+  <div class="openclaw-banner" id="openclawBanner">
+    <div class="openclaw-banner-icon"></div>
+    <span class="openclaw-banner-text">Connect to <strong>OpenClaw</strong> for shared boards, team sync, and CI hooks</span>
+    <button class="openclaw-connect-btn" type="button">Connect</button>
+    <button class="openclaw-dismiss" id="dismissBanner" type="button" title="Dismiss">×</button>
+  </div>
 
-        <div class="toolbar-center">
-          <div class="search-wrap">
-            <span class="search-icon">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-                <circle cx="5.5" cy="5.5" r="4.2"/>
-                <line x1="8.7" y1="8.7" x2="11.5" y2="11.5"/>
-              </svg>
-            </span>
-            <input class="search-input" id="searchInput" type="text" placeholder="Search tasks, tags, ids…" autocomplete="off" />
-            <button class="search-clear" type="button" id="searchClear" title="Clear search">×</button>
-          </div>
-        </div>
+  <div class="board-header-wrap">
+    <div class="board-toolbar">
+      <div class="toolbar-left">
+        <span class="toolbar-brand">Kanban2Code</span>
+        <div class="toolbar-div"></div>
+        <button class="bc-scope" type="button">Filesystem snapshot <span class="bc-caret">▼</span></button>
+      </div>
 
-        <div class="toolbar-right">
-          <select class="filter-select" title="Priority" aria-label="Priority filter" id="priorityFilter">
-            <option value="all">All priority</option>
-            <option value="high">High</option>
-            <option value="med">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <select class="filter-select" title="Sort" aria-label="Sort by" id="sortFilter">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-          <div class="view-toggle">
-            <button type="button" class="active" data-view="all">All</button>
-            <button type="button" data-view="mine">Mine</button>
-          </div>
-          <span class="model-badge">sonnet-4.6</span>
-          <div class="toolbar-div"></div>
-          <button class="capture-header-btn" type="button">+ Capture</button>
+      <div class="toolbar-center">
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="5.5" cy="5.5" r="4.2"/>
+              <line x1="8.7" y1="8.7" x2="11.5" y2="11.5"/>
+            </svg>
+          </span>
+          <input class="search-input" id="searchInput" type="text" placeholder="Search tasks, tags, ids…" autocomplete="off" />
+          <button class="search-clear" type="button" id="searchClear" title="Clear search">×</button>
         </div>
       </div>
-      <div class="filter-summary" id="filterSummary">
-        Showing: <span>All priority</span> <span class="sep">·</span> <span>Newest first</span> <span class="sep">·</span> <span>All tasks</span>
+
+      <div class="toolbar-right">
+        <span class="model-badge">live snapshot</span>
+        <div class="toolbar-div"></div>
+        <button class="capture-header-btn" type="button">+ Capture</button>
       </div>
     </div>
 
-    <div class="board-columns">
-      <div class="column col-capture">
-        <div class="col-header">
-          <div class="col-accent"></div>
-          <div class="col-title-row">
-            <span class="col-name">Capture</span>
-            <span class="col-count">3</span>
-            <button class="col-plus" type="button" title="Add task">+</button>
-          </div>
-        </div>
-        <div class="col-cards">
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg>
-                </button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg>
-                </button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot high" title="High priority"></span>Review System — Notification Delivery Pipeline</div>
-            <div class="card-desc">Async email + mobile push on review submit. Queue-based, retry logic, failure logging, and poison-job handling.</div>
-            <div class="card-chips">
-              <span class="agent-chip">architect</span>
-              <span class="tag-chip">feature</span>
-              <span class="tag-chip">p1</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run Plan stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run full pipeline" onclick="showToast('Queuing full pipeline…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg>
-                </button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg>
-                </button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot med" title="Medium priority"></span>Bulk CSV export for admin analytics</div>
-            <div class="card-desc">Export filtered task and project data to CSV from the admin dashboard with strict access scope.</div>
-            <div class="card-chips">
-              <span class="agent-chip">sonnet</span>
-              <span class="tag-chip">enhancement</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing full pipeline…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg>
-                </button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg>
-                </button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot low" title="Low priority"></span>Remove deprecated v1 auth endpoints</div>
-            <div class="card-desc">Clean up legacy /auth/v1/* routes. Update docs and remove stale tests.</div>
-            <div class="card-chips">
-              <span class="agent-chip">haiku</span>
-              <span class="tag-chip">cleanup</span>
-              <span class="tag-chip">tech-debt</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing full pipeline…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="column col-plan">
-        <div class="col-header">
-          <div class="col-accent"></div>
-          <div class="col-title-row">
-            <span class="col-name">Plan</span>
-            <span class="col-count">2</span>
-            <button class="col-plus" type="button" title="Add task">+</button>
-          </div>
-        </div>
-        <div class="col-cards">
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg>
-                </button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg>
-                </button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot high" title="High priority"></span>Review System — Backend API</div>
-            <div class="card-desc">Build review schema, database migrations, and REST endpoints for the core review system.</div>
-            <div class="card-chips">
-              <span class="agent-chip">architect</span>
-              <span class="tag-chip">api</span>
-              <span class="tag-chip">feature</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing Code → Audit → Done…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot med" title="Medium priority"></span>Dashboard metrics caching layer</div>
-            <div class="card-desc">Redis-backed cache for dashboard queries. 5-minute TTL, invalidate on write operations.</div>
-            <div class="card-chips">
-              <span class="agent-chip">sonnet</span>
-              <span class="tag-chip">performance</span>
-              <span class="tag-chip">p2</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing Code → Audit → Done…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="column col-code">
-        <div class="col-header">
-          <div class="col-accent"></div>
-          <div class="col-title-row">
-            <span class="col-name">Code</span>
-            <span class="col-count">2</span>
-            <button class="col-plus" type="button" title="Add task">+</button>
-          </div>
-        </div>
-        <div class="col-cards">
-          <div class="card running" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <span class="running-badge"><span class="running-dot"></span>RUNNING</span>
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot high" title="High priority"></span>Auth: JWT refresh token rotation</div>
-            <div class="card-desc">Secure refresh token rotation, revoke on reuse, 7-day expiry, stored in httpOnly cookie.</div>
-            <div class="card-chips">
-              <span class="agent-chip">sonnet</span>
-              <span class="tag-chip">security</span>
-              <span class="tag-chip">p1</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-stop" type="button" title="Stop run" onclick="showToast('Focusing terminal…')"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><rect x="1" y="1" width="8" height="8" rx="1"/></svg></button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot high" title="High priority"></span>API rate limiting middleware</div>
-            <div class="card-desc">Per-IP and per-user limits on public endpoints with 429 responses and retry metadata.</div>
-            <div class="card-chips">
-              <span class="agent-chip">sonnet</span>
-              <span class="tag-chip">security</span>
-              <span class="tag-chip">api</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing Audit → Done…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="column col-audit">
-        <div class="col-header">
-          <div class="col-accent"></div>
-          <div class="col-title-row">
-            <span class="col-name">Audit</span>
-            <span class="col-count">1</span>
-            <button class="col-plus" type="button" title="Add task">+</button>
-          </div>
-        </div>
-        <div class="col-cards">
-          <div class="card" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <span class="audit-return">! 1 return</span>
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')"><span class="priority-dot high" title="High priority"></span>Email notification delivery pipeline</div>
-            <div class="card-desc">Returned once. Error handling coverage incomplete per auditor, revised and re-queued.</div>
-            <div class="card-chips">
-              <span class="agent-chip">opus</span>
-              <span class="tag-chip">feature</span>
-              <span class="tag-chip">api</span>
-            </div>
-            <div class="card-actions">
-              <div class="actions-run">
-                <button class="run-one" type="button" title="Run stage" onclick="showToast('Opening terminal executor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5l7 4.5-7 4.5z"/></svg></button>
-                <button class="run-all" type="button" title="Run all stages" onclick="showToast('Queuing Audit → Done…')"><svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><path d="M1 0.5l5 5.5-5 5.5z"/><path d="M7 0.5l5 5.5-5 5.5z"/></svg></button>
-                <button class="run-queue" type="button" title="Add to queue" onclick="showToast('Added to queue')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h8M2 6h8M2 9h8"/></svg></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="column col-done">
-        <div class="col-header">
-          <div class="col-accent"></div>
-          <div class="col-title-row">
-            <span class="col-name">Done</span>
-            <span class="col-count">3</span>
-          </div>
-        </div>
-        <div class="col-cards">
-          <div class="card done" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <span class="done-mark">✓</span>
-              <span class="done-agent">sonnet</span>
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')">User profile CRUD endpoints</div>
-            <div class="card-chips"><span class="tag-chip">api</span><span class="tag-chip">feature</span></div>
-            <div class="card-actions">
-              <div class="actions-run"></div>
-            </div>
-          </div>
-
-          <div class="card done" oncontextmenu="openMenu(event)">
-            <div class="card-top">
-              <span class="done-mark">✓</span>
-              <span class="done-agent">opus</span>
-              <div class="card-top-actions">
-                <button class="edit-btn" type="button" title="Edit task" onclick="showToast('Opening task editor…')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z"/></svg></button>
-                <button class="delete-btn" type="button" title="Delete task" onclick="showToast('Are you sure? (prototype)')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h9M4 3V2h4v1M2.5 3l.8 7.5h5.4l.8-7.5"/></svg></button>
-                <button class="card-kebab" type="button" title="Card options" onclick="openMenu(event)">⋮</button>
-              </div>
-            </div>
-            <div class="card-title" onclick="showToast('Opening task file…')">Admin: role-based access control</div>
-            <div class="card-chips"><span class="tag-chip">security</span><span class="tag-chip">admin</span></div>
-            <div class="card-actions">
-              <div class="actions-run"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="filter-summary" id="filterSummary">
+      Showing: <span id="taskCountLabel">0 tasks</span> <span class="sep">·</span> <span>Live updates enabled</span>
     </div>
   </div>
 
-  <div class="copy-dd" id="copyDd">
-    <div class="copy-dd-title">Copy options</div>
-    <div class="copy-dd-item" onclick="copyAct('prompt')">Copy Prompt</div>
-    <div class="copy-dd-item is-default" onclick="copyAct('xml')">Copy Full Context XML <span class="default-badge">default</span></div>
-    <div class="copy-dd-item" onclick="copyAct('both')">Copy Prompt + XML</div>
-  </div>
+  <div class="board-columns">
+    <div class="column col-capture" data-column="capture">
+      <div class="col-header">
+        <div class="col-accent"></div>
+        <div class="col-title-row">
+          <span class="col-name">Capture</span>
+          <span class="col-count" data-count>0</span>
+          <button class="col-plus" type="button" title="Add task">+</button>
+        </div>
+      </div>
+      <div class="col-cards" data-cards></div>
+    </div>
 
-  <div class="ctx-menu" id="ctxMenu">
-    <div class="cm-section">
-      <div class="cm-item" onclick="menuAct('open')">Open task file</div>
-      <div class="cm-item" onclick="menuAct('run')">Run current stage</div>
-      <div class="cm-item" onclick="menuAct('run-all')">Run full pipeline</div>
+    <div class="column col-plan" data-column="plan">
+      <div class="col-header">
+        <div class="col-accent"></div>
+        <div class="col-title-row">
+          <span class="col-name">Plan</span>
+          <span class="col-count" data-count>0</span>
+          <button class="col-plus" type="button" title="Add task">+</button>
+        </div>
+      </div>
+      <div class="col-cards" data-cards></div>
     </div>
-    <div class="cm-section">
-      <div class="cm-item" onclick="menuAct('move')">Move to stage…</div>
-      <div class="cm-item" onclick="menuAct('edit')">Edit task</div>
-      <div class="cm-item" onclick="menuAct('copy')">Copy context</div>
-      <div class="cm-item" onclick="menuAct('copy-xml')">Copy XML</div>
+
+    <div class="column col-code" data-column="code">
+      <div class="col-header">
+        <div class="col-accent"></div>
+        <div class="col-title-row">
+          <span class="col-name">Code</span>
+          <span class="col-count" data-count>0</span>
+          <button class="col-plus" type="button" title="Add task">+</button>
+        </div>
+      </div>
+      <div class="col-cards" data-cards></div>
     </div>
-    <div class="cm-section">
-      <div class="cm-item danger" onclick="menuAct('delete')">Delete task</div>
+
+    <div class="column col-audit" data-column="audit">
+      <div class="col-header">
+        <div class="col-accent"></div>
+        <div class="col-title-row">
+          <span class="col-name">Audit</span>
+          <span class="col-count" data-count>0</span>
+          <button class="col-plus" type="button" title="Add task">+</button>
+        </div>
+      </div>
+      <div class="col-cards" data-cards></div>
+    </div>
+
+    <div class="column col-done" data-column="completed">
+      <div class="col-header">
+        <div class="col-accent"></div>
+        <div class="col-title-row">
+          <span class="col-name">Done</span>
+          <span class="col-count" data-count>0</span>
+          <button class="col-plus" type="button" title="Add task">+</button>
+        </div>
+      </div>
+      <div class="col-cards" data-cards></div>
     </div>
   </div>
-
-  <div class="toast" id="toast"></div>
+</div>
 `;
 
-  
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
-    const searchClear = document.getElementById('searchClear') as HTMLButtonElement | null;
+const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
+const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
+const searchClear = document.getElementById('searchClear') as HTMLButtonElement | null;
+const taskCountLabel = document.getElementById('taskCountLabel');
 
-    searchInput?.addEventListener('input', () => filterCards());
+const columnIds: BoardColumnId[] = ['capture', 'plan', 'code', 'audit', 'completed'];
+let allTasks: TaskSnapshotItem[] = [];
+let activeSearch = '';
 
-    searchClear?.addEventListener('click', () => {
-      if (searchInput) {
-        searchInput.value = '';
-        filterCards();
-        searchInput.focus();
-      }
-    });
+const escapeHtml = (value: string): string => {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
 
-    function filterCards(): void {
-      if (!searchInput) return;
-      const q = searchInput.value.toLowerCase().trim();
-      document.querySelectorAll('.card').forEach(card => {
-        if (!q) {
-          card.classList.remove('no-match');
-          return;
-        }
-        const text = (card as HTMLElement).innerText.toLowerCase();
-        card.classList.toggle('no-match', !text.includes(q));
-      });
+const toBoardColumn = (stage: TaskSnapshotItem['stage']): BoardColumnId => {
+  switch (stage) {
+    case 'plan':
+    case 'code':
+    case 'audit':
+    case 'completed':
+      return stage;
+    case 'capture':
+    case 'inbox':
+    case 'unknown':
+    default:
+      return 'capture';
+  }
+};
 
-      document.querySelectorAll('.column').forEach(col => {
-        const total = col.querySelectorAll('.card').length;
-        const visible = col.querySelectorAll('.card:not(.no-match)').length;
-        const badge = col.querySelector('.col-count');
-        if (badge) badge.textContent = q ? visible + '/' + total : String(total);
-      });
+const toPriorityClass = (priority?: TaskSnapshotItem['priority']): 'high' | 'med' | 'low' | 'none' => {
+  if (priority === 'high') {
+    return 'high';
+  }
+
+  if (priority === 'medium') {
+    return 'med';
+  }
+
+  if (priority === 'low') {
+    return 'low';
+  }
+
+  return 'none';
+};
+
+const getDescription = (task: TaskSnapshotItem): string => {
+  const description = task.description?.trim();
+  if (description && description.length > 0) {
+    return description;
+  }
+
+  return `Task ID: ${task.taskId}`;
+};
+
+const createCardMarkup = (task: TaskSnapshotItem): string => {
+  const priorityClass = toPriorityClass(task.priority);
+  const priorityLabel = task.priority ?? 'unset';
+  const roleChip = task.role
+    ? `<span class="agent-chip">${escapeHtml(task.role)}</span>`
+    : '';
+  const projectChip = task.project
+    ? `<span class="project-chip">${escapeHtml(task.project)}</span>`
+    : '';
+  const tagChips = task.tags
+    .map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`)
+    .join('');
+
+  return `
+    <article class="card${toBoardColumn(task.stage) === 'completed' ? ' done' : ''}">
+      <div class="card-title">
+        <span class="priority-dot ${priorityClass}" title="${escapeHtml(priorityLabel)} priority"></span>
+        <span>${escapeHtml(task.title)}</span>
+      </div>
+      <p class="card-desc">${escapeHtml(getDescription(task))}</p>
+      <div class="card-chips">
+        ${roleChip}
+        ${projectChip}
+        ${tagChips}
+      </div>
+    </article>
+  `;
+};
+
+const createEmptyMarkup = (): string => {
+  return `<div class="empty-state">No tasks in this stage</div>`;
+};
+
+const filterTasks = (tasks: TaskSnapshotItem[], search: string): TaskSnapshotItem[] => {
+  const query = search.trim().toLowerCase();
+  if (query.length === 0) {
+    return tasks;
+  }
+
+  return tasks.filter((task) => {
+    const haystack = [
+      task.title,
+      task.taskId,
+      task.description ?? '',
+      task.role ?? '',
+      task.project ?? '',
+      ...task.tags
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
+};
+
+const renderBoard = (): void => {
+  const visibleTasks = filterTasks(allTasks, activeSearch);
+  const grouped = new Map<BoardColumnId, TaskSnapshotItem[]>();
+
+  for (const columnId of columnIds) {
+    grouped.set(columnId, []);
+  }
+
+  for (const task of visibleTasks) {
+    grouped.get(toBoardColumn(task.stage))?.push(task);
+  }
+
+  for (const columnId of columnIds) {
+    const column = document.querySelector(`.column[data-column="${columnId}"]`) as HTMLElement | null;
+    if (!column) {
+      continue;
     }
-    (window as any).filterCards = filterCards;
 
-    const copyDd = document.getElementById('copyDd') as HTMLElement | null;
+    const countEl = column.querySelector('[data-count]') as HTMLElement | null;
+    const cardsEl = column.querySelector('[data-cards]') as HTMLElement | null;
+    const tasks = grouped.get(columnId) ?? [];
 
-    function openCopyDD(e: any): void {
-      if (!copyDd) return;
-      e.stopPropagation();
-      const btn = e.currentTarget;
-      const rect = btn.getBoundingClientRect();
-      const ddW = 210;
-      let x = rect.right - ddW;
-      let y = rect.bottom + 4;
-      if (x < 6) x = 6;
-      if (y + 120 > window.innerHeight) y = rect.top - 120;
-      copyDd.style.left = x + 'px';
-      copyDd.style.top = y + 'px';
-      const wasOpen = copyDd.classList.contains('open');
-      closeAll();
-      if (!wasOpen) copyDd.classList.add('open');
+    if (countEl) {
+      countEl.textContent = String(tasks.length);
     }
-    (window as any).openCopyDD = openCopyDD;
 
-    function copyDefault(): void { showToast('Full context XML copied to clipboard'); }
-    (window as any).copyDefault = copyDefault;
-
-    function copyAct(type: string): void {
-      if (copyDd) copyDd.classList.remove('open');
-      const msgs: Record<string, string> = {
-        prompt: 'Prompt copied to clipboard',
-        xml: 'Full context XML copied to clipboard',
-        both: 'Prompt + XML copied to clipboard'
-      };
-      showToast(msgs[type] || 'Copied');
+    if (cardsEl) {
+      cardsEl.innerHTML = tasks.length > 0 ? tasks.map((task) => createCardMarkup(task)).join('') : createEmptyMarkup();
     }
-    (window as any).copyAct = copyAct;
+  }
 
-    const ctxMenu = document.getElementById('ctxMenu') as HTMLElement | null;
+  if (taskCountLabel) {
+    taskCountLabel.textContent = activeSearch
+      ? `${visibleTasks.length} matching tasks`
+      : `${visibleTasks.length} tasks`;
+  }
+};
 
-    function openMenu(e: any): void {
-      if (!ctxMenu) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const x = Math.min(e.clientX, window.innerWidth - 200);
-      const y = Math.min(e.clientY, window.innerHeight - 190);
-      ctxMenu.style.left = x + 'px';
-      ctxMenu.style.top = y + 'px';
-      const wasOpen = ctxMenu.classList.contains('open');
-      closeAll();
-      if (!wasOpen) ctxMenu.classList.add('open');
-    }
-    (window as any).openMenu = openMenu;
+const requestTaskSnapshot = (): void => {
+  if (!vscode) {
+    return;
+  }
 
-    function menuAct(action: string): void {
-      closeAll();
-      const msgs: Record<string, string> = {
-        open: 'Opening task file in editor…',
-        run: 'Opening terminal executor…',
-        'run-all': 'Queuing pipeline…',
-        move: 'Move to stage — coming soon',
-        edit: 'Opening task editor…',
-        copy: 'Context copied to clipboard',
-        delete: 'Task deleted'
-      };
-      showToast(msgs[action] || action);
-    }
-    (window as any).menuAct = menuAct;
+  const message: RequestTaskSnapshotMessage = {
+    type: 'RequestTaskSnapshot'
+  };
 
-    function closeAll(): void {
-      if (ctxMenu) ctxMenu.classList.remove('open');
-      if (copyDd) copyDd.classList.remove('open');
-    }
-    (window as any).closeAll = closeAll;
+  vscode.postMessage(message);
+};
 
-    document.addEventListener('click', closeAll);
+window.addEventListener('message', (event: MessageEvent<unknown>) => {
+  if (!isHostToWebviewMessage(event.data)) {
+    return;
+  }
 
-    const priorityFilter = document.getElementById('priorityFilter') as HTMLSelectElement | null;
-    const sortFilter = document.getElementById('sortFilter') as HTMLSelectElement | null;
-    const filterSummary = document.getElementById('filterSummary') as HTMLElement | null;
+  if (event.data.type !== 'TaskSnapshot') {
+    return;
+  }
 
-    function updateFilterSummary(): void {
-      if (!priorityFilter || !sortFilter || !filterSummary) return;
-      const p = priorityFilter.options[priorityFilter.selectedIndex].text;
-      const s = sortFilter.options[sortFilter.selectedIndex].text;
-      const v = document.querySelector('.view-toggle .active') as HTMLElement | null;
-      const vLabel = v ? (v.dataset.view === 'all' ? 'All tasks' : 'My tasks') : 'All tasks';
-      filterSummary.innerHTML = `Showing: <span>${p}</span> <span class="sep">·</span> <span>${s}</span> <span class="sep">·</span> <span>${vLabel}</span>`;
-    }
-    (window as any).updateFilterSummary = updateFilterSummary;
+  allTasks = event.data.payload.tasks;
+  renderBoard();
+});
 
-    priorityFilter?.addEventListener('change', () => { updateFilterSummary(); showToast('Priority: ' + priorityFilter.options[priorityFilter.selectedIndex].text); });
-    sortFilter?.addEventListener('change', () => { updateFilterSummary(); showToast('Sort: ' + sortFilter.options[sortFilter.selectedIndex].text); });
+searchInput?.addEventListener('input', () => {
+  activeSearch = searchInput.value;
+  renderBoard();
+});
 
-    document.querySelectorAll('.view-toggle button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateFilterSummary();
-        showToast('View: ' + ((btn as HTMLElement).dataset.view === 'all' ? 'All tasks' : 'My tasks'));
-      });
-    });
+searchClear?.addEventListener('click', () => {
+  if (!searchInput) {
+    return;
+  }
 
-    document.querySelector('.capture-header-btn')?.addEventListener('click', () => {
-      showToast('Use the chat sidebar to capture a task');
-    });
+  searchInput.value = '';
+  activeSearch = '';
+  renderBoard();
+  searchInput.focus();
+});
 
-    document.querySelectorAll('.col-plus').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        showToast('Use the chat sidebar to capture a task');
-      });
-    });
+document.querySelectorAll('.capture-header-btn, .col-plus').forEach((button) => {
+  button.addEventListener('click', () => {
+    requestTaskSnapshot();
+  });
+});
 
-    document.getElementById('projectBtn')?.addEventListener('click', () => {
-      showToast('Project switcher — coming soon');
-    });
+document.getElementById('dismissBanner')?.addEventListener('click', () => {
+  const banner = document.getElementById('openclawBanner');
+  if (banner) {
+    banner.style.display = 'none';
+  }
+});
 
-    const ta = document.querySelector('.compose-ta') as HTMLTextAreaElement | null;
-    ta?.addEventListener('input', () => {
-      if (!ta) return;
-      ta.style.height = 'auto';
-      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-    });
-
-    ta?.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        showToast('Message sent to orchestrator');
-        if (ta) {
-          ta.value = '';
-          ta.style.height = 'auto';
-        }
-      }
-    });
-
-    document.querySelector('.send-btn')?.addEventListener('click', () => {
-      showToast('Message sent to orchestrator');
-      if (ta) {
-        ta.value = '';
-        ta.style.height = 'auto';
-      }
-    });
-
-    (function fixButtons() {
-      document.querySelectorAll('button:not([type])').forEach(b => b.setAttribute('type', 'button'));
-      document.querySelectorAll('.edit-btn:not([title])').forEach(b => b.setAttribute('title', 'Edit task'));
-      document.querySelectorAll('.delete-btn:not([title])').forEach(b => b.setAttribute('title', 'Delete task'));
-      document.querySelectorAll('.copy-arrow:not([title])').forEach(b => b.setAttribute('title', 'More copy options'));
-      document.querySelectorAll('.card-kebab:not([title])').forEach(b => b.setAttribute('title', 'Card options'));
-    })();
-
-    let tt: any;
-    function showToast(msg: string): void {
-      const el = document.getElementById('toast');
-      if (!el) return;
-      el.textContent = msg;
-      el.classList.add('show');
-      clearTimeout(tt);
-      tt = setTimeout(() => el.classList.remove('show'), 2000);
-    }
-    (window as any).showToast = showToast;
-}
+renderBoard();
+requestTaskSnapshot();

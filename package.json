@@ -45,12 +45,16 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.json && node --test dist/services/*.test.js"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.25.10",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
   }
 }
