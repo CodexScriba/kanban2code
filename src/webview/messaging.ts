@@ -1,4 +1,5 @@
 import type {
+  Task,
   TaskCreateInput,
   TaskSnapshotItem,
   TaskStage,
@@ -220,6 +221,15 @@ export interface QueueSnapshotMessage {
   };
 }
 
+export interface LoadTaskEditorMessage {
+  type: 'LoadTaskEditor';
+  payload: {
+    taskPath: string;
+    taskId: string;
+    task: Task;
+  };
+}
+
 export type HostToWebviewMessage =
   | TaskSnapshotMessage
   | TaskUpdatedMessage
@@ -228,7 +238,8 @@ export type HostToWebviewMessage =
   | TaskSelectionResetMessage
   | OrchestratorResponseMessage
   | RunnerStateChangedMessage
-  | QueueSnapshotMessage;
+  | QueueSnapshotMessage
+  | LoadTaskEditorMessage;
 
 const TASK_STAGES: TaskStage[] = ['inbox', 'capture', 'plan', 'code', 'audit', 'completed', 'unknown'];
 const PRIORITIES = ['low', 'medium', 'high'] as const;
@@ -357,6 +368,30 @@ const isTaskSnapshotItem = (task: unknown): task is TaskSnapshotItem => {
     (task.role === undefined || typeof task.role === 'string') &&
     (task.project === undefined || typeof task.project === 'string')
   );
+};
+
+const isTaskFrontmatter = (value: unknown): value is Task['frontmatter'] => {
+  return (
+    isObject(value) &&
+    isTaskStage(value.stage) &&
+    (value.order === undefined || (typeof value.order === 'number' && Number.isFinite(value.order))) &&
+    (value.title === undefined || typeof value.title === 'string') &&
+    (value.role === undefined || typeof value.role === 'string') &&
+    (value.agent === undefined || typeof value.agent === 'string') &&
+    (value.provider === undefined || typeof value.provider === 'string') &&
+    (value.model === undefined || typeof value.model === 'string') &&
+    (value.profile === undefined || typeof value.profile === 'string') &&
+    (value.priority === undefined || isPriority(value.priority)) &&
+    isStringArray(value.tags) &&
+    isStringArray(value.contexts) &&
+    isStringArray(value.skills) &&
+    (value.project === undefined || typeof value.project === 'string') &&
+    (value.phase === undefined || typeof value.phase === 'string')
+  );
+};
+
+const isTask = (value: unknown): value is Task => {
+  return isObject(value) && isTaskFrontmatter(value.frontmatter) && typeof value.body === 'string';
 };
 
 export const isWebviewToHostMessage = (value: unknown): value is WebviewToHostMessage => {
@@ -554,6 +589,15 @@ export const isHostToWebviewMessage = (value: unknown): value is HostToWebviewMe
       (value.payload.activeTaskId === null || typeof value.payload.activeTaskId === 'string') &&
       typeof value.payload.totalQueued === 'number' &&
       Number.isFinite(value.payload.totalQueued)
+    );
+  }
+
+  if (value.type === 'LoadTaskEditor') {
+    return (
+      isObject(value.payload) &&
+      typeof value.payload.taskPath === 'string' &&
+      typeof value.payload.taskId === 'string' &&
+      isTask(value.payload.task)
     );
   }
 

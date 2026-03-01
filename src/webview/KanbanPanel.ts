@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'node:path';
 import { TaskScanner } from '../services/task-scanner';
 import { TaskService } from '../services/task-service';
 import { SettingsService } from '../services/settings-service';
@@ -20,7 +19,6 @@ export class KanbanPanel {
   private readonly taskScanner: TaskScanner;
   private readonly taskService: TaskService;
   private readonly settingsService: SettingsService;
-  private readonly workspaceRoot: string;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -34,7 +32,6 @@ export class KanbanPanel {
     this.taskScanner = taskScanner;
     this.taskService = taskService;
     this.settingsService = settingsService;
-    this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 
     this._disposables.push(
       this.taskScanner.onDidRefresh(() => {
@@ -175,15 +172,8 @@ export class KanbanPanel {
         return;
       }
 
-      if (!this.workspaceRoot) {
-        void vscode.window.showWarningMessage('Open a workspace folder to edit tasks.');
-        return;
-      }
-
       try {
-        const taskUri = vscode.Uri.file(path.join(this.workspaceRoot, resolvedTask.id));
-        const document = await vscode.workspace.openTextDocument(taskUri);
-        await vscode.window.showTextDocument(document, { preview: false });
+        await vscode.commands.executeCommand('kanban2code.openTaskEditor', resolvedTask.id);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         void vscode.window.showErrorMessage(`Failed to open task editor: ${message}`);

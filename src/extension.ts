@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { SidebarProvider } from './webview/SidebarProvider';
 import { KanbanPanel } from './webview/KanbanPanel';
+import { TaskEditorPanel } from './webview/TaskEditorPanel';
 import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
 import { TaskService } from './services/task-service';
 import { SettingsService } from './services/settings-service';
@@ -36,6 +37,27 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       KanbanPanel.createOrShow(context.extensionUri, taskScanner, taskService, settingsService);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('kanban2code.openTaskEditor', (arg?: unknown) => {
+      if (!workspaceRoot) {
+        void vscode.window.showWarningMessage('Open a workspace folder to use the task editor.');
+        return;
+      }
+
+      const taskPath =
+        typeof arg === 'string'
+          ? arg
+          : arg &&
+              typeof arg === 'object' &&
+              'taskId' in arg &&
+              typeof (arg as { taskId?: unknown }).taskId === 'string'
+            ? (arg as { taskId: string }).taskId
+            : undefined;
+
+      TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath);
     })
   );
 }

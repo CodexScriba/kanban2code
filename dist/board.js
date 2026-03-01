@@ -17,6 +17,12 @@
   var isTaskSnapshotItem = (task) => {
     return isObject(task) && typeof task.id === "string" && typeof task.taskId === "string" && typeof task.title === "string" && (task.description === void 0 || typeof task.description === "string") && isTaskStage(task.stage) && (task.order === void 0 || typeof task.order === "number" && Number.isFinite(task.order)) && isStringArray(task.tags) && typeof task.createdAt === "number" && Number.isFinite(task.createdAt) && (task.priority === void 0 || isPriority(task.priority)) && (task.role === void 0 || typeof task.role === "string") && (task.project === void 0 || typeof task.project === "string");
   };
+  var isTaskFrontmatter = (value) => {
+    return isObject(value) && isTaskStage(value.stage) && (value.order === void 0 || typeof value.order === "number" && Number.isFinite(value.order)) && (value.title === void 0 || typeof value.title === "string") && (value.role === void 0 || typeof value.role === "string") && (value.agent === void 0 || typeof value.agent === "string") && (value.provider === void 0 || typeof value.provider === "string") && (value.model === void 0 || typeof value.model === "string") && (value.profile === void 0 || typeof value.profile === "string") && (value.priority === void 0 || isPriority(value.priority)) && isStringArray(value.tags) && isStringArray(value.contexts) && isStringArray(value.skills) && (value.project === void 0 || typeof value.project === "string") && (value.phase === void 0 || typeof value.phase === "string");
+  };
+  var isTask = (value) => {
+    return isObject(value) && isTaskFrontmatter(value.frontmatter) && typeof value.body === "string";
+  };
   var isHostToWebviewMessage = (value) => {
     if (!isObject(value) || typeof value.type !== "string") {
       return false;
@@ -44,6 +50,9 @@
     }
     if (value.type === "QueueSnapshot") {
       return isObject(value.payload) && Array.isArray(value.payload.items) && value.payload.items.every(isQueueItem) && (value.payload.activeTaskId === null || typeof value.payload.activeTaskId === "string") && typeof value.payload.totalQueued === "number" && Number.isFinite(value.payload.totalQueued);
+    }
+    if (value.type === "LoadTaskEditor") {
+      return isObject(value.payload) && typeof value.payload.taskPath === "string" && typeof value.payload.taskId === "string" && isTask(value.payload.task);
     }
     return false;
   };

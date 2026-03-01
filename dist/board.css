@@ -65,6 +65,14 @@ body {
 }
 body {
   display: flex;
+  min-height: 100vh;
+}
+#app {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  min-height: 100vh;
 }
 .sidebar {
   width: 322px;
@@ -372,6 +380,7 @@ body {
 .board-area {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -675,7 +684,7 @@ body {
 .board-columns {
   display: flex;
   gap: 16px;
-  overflow-x: auto;
+  overflow-x: hidden;
   flex: 1;
   min-height: 0;
   padding: 20px;
@@ -904,18 +913,14 @@ body {
   border-color: rgba(59, 130, 246, 0.6);
 }
 .column {
-  width: 320px;
-  min-width: 320px;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(10, 14, 24, 0.88);
   overflow: hidden;
-  flex-shrink: 0;
-}
-.column:last-child {
-  min-width: 320px;
 }
 .col-header {
   padding: 0 14px 12px;
@@ -1524,10 +1529,6 @@ body.board-dragging .card:not(.dragging) {
   }
 }
 @media (max-width: 1360px) {
-  .column {
-    width: 300px;
-    min-width: 300px;
-  }
   .model-badge {
     display: none;
   }

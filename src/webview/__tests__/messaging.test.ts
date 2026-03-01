@@ -250,6 +250,29 @@ test('isHostToWebviewMessage accepts existing and new event types', () => {
     }),
     true
   );
+
+  assert.equal(
+    isHostToWebviewMessage({
+      type: 'LoadTaskEditor',
+      payload: {
+        taskPath: '.kanban2code/projects/roadmap/demo.md',
+        taskId: 'demo',
+        task: {
+          frontmatter: {
+            stage: 'code',
+            title: 'Demo editor task',
+            role: 'coder',
+            provider: 'codex',
+            tags: ['feature'],
+            contexts: ['skill-vscode'],
+            skills: ['skill-frontend-design']
+          },
+          body: 'Task body'
+        }
+      }
+    }),
+    true
+  );
 });
 
 test('isHostToWebviewMessage rejects invalid payloads', () => {
@@ -323,6 +346,26 @@ test('isHostToWebviewMessage rejects invalid payloads', () => {
         items: [],
         activeTaskId: 99,
         totalQueued: 0
+      }
+    }),
+    false
+  );
+
+  assert.equal(
+    isHostToWebviewMessage({
+      type: 'LoadTaskEditor',
+      payload: {
+        taskPath: '.kanban2code/projects/roadmap/demo.md',
+        taskId: 'demo',
+        task: {
+          frontmatter: {
+            stage: 'nope',
+            tags: [],
+            contexts: [],
+            skills: []
+          },
+          body: 'Task body'
+        }
       }
     }),
     false

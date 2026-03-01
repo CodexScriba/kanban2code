@@ -38,6 +38,7 @@ exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const SidebarProvider_1 = require("./webview/SidebarProvider");
 const KanbanPanel_1 = require("./webview/KanbanPanel");
+const TaskEditorPanel_1 = require("./webview/TaskEditorPanel");
 const task_scanner_1 = require("./services/task-scanner");
 const task_service_1 = require("./services/task-service");
 const settings_service_1 = require("./services/settings-service");
@@ -62,6 +63,21 @@ function activate(context) {
             return;
         }
         KanbanPanel_1.KanbanPanel.createOrShow(context.extensionUri, taskScanner, taskService, settingsService);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('kanban2code.openTaskEditor', (arg) => {
+        if (!workspaceRoot) {
+            void vscode.window.showWarningMessage('Open a workspace folder to use the task editor.');
+            return;
+        }
+        const taskPath = typeof arg === 'string'
+            ? arg
+            : arg &&
+                typeof arg === 'object' &&
+                'taskId' in arg &&
+                typeof arg.taskId === 'string'
+                ? arg.taskId
+                : undefined;
+        TaskEditorPanel_1.TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath);
     }));
 }
 function deactivate() {
