@@ -1,8 +1,14 @@
 ---
 stage: plan
-tags: [feature, p1]
+tags:
+  - feature
+  - p1
+  - orchestration-wave1
 agent: planner
-contexts: [skill-vscode, skill-typescript-config]
+contexts:
+  - skill-vscode
+  - skill-typescript-config
+skills: []
 ---
 
 # SettingsService — global + per-project settings

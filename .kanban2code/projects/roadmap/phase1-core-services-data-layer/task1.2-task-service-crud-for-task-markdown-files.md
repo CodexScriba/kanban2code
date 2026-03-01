@@ -1,8 +1,13 @@
 ---
 stage: plan
-tags: [feature, p1]
+tags:
+  - feature
+  - p1
+  - orchestration-wave1
 agent: planner
-contexts: [skill-vscode]
+contexts:
+  - skill-vscode
+skills: []
 ---
 
 # TaskService — CRUD for task markdown files
