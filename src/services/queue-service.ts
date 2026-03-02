@@ -1,38 +1,59 @@
 import * as path from 'node:path';
 import { access } from 'node:fs/promises';
 import { EventEmitter } from 'node:events';
-import type { SettingsService } from './settings-service';
-import type { TaskService } from './task-service';
-import type { QueueItem, QueueScope, RunState, ValidationError, ValidationResult } from '../types/runner';
-import type { Task, TaskFrontmatter } from '../types/task';
+import type {
+  QueueItem,
+  QueueOperation,
+  QueueOperationResult,
+  QueueScope,
+  QueueSnapshot,
+  QueueState,
+  QueueStateChangeEvent,
+  RunState,
+  ValidationError,
+  ValidationResult
+} from '../types/runner';
+import type { Task, TaskFrontmatter, TaskUpdateInput } from '../types/task';
+import type { Settings } from '../types/settings';
 
-interface QueueServiceDeps {
-  now?: () => number;
-  pathExists?: (absolutePath: string) => Promise<boolean>;
-  promptForValidation?: (taskPath: string, validation: ValidationResult) => Promise<void> | void;
+interface QueueTaskServiceLike {
+  readTask(taskPath: string): Promise<Task>;
+  updateTask(taskPath: string, updates: TaskUpdateInput): Promise<Task>;
 }
 
-interface PendingRunIntent {
+interface QueueSettingsServiceLike {
+  getSettings(projectSlug?: string): Promise<Settings>;
+  getEffectiveMapping(stage: string, projectSlug?: string): Promise<{
+    role: string;
+    provider: string;
+    model: string;
+    profile: string;
+  }>;
+  validateProviderModel(provider: string, model: string, settings?: Settings): {
+    valid: boolean;
+    error?: string;
+  };
+  validateProfile(profile: string, settings?: Settings): { valid: boolean; error?: string };
+}
+
+export interface QueueServiceOptions {
+  now?: () => number;
+  pathExists?: (absolutePath: string) => Promise<boolean>;
+  promptForValidation?: (taskPath: string, validation: ValidationResult) => Promise<void>;
+}
+
+interface EnqueueIntent {
   scope: QueueScope;
   projectSlug?: string;
 }
 
-export interface EnqueueResult {
-  ok: boolean;
-  item?: QueueItem;
-  reason?: 'duplicate' | 'validation_failed';
-  validation?: ValidationResult;
-}
-
-export interface QueueSnapshot {
-  items: QueueItem[];
-  activeTaskId: string | null;
-  totalQueued: number;
-}
+type QueueEventMap = {
+  state: [taskId: string, state: RunState, timestamp: number];
+  queue: [snapshot: QueueSnapshot];
+  stateChange: [event: QueueStateChangeEvent];
+};
 
 const hasValue = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-
-const toTaskId = (taskPath: string): string => taskPath.replace(/\\/g, '/').split('/').pop()?.replace(/\.md$/i, '') ?? taskPath;
 
 const inferProjectSlugFromPath = (taskPath: string): string | undefined => {
   const normalized = taskPath.replace(/\\/g, '/');
@@ -47,90 +68,98 @@ const inferProjectSlugFromPath = (taskPath: string): string | undefined => {
   return hasValue(projectSlug) ? projectSlug.trim() : undefined;
 };
 
+const isTerminalState = (state: RunState): boolean =>
+  state === 'success' || state === 'failed' || state === 'cancelled';
+
+const isAllowedStateTransition = (from: RunState | undefined, to: RunState): boolean => {
+  if (!from) {
+    return true;
+  }
+
+  if (from === to) {
+    return true;
+  }
+
+  if (from === 'queued') {
+    return to === 'running' || to === 'cancelled';
+  }
+
+  if (from === 'running') {
+    return to === 'success' || to === 'failed' || to === 'cancelled';
+  }
+
+  if (from === 'failed') {
+    return to === 'queued';
+  }
+
+  return false;
+};
+
+class TypedQueueEmitter {
+  private readonly emitter = new EventEmitter();
+
+  on<K extends keyof QueueEventMap>(event: K, listener: (...args: QueueEventMap[K]) => void): void {
+    this.emitter.on(event, listener);
+  }
+
+  off<K extends keyof QueueEventMap>(event: K, listener: (...args: QueueEventMap[K]) => void): void {
+    this.emitter.off(event, listener);
+  }
+
+  emit<K extends keyof QueueEventMap>(event: K, ...args: QueueEventMap[K]): void {
+    this.emitter.emit(event, ...args);
+  }
+
+  removeAllListeners(): void {
+    this.emitter.removeAllListeners();
+  }
+}
+
 export class QueueService {
   private readonly queue: QueueItem[] = [];
   private readonly stateByTaskId = new Map<string, RunState>();
-  private readonly pendingRunIntents = new Map<string, PendingRunIntent>();
-  private activeTaskId: string | null = null;
-  private readonly emitter = new EventEmitter();
+  private readonly pendingRunIntents = new Map<string, EnqueueIntent>();
+  private readonly runningTaskIds = new Set<string>();
+  private readonly cancellationRequested = new Set<string>();
+  private readonly emitter = new TypedQueueEmitter();
 
   constructor(
     private readonly workspaceRoot: string,
-    private readonly taskService: Pick<TaskService, 'readTask' | 'updateTask'>,
-    private readonly settingsService: Pick<
-      SettingsService,
-      'getSettings' | 'getEffectiveMapping' | 'validateProviderModel' | 'validateProfile'
-    >,
-    private readonly deps: QueueServiceDeps = {}
+    private readonly taskService: QueueTaskServiceLike,
+    private readonly settingsService: QueueSettingsServiceLike,
+    private readonly options: QueueServiceOptions = {}
   ) {}
 
-  dispose(): void {
-    this.emitter.removeAllListeners();
-  }
-
-  onDidStateChange(listener: (taskId: string, state: RunState, timestamp: number) => void): () => void {
-    this.emitter.on('state', listener);
-    return () => this.emitter.off('state', listener);
-  }
-
-  onDidQueueChange(listener: (snapshot: QueueSnapshot) => void): () => void {
-    this.emitter.on('queue', listener);
-    return () => this.emitter.off('queue', listener);
-  }
-
-  onDidRunnerStateChange(
-    listener: (event: { taskId: string; state: RunState; timestamp: number }) => void
-  ): { dispose(): void } {
-    const unsubscribe = this.onDidStateChange((taskId, state, timestamp) => {
-      listener({ taskId, state, timestamp });
-    });
-    return { dispose: unsubscribe };
-  }
-
-  onDidQueueSnapshotChange(listener: (snapshot: QueueSnapshot) => void): { dispose(): void } {
-    const unsubscribe = this.onDidQueueChange(listener);
-    return { dispose: unsubscribe };
-  }
-
-  onDidRunnerStateChange(
-    listener: (event: { taskId: string; state: RunState; timestamp: number }) => void
-  ): { dispose: () => void } {
-    const unsubscribe = this.onDidStateChange((taskId, state, timestamp) =>
-      listener({ taskId, state, timestamp })
-    );
-    return { dispose: unsubscribe };
-  }
-
-  onDidQueueSnapshotChange(listener: () => void): { dispose: () => void } {
-    const unsubscribe = this.onDidQueueChange(() => listener());
-    return { dispose: unsubscribe };
-  }
-
-  async enqueue(taskPath: string, scope: QueueScope, projectSlug?: string): Promise<EnqueueResult> {
-    const taskId = toTaskId(taskPath);
+  async enqueue(taskId: string, scope: QueueScope, projectSlug?: string): Promise<QueueOperationResult> {
     if (this.isDuplicate(taskId)) {
       return { ok: false, reason: 'duplicate' };
     }
 
-    const task = await this.taskService.readTask(taskPath);
-    const resolvedProjectSlug = projectSlug ?? task.frontmatter.project ?? inferProjectSlugFromPath(taskPath);
-    const effectiveSettings = await this.settingsService.getSettings(resolvedProjectSlug);
-    const hydratedTask = await this.applyExecutionDefaults(taskPath, task, resolvedProjectSlug);
-    const validation = await this.validateTaskForRun(hydratedTask.frontmatter, effectiveSettings);
+    const task = await this.taskService.readTask(taskId);
+    const resolvedProjectSlug = projectSlug ?? task.frontmatter.project ?? inferProjectSlugFromPath(taskId);
+    const settings = await this.settingsService.getSettings(resolvedProjectSlug);
 
+    const hydratedTask = await this.applyExecutionDefaults(taskId, task, resolvedProjectSlug);
+    const validation = await this.validateTaskForRun(hydratedTask.frontmatter, settings);
     if (!validation.valid) {
-      this.pendingRunIntents.set(taskPath, { scope, projectSlug: resolvedProjectSlug });
-      if (effectiveSettings.queueAndExecution.promptMissingFields && this.deps.promptForValidation) {
-        await this.deps.promptForValidation(taskPath, validation);
+      this.pendingRunIntents.set(taskId, { scope, projectSlug: resolvedProjectSlug });
+
+      if (settings.queueAndExecution.promptMissingFields && this.options.promptForValidation) {
+        await this.options.promptForValidation(taskId, validation);
       }
-      return { ok: false, reason: 'validation_failed', validation };
+
+      return {
+        ok: false,
+        reason: 'validation_failed',
+        validation
+      };
     }
 
-    this.pendingRunIntents.delete(taskPath);
+    this.pendingRunIntents.delete(taskId);
 
     const item: QueueItem = {
       taskId,
-      taskPath,
+      taskPath: taskId,
       scope,
       state: 'queued',
       enqueuedAt: this.now()
@@ -138,135 +167,233 @@ export class QueueService {
 
     this.queue.push(item);
     this.transition(taskId, 'queued');
-    this.emitQueueSnapshot();
+    this.emitQueueChange();
+
     return { ok: true, item };
   }
 
-  async runTask(taskPath: string, scope: QueueScope): Promise<EnqueueResult> {
-    return this.enqueue(taskPath, scope);
-  }
+  async dequeue(): Promise<QueueItem | null> {
+    const maxParallelRuns = await this.getMaxParallelRuns();
+    if (this.runningTaskIds.size >= maxParallelRuns) {
+      return null;
+    }
 
-  async queueTask(taskPath: string, scope: QueueScope): Promise<EnqueueResult> {
-    return this.enqueue(taskPath, scope);
-  }
-
-  dequeue(): QueueItem | null {
     const item = this.queue.shift() ?? null;
-    this.emitQueueSnapshot();
+    if (!item) {
+      return null;
+    }
+
+    this.emitQueueChange();
     return item;
   }
 
+  peek(): QueueItem | null {
+    return this.queue[0] ?? null;
+  }
+
+  setState(taskId: string, state: RunState): boolean {
+    return this.transition(taskId, state);
+  }
+
   cancel(taskId: string): boolean {
-    const index = this.queue.findIndex((item) => item.taskId === taskId);
-    if (index >= 0) {
-      this.queue.splice(index, 1);
+    const queuedIndex = this.queue.findIndex((item) => item.taskId === taskId);
+    if (queuedIndex >= 0) {
+      this.queue.splice(queuedIndex, 1);
       this.transition(taskId, 'cancelled');
-      this.emitQueueSnapshot();
+      this.emitQueueChange();
       return true;
     }
 
-    if (this.activeTaskId === taskId) {
-      this.activeTaskId = null;
+    if (this.runningTaskIds.has(taskId)) {
+      this.cancellationRequested.add(taskId);
       this.transition(taskId, 'cancelled');
-      this.emitQueueSnapshot();
+      this.emitQueueChange();
       return true;
     }
 
     return false;
   }
 
-  cancelTask(taskId: string): boolean {
+  async retry(taskId: string, scope: QueueScope = 'stage'): Promise<QueueOperationResult> {
+    const state = this.stateByTaskId.get(taskId);
+    if (state !== 'failed') {
+      return { ok: false, reason: 'invalid_state' };
+    }
+
+    return this.enqueue(taskId, scope);
+  }
+
+  async runStage(taskId: string): Promise<QueueOperationResult> {
+    return this.enqueue(taskId, 'stage');
+  }
+
+  async runAllStages(taskId: string): Promise<QueueOperationResult> {
+    return this.enqueue(taskId, 'all');
+  }
+
+  cancelRun(taskId: string): boolean {
     return this.cancel(taskId);
   }
 
-  retry(taskPath: string, scope: QueueScope = 'stage'): Promise<EnqueueResult> {
-    const taskId = toTaskId(taskPath);
-    if (this.stateByTaskId.get(taskId) !== 'failed') {
-      return Promise.resolve({ ok: false, reason: 'validation_failed' });
+  async retryRun(taskId: string): Promise<QueueOperationResult> {
+    return this.retry(taskId, 'stage');
+  }
+
+  async handleOperation(operation: QueueOperation, taskId: string): Promise<QueueOperationResult | boolean> {
+    if (operation === 'RunStage') {
+      return this.runStage(taskId);
+    }
+    if (operation === 'RunAllStages') {
+      return this.runAllStages(taskId);
+    }
+    if (operation === 'RetryRun') {
+      return this.retryRun(taskId);
     }
 
-    return this.enqueue(taskPath, scope);
-  }
-
-  async queueTask(taskPath: string, scope: QueueScope): Promise<EnqueueResult> {
-    return this.enqueue(taskPath, scope);
-  }
-
-  async runTask(taskPath: string, scope: QueueScope): Promise<EnqueueResult> {
-    const result = await this.enqueue(taskPath, scope);
-    if (!result.ok) {
-      return result;
-    }
-
-    const next = this.dequeue();
-    if (!next) {
-      return result;
-    }
-
-    this.markRunning(next.taskId);
-    this.markCompleted(next.taskId, true);
-    return result;
-  }
-
-  cancelTask(taskId: string): boolean {
-    return this.cancel(taskId);
-  }
-
-  retryTask(taskPath: string, scope: QueueScope = 'stage'): Promise<EnqueueResult> {
-    return this.retry(taskPath, scope);
-  }
-
-  retryTask(taskPath: string, scope: QueueScope = 'stage'): Promise<EnqueueResult> {
-    return this.retry(taskPath, scope);
-  }
-
-  markRunning(taskId: string): void {
-    this.activeTaskId = taskId;
-    this.transition(taskId, 'running');
-    this.emitQueueSnapshot();
-  }
-
-  markCompleted(taskId: string, success: boolean): void {
-    if (this.activeTaskId === taskId) {
-      this.activeTaskId = null;
-    }
-    this.transition(taskId, success ? 'success' : 'failed');
-    this.emitQueueSnapshot();
+    return this.cancelRun(taskId);
   }
 
   getSnapshot(): QueueSnapshot {
     return {
-      items: [...this.queue],
-      activeTaskId: this.activeTaskId,
+      items: this.queue.map((item) => ({ ...item })),
+      activeTaskId: this.runningTaskIds.values().next().value ?? null,
       totalQueued: this.queue.length
     };
   }
 
-  async handleTaskSaved(taskPath: string): Promise<void> {
-    const pending = this.pendingRunIntents.get(taskPath);
-    if (!pending) {
+  onDidStateChange(listener: (taskId: string, state: RunState, timestamp: number) => void): () => void {
+    this.emitter.on('state', listener);
+    return () => {
+      this.emitter.off('state', listener);
+    };
+  }
+
+  onDidQueueChange(listener: () => void): () => void {
+    const wrapped = (): void => listener();
+    this.emitter.on('queue', wrapped);
+    return () => {
+      this.emitter.off('queue', wrapped);
+    };
+  }
+
+  onDidRunnerStateChange(listener: (event: QueueStateChangeEvent) => void): { dispose: () => void } {
+    this.emitter.on('stateChange', listener);
+    return {
+      dispose: () => {
+        this.emitter.off('stateChange', listener);
+      }
+    };
+  }
+
+  onDidQueueSnapshotChange(listener: () => void): { dispose: () => void } {
+    const wrapped = (): void => listener();
+    this.emitter.on('queue', wrapped);
+    return {
+      dispose: () => {
+        this.emitter.off('queue', wrapped);
+      }
+    };
+  }
+
+  isCancellationRequested(taskId: string): boolean {
+    return this.cancellationRequested.has(taskId);
+  }
+
+  consumeCancellation(taskId: string): boolean {
+    const exists = this.cancellationRequested.has(taskId);
+    this.cancellationRequested.delete(taskId);
+    return exists;
+  }
+
+  async handleTaskSaved(taskId: string): Promise<void> {
+    const pendingIntent = this.pendingRunIntents.get(taskId);
+    if (!pendingIntent) {
       return;
     }
 
-    const settings = await this.settingsService.getSettings(pending.projectSlug);
+    const settings = await this.settingsService.getSettings(pendingIntent.projectSlug);
     if (!settings.queueAndExecution.autoResumeOnSave) {
       return;
     }
 
-    await this.enqueue(taskPath, pending.scope, pending.projectSlug);
+    await this.enqueue(taskId, pendingIntent.scope, pendingIntent.projectSlug);
   }
 
   dispose(): void {
-    this.emitter.removeAllListeners();
     this.queue.length = 0;
     this.stateByTaskId.clear();
     this.pendingRunIntents.clear();
-    this.activeTaskId = null;
+    this.runningTaskIds.clear();
+    this.cancellationRequested.clear();
+    this.emitter.removeAllListeners();
   }
 
-  private async applyExecutionDefaults(taskPath: string, task: Task, projectSlug?: string): Promise<Task> {
+  private async getMaxParallelRuns(): Promise<number> {
+    const settings = await this.settingsService.getSettings();
+    const configured = settings.queueAndExecution.maxParallelRuns;
+    if (typeof configured !== 'number' || !Number.isFinite(configured)) {
+      return 1;
+    }
+    return Math.max(1, Math.floor(configured));
+  }
+
+  private isDuplicate(taskId: string): boolean {
+    return this.runningTaskIds.has(taskId) || this.queue.some((item) => item.taskId === taskId);
+  }
+
+  private transition(taskId: string, nextState: RunState): boolean {
+    const previousState = this.stateByTaskId.get(taskId);
+
+    if (!isAllowedStateTransition(previousState, nextState)) {
+      if (previousState && isTerminalState(previousState)) {
+        return false;
+      }
+      return false;
+    }
+
+    this.stateByTaskId.set(taskId, nextState);
+
+    if (nextState === 'running') {
+      this.runningTaskIds.add(taskId);
+      this.cancellationRequested.delete(taskId);
+    }
+
+    if (nextState !== 'running') {
+      this.runningTaskIds.delete(taskId);
+      if (nextState !== 'cancelled') {
+        this.cancellationRequested.delete(taskId);
+      }
+    }
+
+    const timestamp = this.now();
+    const event: QueueStateChangeEvent = {
+      taskId,
+      oldState: previousState ?? null,
+      state: nextState,
+      newState: nextState,
+      timestamp
+    };
+
+    this.emitter.emit('state', taskId, nextState, timestamp);
+    this.emitter.emit('stateChange', event);
+    return true;
+  }
+
+  private emitQueueChange(): void {
+    this.emitter.emit('queue', this.getSnapshot());
+  }
+
+  private now(): number {
+    return typeof this.options.now === 'function' ? this.options.now() : Date.now();
+  }
+
+  private async applyExecutionDefaults(
+    taskPath: string,
+    task: Task,
+    projectSlug?: string
+  ): Promise<Task> {
     const mapping = await this.settingsService.getEffectiveMapping(task.frontmatter.stage, projectSlug);
-    const updates: Partial<TaskFrontmatter> = {};
+    const updates: TaskUpdateInput = {};
 
     if (!hasValue(task.frontmatter.role)) {
       updates.role = mapping.role;
@@ -285,16 +412,12 @@ export class QueueService {
       return task;
     }
 
-    const updatedTask = await this.taskService.updateTask(taskPath, updates);
-    return updatedTask;
+    return this.taskService.updateTask(taskPath, updates);
   }
 
-  private async validateTaskForRun(
-    frontmatter: TaskFrontmatter,
-    settings: Awaited<ReturnType<SettingsService['getSettings']>>
-  ): Promise<ValidationResult> {
+  private async validateTaskForRun(frontmatter: TaskFrontmatter, settings: Settings): Promise<ValidationResult> {
     const errors: ValidationError[] = [];
-    const missingRequiredFields: ValidationResult['missingRequiredFields'] = [];
+    const missingRequiredFields: Array<'title' | 'stage' | 'role'> = [];
 
     if (!hasValue(frontmatter.title)) {
       errors.push({ field: 'title', message: 'Task title is required before run.' });
@@ -319,9 +442,9 @@ export class QueueService {
         errors.push({ field: 'model', message: 'Model must be configured before run.' });
       }
     } else {
-      const providerModelValidation = this.settingsService.validateProviderModel(provider, model, settings);
-      if (!providerModelValidation.valid && providerModelValidation.error) {
-        errors.push({ field: 'provider', message: providerModelValidation.error });
+      const providerValidation = this.settingsService.validateProviderModel(provider, model, settings);
+      if (!providerValidation.valid && providerValidation.error) {
+        errors.push({ field: 'provider', message: providerValidation.error });
       }
     }
 
@@ -371,10 +494,11 @@ export class QueueService {
     };
   }
 
-  private async findUnavailableContexts(contexts: string[]): Promise<string[]> {
+  private async findUnavailableContexts(contexts: readonly string[]): Promise<string[]> {
     const unavailable: string[] = [];
-    for (const entry of contexts) {
-      const name = entry.trim();
+
+    for (const raw of contexts) {
+      const name = raw.trim();
       if (!name) {
         continue;
       }
@@ -392,53 +516,40 @@ export class QueueService {
         unavailable.push(name);
       }
     }
+
     return unavailable;
   }
 
-  private async findUnavailableSkills(skills: string[]): Promise<string[]> {
+  private async findUnavailableSkills(skills: readonly string[]): Promise<string[]> {
     const unavailable: string[] = [];
-    for (const entry of skills) {
-      const name = entry.trim();
+
+    for (const raw of skills) {
+      const name = raw.trim();
       if (!name) {
         continue;
       }
 
-      const skillPath = path.join(this.workspaceRoot, '.kanban2code', '_context', 'skills', `${name}.md`);
+      const normalized = name.endsWith('.md') ? name : `${name}.md`;
+      const skillPath = path.join(this.workspaceRoot, '.kanban2code', '_context', 'skills', normalized);
       if (!(await this.pathExists(skillPath))) {
         unavailable.push(name);
       }
     }
+
     return unavailable;
   }
 
   private resolveContextCandidates(name: string): string[] {
-    const normalizedName = name.endsWith('.md') ? name : `${name}.md`;
+    const normalized = name.endsWith('.md') ? name : `${name}.md`;
     return [
-      path.join(this.workspaceRoot, '.kanban2code', '_context', normalizedName),
-      path.join(this.workspaceRoot, '.kanban2code', '_context', 'skills', normalizedName)
+      path.join(this.workspaceRoot, '.kanban2code', '_context', normalized),
+      path.join(this.workspaceRoot, '.kanban2code', '_context', 'skills', normalized)
     ];
   }
 
-  private isDuplicate(taskId: string): boolean {
-    return this.activeTaskId === taskId || this.queue.some((item) => item.taskId === taskId);
-  }
-
-  private transition(taskId: string, state: RunState): void {
-    this.stateByTaskId.set(taskId, state);
-    this.emitter.emit('state', taskId, state, this.now());
-  }
-
-  private emitQueueSnapshot(): void {
-    this.emitter.emit('queue', this.getSnapshot());
-  }
-
-  private now(): number {
-    return typeof this.deps.now === 'function' ? this.deps.now() : Date.now();
-  }
-
   private async pathExists(absolutePath: string): Promise<boolean> {
-    if (this.deps.pathExists) {
-      return this.deps.pathExists(absolutePath);
+    if (this.options.pathExists) {
+      return this.options.pathExists(absolutePath);
     }
 
     try {
@@ -449,3 +560,6 @@ export class QueueService {
     }
   }
 }
+
+export type { QueueScope, RunState };
+export type QueueStateManagement = QueueState;
