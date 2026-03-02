@@ -1,6 +1,7 @@
 ---
 stage: audit
 agent: auditor
+stage: completed
 agent: coder
 tags: [feature, p1]
 contexts: [skill-vscode, skill-frontend-design]
