@@ -1,5 +1,4 @@
 ---
-stage: audit
 agent: auditor
 stage: completed
 agent: coder
