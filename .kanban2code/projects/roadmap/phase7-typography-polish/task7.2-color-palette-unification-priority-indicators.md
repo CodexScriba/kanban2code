@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: code
 tags: [feature, p1]
 agent: planner
 contexts: [skill-frontend-design]

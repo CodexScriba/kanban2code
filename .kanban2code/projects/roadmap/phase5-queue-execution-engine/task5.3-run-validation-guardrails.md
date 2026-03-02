@@ -1,5 +1,5 @@
 ---
-stage: code
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: [skill-vscode]
