@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import type { ValidationFocusTarget } from '../types/runner';
 import { TaskService } from '../services/task-service';
 import {
+  type FocusTaskEditorMessage,
   isWebviewToHostMessage,
   type LoadTaskEditorMessage,
   type SaveTaskMessage
@@ -23,7 +25,8 @@ export class TaskEditorPanel {
     panel: vscode.WebviewPanel,
     extensionUri: vscode.Uri,
     taskService: TaskService,
-    initialTaskPath?: string
+    initialTaskPath?: string,
+    initialFocusTargets?: ValidationFocusTarget[]
   ) {
     this.panel = panel;
     this.extensionUri = extensionUri;
@@ -32,7 +35,7 @@ export class TaskEditorPanel {
     this.update();
 
     if (initialTaskPath) {
-      void this.loadTask(initialTaskPath);
+      void this.loadTask(initialTaskPath, initialFocusTargets);
     }
 
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
@@ -48,7 +51,8 @@ export class TaskEditorPanel {
   public static createOrShow(
     extensionUri: vscode.Uri,
     taskService: TaskService,
-    taskPath?: string
+    taskPath?: string,
+    focusTargets?: ValidationFocusTarget[]
   ): void {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -58,7 +62,9 @@ export class TaskEditorPanel {
       TaskEditorPanel.currentPanel.panel.reveal(column);
 
       if (taskPath && taskPath !== TaskEditorPanel.currentPanel.currentTaskPath) {
-        void TaskEditorPanel.currentPanel.loadTask(taskPath);
+        void TaskEditorPanel.currentPanel.loadTask(taskPath, focusTargets);
+      } else if (focusTargets?.length) {
+        TaskEditorPanel.currentPanel.focusFields(focusTargets);
       }
 
       return;
@@ -75,7 +81,13 @@ export class TaskEditorPanel {
       }
     );
 
-    TaskEditorPanel.currentPanel = new TaskEditorPanel(panel, extensionUri, taskService, taskPath);
+    TaskEditorPanel.currentPanel = new TaskEditorPanel(
+      panel,
+      extensionUri,
+      taskService,
+      taskPath,
+      focusTargets
+    );
   }
 
   public dispose(): void {
@@ -133,7 +145,7 @@ export class TaskEditorPanel {
     }
   }
 
-  private async loadTask(taskPath: string): Promise<void> {
+  private async loadTask(taskPath: string, focusTargets?: ValidationFocusTarget[]): Promise<void> {
     try {
       const task = await this.taskService.readTask(taskPath);
       this.currentTaskPath = taskPath;
@@ -144,7 +156,8 @@ export class TaskEditorPanel {
         payload: {
           taskPath,
           taskId: taskPath.replace(/\\/g, '/').split('/').pop()?.replace(/\.md$/i, '') ?? taskPath,
-          task
+          task,
+          focusTargets
         }
       };
 
@@ -154,6 +167,19 @@ export class TaskEditorPanel {
       void vscode.window.showErrorMessage(`Failed to load task editor: ${errorMessage}`);
       this.dispose();
     }
+  }
+
+  private focusFields(focusTargets: ValidationFocusTarget[]): void {
+    if (!focusTargets.length) {
+      return;
+    }
+    const focusMessage: FocusTaskEditorMessage = {
+      type: 'FocusTaskEditor',
+      payload: {
+        focusTargets
+      }
+    };
+    void this.panel.webview.postMessage(focusMessage);
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -169,11 +195,11 @@ export class TaskEditorPanel {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com; script-src 'nonce-${nonce}'; img-src data: https:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src https://fonts.gstatic.com; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com; script-src 'nonce-${nonce}'; img-src data: https:;" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="${styleUri}" />
     <title>Kanban2Code Task Editor</title>
   </head>

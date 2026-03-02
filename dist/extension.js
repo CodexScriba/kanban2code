@@ -62,7 +62,10 @@ function activate(context) {
             if (firstError) {
                 void vscode.window.showWarningMessage(firstError.message);
             }
-            await vscode.commands.executeCommand('kanban2code.openTaskEditor', taskPath);
+            await vscode.commands.executeCommand('kanban2code.openTaskEditor', {
+                taskId: taskPath,
+                focusTargets: validation.focusTargets
+            });
         }
     });
     const sidebarProvider = new SidebarProvider_1.SidebarProvider(context.extensionUri, taskScanner, queueService);
@@ -91,7 +94,13 @@ function activate(context) {
                 typeof arg.taskId === 'string'
                 ? arg.taskId
                 : undefined;
-        TaskEditorPanel_1.TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath);
+        const focusTargets = arg &&
+            typeof arg === 'object' &&
+            'focusTargets' in arg &&
+            Array.isArray(arg.focusTargets)
+            ? (arg.focusTargets ?? [])
+            : undefined;
+        TaskEditorPanel_1.TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath, focusTargets);
     }));
     context.subscriptions.push(vscode.commands.registerCommand('kanban2code.openSettings', (arg) => {
         if (!workspaceRoot) {

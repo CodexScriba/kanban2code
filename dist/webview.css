@@ -28,6 +28,23 @@
   --accent-rose: #fb7185;
   --accent-cyan: #22d3ee;
   --user-message-bg: #103149;
+  --font-ui:
+    "Poppins",
+    "URW Gothic",
+    "Noto Sans",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  --font-mono:
+    "Noto Sans Mono",
+    "Noto Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
 }
 html,
 body,
@@ -36,15 +53,7 @@ body,
   height: 100%;
 }
 body {
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    sans-serif;
+  font-family: var(--font-ui);
   background:
     radial-gradient(
       circle at top right,

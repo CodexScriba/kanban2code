@@ -5,10 +5,10 @@ import type {
   TaskStage,
   TaskUpdateInput
 } from '../types/task';
-import type { QueueItem, RunState } from '../types/runner';
+import type { QueueItem, RunState, ValidationFocusTarget } from '../types/runner';
 import type { SettingsSection } from '../types/settings';
 export type { TaskSnapshotItem } from '../types/task';
-export type { QueueItem, RunResult, RunState } from '../types/runner';
+export type { QueueItem, RunResult, RunState, ValidationFocusTarget } from '../types/runner';
 
 export interface RequestTaskSnapshotMessage {
   type: 'RequestTaskSnapshot';
@@ -68,6 +68,7 @@ export interface OpenTaskEditorMessage {
   type: 'OpenTaskEditor';
   payload?: {
     taskId?: string;
+    focusTargets?: ValidationFocusTarget[];
   };
 }
 
@@ -245,6 +246,14 @@ export interface LoadTaskEditorMessage {
     taskPath: string;
     taskId: string;
     task: Task;
+    focusTargets?: ValidationFocusTarget[];
+  };
+}
+
+export interface FocusTaskEditorMessage {
+  type: 'FocusTaskEditor';
+  payload: {
+    focusTargets: ValidationFocusTarget[];
   };
 }
 
@@ -257,7 +266,8 @@ export type HostToWebviewMessage =
   | OrchestratorResponseMessage
   | RunnerStateChangedMessage
   | QueueSnapshotMessage
-  | LoadTaskEditorMessage;
+  | LoadTaskEditorMessage
+  | FocusTaskEditorMessage;
 
 const TASK_STAGES: TaskStage[] = ['inbox', 'capture', 'plan', 'code', 'audit', 'completed', 'unknown'];
 const PRIORITIES = ['low', 'medium', 'high'] as const;
@@ -294,6 +304,29 @@ const isRunState = (value: unknown): value is RunState =>
 
 const isQueueScope = (value: unknown): value is QueueItem['scope'] =>
   typeof value === 'string' && QUEUE_SCOPES.includes(value as (typeof QUEUE_SCOPES)[number]);
+
+const VALIDATION_FOCUS_FIELDS = [
+  'title',
+  'location',
+  'phase',
+  'stage',
+  'role',
+  'provider',
+  'model',
+  'profile',
+  'contexts',
+  'skills',
+  'pipeline'
+] as const;
+
+const isValidationFocusField = (value: unknown): value is ValidationFocusTarget['field'] =>
+  typeof value === 'string' &&
+  VALIDATION_FOCUS_FIELDS.includes(value as (typeof VALIDATION_FOCUS_FIELDS)[number]);
+
+const isValidationFocusTarget = (value: unknown): value is ValidationFocusTarget =>
+  isObject(value) &&
+  isValidationFocusField(value.field) &&
+  (!('stage' in value) || value.stage === undefined || typeof value.stage === 'string');
 
 const isSettingsSection = (value: unknown): value is SettingsSection =>
   typeof value === 'string' && SETTINGS_SECTIONS.includes(value as SettingsSection);
@@ -515,7 +548,11 @@ export const isWebviewToHostMessage = (value: unknown): value is WebviewToHostMe
       isObject(value.payload) &&
       (!('taskId' in value.payload) ||
         value.payload.taskId === undefined ||
-        typeof value.payload.taskId === 'string')
+        typeof value.payload.taskId === 'string') &&
+      (!('focusTargets' in value.payload) ||
+        value.payload.focusTargets === undefined ||
+        (Array.isArray(value.payload.focusTargets) &&
+          value.payload.focusTargets.every(isValidationFocusTarget)))
     );
   }
 
@@ -654,7 +691,19 @@ export const isHostToWebviewMessage = (value: unknown): value is HostToWebviewMe
       isObject(value.payload) &&
       typeof value.payload.taskPath === 'string' &&
       typeof value.payload.taskId === 'string' &&
-      isTask(value.payload.task)
+      isTask(value.payload.task) &&
+      (!('focusTargets' in value.payload) ||
+        value.payload.focusTargets === undefined ||
+        (Array.isArray(value.payload.focusTargets) &&
+          value.payload.focusTargets.every(isValidationFocusTarget)))
+    );
+  }
+
+  if (value.type === 'FocusTaskEditor') {
+    return (
+      isObject(value.payload) &&
+      Array.isArray(value.payload.focusTargets) &&
+      value.payload.focusTargets.every(isValidationFocusTarget)
     );
   }
 

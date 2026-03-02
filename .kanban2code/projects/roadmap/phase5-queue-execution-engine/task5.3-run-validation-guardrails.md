@@ -1,7 +1,7 @@
 ---
-stage: audit
+stage: code
 tags: [feature, p1]
-agent: coder
+agent: auditor
 contexts: [skill-vscode]
 ---
 

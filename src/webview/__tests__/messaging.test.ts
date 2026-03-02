@@ -70,6 +70,13 @@ test('isWebviewToHostMessage accepts task editor + settings operations', () => {
     isWebviewToHostMessage({ type: 'OpenTaskEditor', payload: { taskId: 'task-1' } }),
     true
   );
+  assert.equal(
+    isWebviewToHostMessage({
+      type: 'OpenTaskEditor',
+      payload: { taskId: 'task-1', focusTargets: [{ field: 'title' }, { field: 'pipeline', stage: 'plan' }] }
+    }),
+    true
+  );
   assert.equal(isWebviewToHostMessage({ type: 'CloseTaskEditor' }), true);
   assert.equal(
     isWebviewToHostMessage({
@@ -297,7 +304,18 @@ test('isHostToWebviewMessage accepts existing and new event types', () => {
             skills: ['skill-frontend-design']
           },
           body: 'Task body'
-        }
+        },
+        focusTargets: [{ field: 'title' }]
+      }
+    }),
+    true
+  );
+
+  assert.equal(
+    isHostToWebviewMessage({
+      type: 'FocusTaskEditor',
+      payload: {
+        focusTargets: [{ field: 'pipeline', stage: 'code' }]
       }
     }),
     true
@@ -395,6 +413,16 @@ test('isHostToWebviewMessage rejects invalid payloads', () => {
           },
           body: 'Task body'
         }
+      }
+    }),
+    false
+  );
+
+  assert.equal(
+    isHostToWebviewMessage({
+      type: 'FocusTaskEditor',
+      payload: {
+        focusTargets: [{ field: 'invalid' }]
       }
     }),
     false

@@ -1,13 +1,15 @@
 import './taskeditor.css';
 import {
   type CancelRunMessage,
+  type FocusTaskEditorMessage,
   isHostToWebviewMessage,
   type CloseTaskEditorMessage,
   type LoadTaskEditorMessage,
   type RetryRunMessage,
   type RunAllStagesMessage,
   type RunStageMessage,
-  type SaveTaskMessage
+  type SaveTaskMessage,
+  type ValidationFocusTarget
 } from '../messaging';
 import type { RunState } from '../../types/runner';
 
@@ -685,6 +687,77 @@ const switchEditorTab = (nextTab: EditorTab): void => {
     panel.classList.toggle('is-active', isActive);
     panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
   });
+};
+
+const focusField = (target: ValidationFocusTarget): boolean => {
+  switch (target.field) {
+    case 'title':
+      metaTitleInput?.focus();
+      return Boolean(metaTitleInput);
+    case 'location':
+      locationTypeSelect?.focus();
+      return Boolean(locationTypeSelect);
+    case 'phase':
+      if (locationTypeSelect && locationTypeSelect.value === 'inbox') {
+        locationTypeSelect.value = 'project';
+        formState.locationType = 'project';
+        syncLocationControls();
+      }
+      locationPhaseSelect?.focus();
+      return Boolean(locationPhaseSelect);
+    case 'stage':
+      switchEditorTab('frontmatter');
+      taskFrontmatter?.focus();
+      return Boolean(taskFrontmatter);
+    case 'role':
+      assignmentRoleSelect?.focus();
+      return Boolean(assignmentRoleSelect);
+    case 'provider':
+      assignmentProviderSelect?.focus();
+      return Boolean(assignmentProviderSelect);
+    case 'model':
+      assignmentModelSelect?.focus();
+      return Boolean(assignmentModelSelect);
+    case 'profile':
+      assignmentProfileSelect?.focus();
+      return Boolean(assignmentProfileSelect);
+    case 'contexts':
+      showChipInput('contexts');
+      return Boolean(chipInputRefs.contexts.input);
+    case 'skills':
+      showChipInput('skills');
+      return Boolean(chipInputRefs.skills.input);
+    case 'pipeline':
+      if (!isStepEditorOpen) {
+        isStepEditorOpen = true;
+        renderExecutionRail();
+      }
+      (
+        stepEditor?.querySelector<HTMLElement>(
+          '[data-step-field="role"], [data-step-field="provider"], [data-step-field="model"]'
+        ) ?? editStepsBtn
+      )?.focus();
+      return true;
+    default:
+      return false;
+  }
+};
+
+const applyValidationFocus = (focusTargets?: ValidationFocusTarget[]): boolean => {
+  if (!focusTargets?.length) {
+    return false;
+  }
+
+  const uniqueTargets = focusTargets.filter(
+    (target, index) =>
+      focusTargets.findIndex((entry) => entry.field === target.field && entry.stage === target.stage) === index
+  );
+  for (const target of uniqueTargets) {
+    if (focusField(target)) {
+      return true;
+    }
+  }
+  return false;
 };
 
 const updateHeaderChips = (): void => {
@@ -1794,6 +1867,11 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     return;
   }
 
+  if (message.type === 'FocusTaskEditor') {
+    applyValidationFocus((message as FocusTaskEditorMessage).payload.focusTargets);
+    return;
+  }
+
   if (message.type === 'RunnerStateChanged') {
     if (!currentTaskId || message.payload.taskId !== currentTaskId) {
       return;
@@ -1870,7 +1948,9 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   }
 
   refreshForm();
-  switchEditorTab('body');
+  if (!applyValidationFocus(loadMessage.payload.focusTargets)) {
+    switchEditorTab('body');
+  }
   syncLocationControls();
   exitModalOverlay?.classList.add('is-hidden');
   locationModalOverlay?.classList.add('is-hidden');

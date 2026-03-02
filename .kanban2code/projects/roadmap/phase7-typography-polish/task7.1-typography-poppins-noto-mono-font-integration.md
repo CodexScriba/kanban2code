@@ -1,7 +1,8 @@
 ---
-stage: plan
+stage: completed
+agent: auditor
 tags: [feature, p1]
-agent: planner
+agent: implementer
 contexts: [skill-frontend-design]
 ---
 
@@ -19,15 +20,107 @@ Integrate Poppins font for UI text and Noto Mono for code surfaces across all we
 - [ ] CSP updated to allow font loading (Google Fonts or local bundled)
 - [ ] Consistent across all three webview hosts
 
+## Implementation Plan
+
+### 1. Update CSP and Font Loading in Webview Hosts
+
+**SidebarProvider.ts** (missing Google Fonts links):
+```typescript
+// Add to the HTML template:
+// - font-src CSP directive
+// - Google Fonts preconnect links
+// - Poppins and Noto Sans Mono CSS links
+```
+
+**KanbanPanel.ts**:
+```typescript
+// Update existing Google Fonts link from:
+//   Inter:wght@400;500;600;700
+// To:
+//   Poppins:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500
+```
+
+**TaskEditorPanel.ts**:
+```typescript
+// Same update as KanbanPanel.ts
+```
+
+### 2. Define Font Tokens in CSS Files
+
+Add CSS custom properties at the top of each file:
+
+**styles.css (sidebar)**:
+```css
+:root {
+  --font-ui: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* existing variables... */
+}
+```
+
+**board.css**:
+```css
+:root {
+  --font-ui: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* existing variables... */
+}
+```
+
+**taskeditor.css**:
+```css
+:root {
+  --font-ui: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* existing variables... */
+}
+```
+
+**settings.css**:
+```css
+:root {
+  --font-ui: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Noto Sans Mono', Consolas, 'Courier New', monospace;
+  /* existing variables... */
+}
+```
+
+### 3. Apply Font Tokens
+
+**UI Text (Poppins / --font-ui)**:
+Update `font-family` in:
+- `body` styles
+- Button styles (`.btn-*`, `.action-btn`, `.capture-btn`, etc.)
+- Input/textarea styles (except code editors)
+- Card and panel headers
+- Navigation items
+- Badge/chip text
+
+**Code Surfaces (Noto Mono / --font-mono)**:
+Update `font-family` in:
+- Code editor textareas (`.editor-textarea`)
+- JSON/config editors (`.settings-json`)
+- Run metadata display
+- Code badges/inline code
+- Technical value displays
+
+### 4. CSP Requirements
+
+All three webview hosts need:
+```
+font-src https://fonts.gstatic.com;
+style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com;
+```
+
 ## Files
 
 - `src/webview/ui/board.css` - modify - apply font tokens
 - `src/webview/ui/styles.css` - modify - apply font tokens
 - `src/webview/ui/taskeditor.css` - modify - apply font tokens
 - `src/webview/ui/settings.css` - modify - apply font tokens
-- `src/webview/KanbanPanel.ts` - modify - update CSP for fonts
-- `src/webview/SidebarProvider.ts` - modify - update CSP for fonts
-- `src/webview/TaskEditorPanel.ts` - modify - update CSP for fonts
+- `src/webview/KanbanPanel.ts` - modify - update CSP and font links
+- `src/webview/SidebarProvider.ts` - modify - add font links and CSP
+- `src/webview/TaskEditorPanel.ts` - modify - update CSP and font links
 
 ## Tests
 
@@ -40,31 +133,21 @@ Integrate Poppins font for UI text and Noto Mono for code surfaces across all we
 Typography should be consistent across all webview hosts (sidebar, board, task editor, settings).
 
 Font sources:
-- Option 1: Google Fonts (CDN)
-- Option 2: Local bundled fonts
-- Choose based on performance and offline requirements
+- Google Fonts (CDN) - chosen for ease of integration
+- Load both Poppins (400, 500, 600, 700) and Noto Sans Mono (400, 500)
 
 Font tokens (CSS custom properties):
 - `--font-ui`: Poppins (for all UI text)
-- `--font-mono`: Noto Mono (for code surfaces)
+- `--font-mono`: Noto Sans Mono (for code surfaces)
 
 Application:
 - UI text: headings, labels, buttons, cards, badges → Poppins
-- Code surfaces: editor textareas, run metadata, code badges → Noto Mono
-
-CSP updates:
-- Add `font-src` directive to allow font loading
-- For Google Fonts: `https://fonts.googleapis.com`, `https://fonts.gstatic.com`
-- For local fonts: `self:` or specific paths
-- Update CSP in all three webview hosts:
-  - SidebarProvider
-  - KanbanPanel
-  - TaskEditorPanel
+- Code surfaces: editor textareas, run metadata, code badges → Noto Sans Mono
 
 Font loading:
 - Load fonts in HTML head before any content
-- Use `@font-face` for local fonts or `<link>` for Google Fonts
-- Ensure fonts are loaded before rendering to avoid FOUT (Flash of Unstyled Text)
+- Use Google Fonts `<link>` with preconnect for performance
+- Ensure fonts are loaded before rendering to avoid FOUT
 
 Consistency check:
 - All UI text uses `--font-ui` token

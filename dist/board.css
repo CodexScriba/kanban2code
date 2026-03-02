@@ -41,6 +41,23 @@
   --p-low-border: rgba(52, 211, 153, 0.3);
   --p-none: #7f8ca8;
   --p-none-bg: rgba(127, 140, 168, 0.18);
+  --font-ui:
+    "Poppins",
+    "URW Gothic",
+    "Noto Sans",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  --font-mono:
+    "Noto Sans Mono",
+    "Noto Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
 }
 *,
 *::before,
@@ -52,12 +69,7 @@
 html,
 body {
   height: 100%;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-ui);
   font-size: 13px;
   color: var(--text);
   background: var(--bg);
@@ -150,7 +162,7 @@ body {
   border: 1px solid var(--accent-border);
   background: var(--accent-soft);
   color: #60a5fa;
-  font: 600 12px/1 Inter, sans-serif;
+  font: 600 12px/1 var(--font-ui);
   cursor: pointer;
   transition: background 0.14s, border-color 0.14s;
 }
@@ -315,7 +327,7 @@ body {
   border: 1px solid var(--border-md);
   background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236e7fa8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
   color: var(--text);
-  font: 500 13px/1 Inter, sans-serif;
+  font: 500 13px/1 var(--font-ui);
   appearance: none;
   outline: none;
   cursor: pointer;
@@ -339,7 +351,7 @@ body {
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
-  font: 13px/1.4 Inter, sans-serif;
+  font: 13px/1.4 var(--font-ui);
   padding: 9px 12px;
   resize: none;
   outline: none;
@@ -370,7 +382,7 @@ body {
   justify-content: center;
   gap: 5px;
   flex-shrink: 0;
-  font: 600 13px/1 Inter, sans-serif;
+  font: 600 13px/1 var(--font-ui);
   transition: opacity 0.14s, transform 0.14s;
 }
 .send-btn:hover {
@@ -483,7 +495,7 @@ body {
   border: 1px solid var(--border-md);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
-  font: 12px/1 Inter, sans-serif;
+  font: 12px/1 var(--font-ui);
   outline: none;
   transition: border-color 0.14s;
 }
@@ -530,7 +542,7 @@ body {
   border: 1px solid var(--border-md);
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%236e7fa8' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 7px center;
   color: var(--text-muted);
-  font: 500 11px/1 Inter, sans-serif;
+  font: 500 11px/1 var(--font-ui);
   appearance: none;
   outline: none;
   cursor: pointer;
@@ -560,7 +572,7 @@ body {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font: 500 11px/1 Inter, sans-serif;
+  font: 500 11px/1 var(--font-ui);
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
@@ -608,7 +620,7 @@ body {
   border: 1px solid var(--accent-border);
   background: var(--accent-soft);
   color: #60a5fa;
-  font: 600 11px/1 Inter, sans-serif;
+  font: 600 11px/1 var(--font-ui);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -676,7 +688,7 @@ body {
   border: 1px solid var(--purple-border);
   background: var(--purple-soft);
   color: #c4b5fd;
-  font: 600 10px/1 Inter, sans-serif;
+  font: 600 10px/1 var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.14s, border-color 0.14s;
@@ -805,7 +817,7 @@ body {
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
-  font: 500 12px/1.2 Inter, sans-serif;
+  font: 500 12px/1.2 var(--font-ui);
   padding: 8px 10px;
   outline: none;
   transition: border-color 0.14s, background 0.14s;
@@ -834,7 +846,7 @@ body {
   border: 1px solid var(--border-md);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
-  font: 600 11px/1 Inter, sans-serif;
+  font: 600 11px/1 var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
   transition:
@@ -862,7 +874,7 @@ body {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
-  font: 500 11px/1 Inter, sans-serif;
+  font: 500 11px/1 var(--font-ui);
   padding: 4px 9px;
   cursor: pointer;
 }
@@ -897,7 +909,7 @@ body {
 .capture-action-btn {
   height: 32px;
   border-radius: 6px;
-  font: 600 11px/1 Inter, sans-serif;
+  font: 600 11px/1 var(--font-ui);
   padding: 0 12px;
   cursor: pointer;
   transition:

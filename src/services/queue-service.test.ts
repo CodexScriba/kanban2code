@@ -174,3 +174,129 @@ test('dequeue respects max parallel runs setting', async () => {
   const second = await queue.dequeue();
   assert.equal(second?.taskId, '.kanban2code/inbox/task-b.md');
 });
+
+test('validation failure reports missing title focus target', async () => {
+  const task: Task = {
+    ...createTask(),
+    frontmatter: {
+      ...createTask().frontmatter,
+      title: ''
+    }
+  };
+
+  const queue = new QueueService(
+    '/workspace',
+    {
+      readTask: async () => task,
+      updateTask: async () => task
+    },
+    {
+      getSettings: async () => createSettings(1),
+      getEffectiveMapping: async () => ({
+        role: 'planner',
+        provider: 'codex',
+        model: 'gpt-5.3-codex',
+        profile: 'default'
+      }),
+      validateProviderModel: () => ({ valid: true }),
+      validateProfile: () => ({ valid: true })
+    },
+    {
+      pathExists: async () => true
+    }
+  );
+
+  const result = await queue.enqueue('.kanban2code/inbox/task-a.md', 'stage');
+  assert.equal(result.ok, false);
+  if (result.ok) {
+    return;
+  }
+  assert.equal(result.reason, 'validation_failed');
+  assert.equal(result.validation?.missingRequiredFields.includes('title'), true);
+  assert.deepEqual(result.validation?.focusTargets[0], { field: 'title', stage: undefined });
+});
+
+test('run-all validates entire pipeline mappings', async () => {
+  const queue = new QueueService(
+    '/workspace',
+    {
+      readTask: async () => createTask(),
+      updateTask: async () => createTask()
+    },
+    {
+      getSettings: async () => createSettings(1),
+      getEffectiveMapping: async (stage: string) => {
+        if (stage === 'capture') {
+          return {
+            role: '',
+            provider: '',
+            model: '',
+            profile: ''
+          };
+        }
+        return {
+          role: 'planner',
+          provider: 'codex',
+          model: 'gpt-5.3-codex',
+          profile: 'default'
+        };
+      },
+      validateProviderModel: () => ({ valid: true }),
+      validateProfile: () => ({ valid: true })
+    },
+    {
+      pathExists: async () => true
+    }
+  );
+
+  const result = await queue.enqueue('.kanban2code/inbox/task-a.md', 'all');
+  assert.equal(result.ok, false);
+  if (result.ok) {
+    return;
+  }
+  assert.equal(result.reason, 'validation_failed');
+  assert.equal(result.validation?.errors.some((entry) => entry.message.includes("Pipeline step 'capture'")), true);
+  assert.equal(result.validation?.focusTargets.some((entry) => entry.field === 'pipeline'), true);
+});
+
+test('project tasks require phase for run validation', async () => {
+  const task: Task = {
+    ...createTask(),
+    frontmatter: {
+      ...createTask().frontmatter,
+      project: 'roadmap',
+      phase: ''
+    }
+  };
+
+  const queue = new QueueService(
+    '/workspace',
+    {
+      readTask: async () => task,
+      updateTask: async () => task
+    },
+    {
+      getSettings: async () => createSettings(1),
+      getEffectiveMapping: async () => ({
+        role: 'planner',
+        provider: 'codex',
+        model: 'gpt-5.3-codex',
+        profile: 'default'
+      }),
+      validateProviderModel: () => ({ valid: true }),
+      validateProfile: () => ({ valid: true })
+    },
+    {
+      pathExists: async () => true
+    }
+  );
+
+  const result = await queue.enqueue('.kanban2code/projects/roadmap/task-a.md', 'stage');
+  assert.equal(result.ok, false);
+  if (result.ok) {
+    return;
+  }
+  assert.equal(result.reason, 'validation_failed');
+  assert.equal(result.validation?.errors.some((entry) => entry.field === 'location'), true);
+  assert.equal(result.validation?.focusTargets.some((entry) => entry.field === 'phase'), true);
+});

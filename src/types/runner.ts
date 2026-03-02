@@ -37,15 +37,46 @@ export interface RunResult {
   completedAt: number;
 }
 
+export type ValidationField =
+  | 'title'
+  | 'location'
+  | 'stage'
+  | 'role'
+  | 'provider'
+  | 'model'
+  | 'profile'
+  | 'contexts'
+  | 'skills'
+  | 'pipeline';
+
+export type ValidationFocusField =
+  | 'title'
+  | 'location'
+  | 'phase'
+  | 'stage'
+  | 'role'
+  | 'provider'
+  | 'model'
+  | 'profile'
+  | 'contexts'
+  | 'skills'
+  | 'pipeline';
+
+export interface ValidationFocusTarget {
+  field: ValidationFocusField;
+  stage?: string;
+}
+
 export interface ValidationError {
-  field: 'title' | 'stage' | 'role' | 'provider' | 'model' | 'profile' | 'contexts' | 'skills';
+  field: ValidationField;
   message: string;
 }
 
 export interface ValidationResult {
   valid: boolean;
   errors: ValidationError[];
-  missingRequiredFields: Array<'title' | 'stage' | 'role'>;
+  missingRequiredFields: Array<'title' | 'location' | 'stage' | 'role' | 'provider' | 'model' | 'profile'>;
+  focusTargets: ValidationFocusTarget[];
 }
 
 export type QueueOperationFailureReason = 'duplicate' | 'validation_failed' | 'invalid_state';

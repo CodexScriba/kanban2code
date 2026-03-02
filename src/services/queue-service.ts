@@ -11,6 +11,7 @@ import type {
   QueueStateChangeEvent,
   RunState,
   ValidationError,
+  ValidationFocusTarget,
   ValidationResult
 } from '../types/runner';
 import type { Task, TaskFrontmatter, TaskUpdateInput } from '../types/task';
@@ -54,6 +55,7 @@ type QueueEventMap = {
 };
 
 const hasValue = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const normalizeStage = (value: string): string => value.trim().toLowerCase();
 
 const inferProjectSlugFromPath = (taskPath: string): string | undefined => {
   const normalized = taskPath.replace(/\\/g, '/');
@@ -140,7 +142,13 @@ export class QueueService {
     const settings = await this.settingsService.getSettings(resolvedProjectSlug);
 
     const hydratedTask = await this.applyExecutionDefaults(taskId, task, resolvedProjectSlug);
-    const validation = await this.validateTaskForRun(hydratedTask.frontmatter, settings);
+    const validation = await this.validateTaskForRun(
+      taskId,
+      hydratedTask.frontmatter,
+      settings,
+      scope,
+      resolvedProjectSlug
+    );
     if (!validation.valid) {
       this.pendingRunIntents.set(taskId, { scope, projectSlug: resolvedProjectSlug });
 
@@ -415,83 +423,290 @@ export class QueueService {
     return this.taskService.updateTask(taskPath, updates);
   }
 
-  private async validateTaskForRun(frontmatter: TaskFrontmatter, settings: Settings): Promise<ValidationResult> {
+  private async validateTaskForRun(
+    taskPath: string,
+    frontmatter: TaskFrontmatter,
+    settings: Settings,
+    scope: QueueScope,
+    projectSlug?: string
+  ): Promise<ValidationResult> {
     const errors: ValidationError[] = [];
-    const missingRequiredFields: Array<'title' | 'stage' | 'role'> = [];
+    const missingRequiredFields: ValidationResult['missingRequiredFields'] = [];
+    const focusTargets: ValidationFocusTarget[] = [];
 
-    if (!hasValue(frontmatter.title)) {
-      errors.push({ field: 'title', message: 'Task title is required before run.' });
-      missingRequiredFields.push('title');
-    }
-
-    if (!hasValue(frontmatter.stage) || frontmatter.stage === 'unknown') {
-      errors.push({ field: 'stage', message: 'Task stage is required before run.' });
-      missingRequiredFields.push('stage');
-    }
-
-    if (!hasValue(frontmatter.role)) {
-      errors.push({ field: 'role', message: 'Task role is required before run.' });
-      missingRequiredFields.push('role');
-    }
-
-    const provider = frontmatter.provider?.trim();
-    const model = frontmatter.model?.trim();
-    if (!provider || !model) {
-      errors.push({ field: 'provider', message: 'Provider and model must be configured before run.' });
-      if (!model) {
-        errors.push({ field: 'model', message: 'Model must be configured before run.' });
+    const addIssue = (
+      error: ValidationError,
+      options?: {
+        missingField?: ValidationResult['missingRequiredFields'][number];
+        focusField?: ValidationFocusTarget['field'];
+        stage?: string;
       }
-    } else {
-      const providerValidation = this.settingsService.validateProviderModel(provider, model, settings);
-      if (!providerValidation.valid && providerValidation.error) {
-        errors.push({ field: 'provider', message: providerValidation.error });
+    ): void => {
+      errors.push(error);
+      if (options?.missingField && !missingRequiredFields.includes(options.missingField)) {
+        missingRequiredFields.push(options.missingField);
       }
-    }
-
-    const profile = frontmatter.profile?.trim();
-    if (!profile) {
-      errors.push({ field: 'profile', message: 'Profile must be configured before run.' });
-    } else {
-      const profileValidation = this.settingsService.validateProfile(profile, settings);
-      if (!profileValidation.valid && profileValidation.error) {
-        errors.push({ field: 'profile', message: profileValidation.error });
-      } else {
-        const profileConfig = settings.providersAndModels.profiles[profile];
-        if (
-          profileConfig &&
-          provider &&
-          model &&
-          (profileConfig.provider !== provider || profileConfig.model !== model)
-        ) {
-          errors.push({
-            field: 'profile',
-            message: `Profile '${profile}' expects '${profileConfig.provider}/${profileConfig.model}'.`
+      if (options?.focusField) {
+        const exists = focusTargets.some(
+          (entry) => entry.field === options.focusField && entry.stage === options.stage
+        );
+        if (!exists) {
+          focusTargets.push({
+            field: options.focusField,
+            stage: options.stage
           });
         }
+      }
+    };
+
+    if (!hasValue(frontmatter.title)) {
+      addIssue(
+        { field: 'title', message: 'Task title is required before run.' },
+        { missingField: 'title', focusField: 'title' }
+      );
+    }
+
+    const stage = frontmatter.stage?.trim() ?? '';
+    const normalizedStage = normalizeStage(stage);
+    const hasValidStage = hasValue(stage) && normalizedStage !== 'unknown';
+    if (!hasValidStage) {
+      addIssue(
+        { field: 'stage', message: 'Task stage is required before run.' },
+        { missingField: 'stage', focusField: 'stage' }
+      );
+    }
+
+    this.validateLocation(taskPath, frontmatter, addIssue);
+
+    if (scope === 'stage') {
+      this.validateExecutionMapping(
+        {
+          role: frontmatter.role,
+          provider: frontmatter.provider,
+          model: frontmatter.model,
+          profile: frontmatter.profile
+        },
+        settings,
+        addIssue,
+        {
+          scope: 'stage',
+          stage: hasValidStage ? stage : undefined,
+          focusField: 'pipeline'
+        }
+      );
+    } else {
+      const pipelineStages = this.getPipelineStages(settings);
+      const stageMappingByName = new Map<string, { role: string; provider: string; model: string; profile: string }>();
+      for (const pipelineStage of pipelineStages) {
+        stageMappingByName.set(
+          normalizeStage(pipelineStage),
+          await this.settingsService.getEffectiveMapping(pipelineStage, projectSlug)
+        );
+      }
+
+      if (hasValidStage) {
+        stageMappingByName.set(normalizedStage, {
+          role: frontmatter.role?.trim() ?? '',
+          provider: frontmatter.provider?.trim() ?? '',
+          model: frontmatter.model?.trim() ?? '',
+          profile: frontmatter.profile?.trim() ?? ''
+        });
+      }
+
+      for (const [stageName, mapping] of stageMappingByName.entries()) {
+        const isCurrentStage = hasValidStage && stageName === normalizedStage;
+        this.validateExecutionMapping(mapping, settings, addIssue, {
+          scope: 'pipeline',
+          stage: stageName,
+          focusField: isCurrentStage ? undefined : 'pipeline'
+        });
       }
     }
 
     const unavailableContexts = await this.findUnavailableContexts(frontmatter.contexts);
     if (unavailableContexts.length > 0) {
-      errors.push({
-        field: 'contexts',
-        message: `Unavailable context(s): ${unavailableContexts.join(', ')}.`
-      });
+      addIssue(
+        {
+          field: 'contexts',
+          message: `Unavailable context(s): ${unavailableContexts.join(', ')}.`
+        },
+        { focusField: 'contexts' }
+      );
     }
 
     const unavailableSkills = await this.findUnavailableSkills(frontmatter.skills);
     if (unavailableSkills.length > 0) {
-      errors.push({
-        field: 'skills',
-        message: `Unavailable skill(s): ${unavailableSkills.join(', ')}.`
-      });
+      addIssue(
+        {
+          field: 'skills',
+          message: `Unavailable skill(s): ${unavailableSkills.join(', ')}.`
+        },
+        { focusField: 'skills' }
+      );
     }
 
     return {
       valid: errors.length === 0,
       errors,
-      missingRequiredFields
+      missingRequiredFields,
+      focusTargets
     };
+  }
+
+  private validateLocation(
+    taskPath: string,
+    frontmatter: TaskFrontmatter,
+    addIssue: (
+      error: ValidationError,
+      options?: {
+        missingField?: ValidationResult['missingRequiredFields'][number];
+        focusField?: ValidationFocusTarget['field'];
+        stage?: string;
+      }
+    ) => void
+  ): void {
+    const normalizedPath = taskPath.replace(/\\/g, '/');
+    const pathProject = inferProjectSlugFromPath(taskPath);
+    const isInboxPath = normalizedPath.includes('/.kanban2code/inbox/') || normalizedPath.includes('/inbox/');
+    const project = frontmatter.project?.trim() ?? '';
+    const phase = frontmatter.phase?.trim() ?? '';
+
+    if (pathProject && pathProject !== 'inbox') {
+      if (!project) {
+        addIssue(
+          { field: 'location', message: 'Project location is required before run.' },
+          { missingField: 'location', focusField: 'location' }
+        );
+      }
+      if (!phase) {
+        addIssue(
+          { field: 'location', message: 'Phase is required for project tasks before run.' },
+          { missingField: 'location', focusField: 'phase' }
+        );
+      }
+      return;
+    }
+
+    if (!isInboxPath && !project) {
+      addIssue(
+        { field: 'location', message: 'Task location is required before run.' },
+        { missingField: 'location', focusField: 'location' }
+      );
+      return;
+    }
+
+    if (project && project !== 'inbox' && !phase) {
+      addIssue(
+        { field: 'location', message: 'Phase is required for project tasks before run.' },
+        { missingField: 'location', focusField: 'phase' }
+      );
+    }
+  }
+
+  private validateExecutionMapping(
+    mapping: { role?: string; provider?: string; model?: string; profile?: string },
+    settings: Settings,
+    addIssue: (
+      error: ValidationError,
+      options?: {
+        missingField?: ValidationResult['missingRequiredFields'][number];
+        focusField?: ValidationFocusTarget['field'];
+        stage?: string;
+      }
+    ) => void,
+    context: { scope: QueueScope | 'pipeline'; stage?: string; focusField?: ValidationFocusTarget['field'] }
+  ): void {
+    const prefix =
+      context.scope === 'pipeline' && context.stage
+        ? `Pipeline step '${context.stage}'`
+        : 'Task execution mapping';
+    const role = mapping.role?.trim() ?? '';
+    const provider = mapping.provider?.trim() ?? '';
+    const model = mapping.model?.trim() ?? '';
+    const profile = mapping.profile?.trim() ?? '';
+    const fallbackFocusField = context.focusField;
+
+    if (!role) {
+      addIssue(
+        { field: 'role', message: `${prefix} requires role before run.` },
+        {
+          missingField: 'role',
+          focusField: fallbackFocusField ?? 'role',
+          stage: context.stage
+        }
+      );
+    }
+
+    if (!provider) {
+      addIssue(
+        { field: 'provider', message: `${prefix} requires provider before run.` },
+        {
+          missingField: 'provider',
+          focusField: fallbackFocusField ?? 'provider',
+          stage: context.stage
+        }
+      );
+    }
+
+    if (!model) {
+      addIssue(
+        { field: 'model', message: `${prefix} requires model before run.` },
+        {
+          missingField: 'model',
+          focusField: fallbackFocusField ?? 'model',
+          stage: context.stage
+        }
+      );
+    }
+
+    if (provider && model) {
+      const providerValidation = this.settingsService.validateProviderModel(provider, model, settings);
+      if (!providerValidation.valid && providerValidation.error) {
+        addIssue(
+          { field: 'provider', message: `${prefix}: ${providerValidation.error}` },
+          { focusField: fallbackFocusField ?? 'provider', stage: context.stage }
+        );
+      }
+    }
+
+    if (!profile) {
+      addIssue(
+        { field: 'profile', message: `${prefix} requires profile before run.` },
+        {
+          missingField: 'profile',
+          focusField: fallbackFocusField ?? 'profile',
+          stage: context.stage
+        }
+      );
+      return;
+    }
+
+    const profileValidation = this.settingsService.validateProfile(profile, settings);
+    if (!profileValidation.valid && profileValidation.error) {
+      addIssue(
+        { field: 'profile', message: `${prefix}: ${profileValidation.error}` },
+        { focusField: fallbackFocusField ?? 'profile', stage: context.stage }
+      );
+      return;
+    }
+
+    const profileConfig = settings.providersAndModels.profiles[profile];
+    if (profileConfig && provider && model && (profileConfig.provider !== provider || profileConfig.model !== model)) {
+      addIssue(
+        {
+          field: 'profile',
+          message: `${prefix}: profile '${profile}' expects '${profileConfig.provider}/${profileConfig.model}'.`
+        },
+        { focusField: fallbackFocusField ?? 'profile', stage: context.stage }
+      );
+    }
+  }
+
+  private getPipelineStages(settings: Settings): string[] {
+    if (settings.pipelineDefaults.template === 'complex') {
+      return ['capture', 'architecture', 'split', 'code', 'audit'];
+    }
+    return ['capture', 'plan', 'code', 'audit'];
   }
 
   private async findUnavailableContexts(contexts: readonly string[]): Promise<string[]> {

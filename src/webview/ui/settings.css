@@ -17,6 +17,8 @@
   --accent-primary-soft: rgba(59, 130, 246, 0.2);
   --accent-success: #34d399;
   --accent-error: #fb7185;
+  --font-ui: 'Poppins', 'URW Gothic', 'Noto Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Noto Sans Mono', 'Noto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 * {
@@ -32,7 +34,7 @@ body {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-ui);
   color: var(--text-secondary);
   background:
     radial-gradient(1100px 620px at 90% -10%, #203256 0%, transparent 56%),
@@ -239,7 +241,7 @@ body {
   color: #d7e4ff;
   resize: vertical;
   padding: 12px;
-  font: 12px/1.45 Consolas, 'Courier New', monospace;
+  font: 12px/1.45 var(--font-mono);
 }
 
 .settings-json:focus {
@@ -317,5 +319,188 @@ body {
 
   .settings-panels {
     padding: 12px 16px 16px;
+  }
+}
+
+.settings-panel-content {
+  margin-top: 16px;
+}
+
+.settings-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(10, 18, 32, 0.88);
+  padding: 14px;
+}
+
+.settings-card h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.settings-note {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.settings-field:last-child {
+  margin-bottom: 0;
+}
+
+.settings-field label {
+  font-size: 12px;
+  color: #9eb2d9;
+}
+
+.settings-field input,
+.settings-field select,
+.settings-field textarea,
+.settings-mapping-row select {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: rgba(8, 13, 24, 0.95);
+  color: #d7e4ff;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.settings-field textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.settings-field input:focus,
+.settings-field select:focus,
+.settings-field textarea:focus,
+.settings-mapping-row select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.settings-json-inline {
+  min-height: 180px;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-toggle input {
+  width: 14px;
+  height: 14px;
+}
+
+.settings-check-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.settings-check-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-check-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-field-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-mapping-header,
+.settings-mapping-row {
+  display: grid;
+  grid-template-columns: 120px repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.settings-mapping-header {
+  margin-bottom: 8px;
+  color: #9eb2d9;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-mapping-row {
+  margin-bottom: 8px;
+}
+
+.settings-mapping-row:last-child {
+  margin-bottom: 0;
+}
+
+.settings-mapping-stage {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.settings-advanced-json {
+  margin-top: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(8, 14, 24, 0.55);
+}
+
+.settings-advanced-json > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.settings-advanced-json[open] > summary {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-advanced-json .settings-editor-block {
+  margin-top: 0;
+  padding: 12px;
+}
+
+@media (max-width: 1200px) {
+  .settings-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-mapping-header,
+  .settings-mapping-row {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-mapping-header {
+    display: none;
   }
 }

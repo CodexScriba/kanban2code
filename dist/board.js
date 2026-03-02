@@ -11,6 +11,21 @@
   var isPriority = (value) => typeof value === "string" && PRIORITIES.includes(value);
   var isRunState = (value) => typeof value === "string" && RUN_STATES.includes(value);
   var isQueueScope = (value) => typeof value === "string" && QUEUE_SCOPES.includes(value);
+  var VALIDATION_FOCUS_FIELDS = [
+    "title",
+    "location",
+    "phase",
+    "stage",
+    "role",
+    "provider",
+    "model",
+    "profile",
+    "contexts",
+    "skills",
+    "pipeline"
+  ];
+  var isValidationFocusField = (value) => typeof value === "string" && VALIDATION_FOCUS_FIELDS.includes(value);
+  var isValidationFocusTarget = (value) => isObject(value) && isValidationFocusField(value.field) && (!("stage" in value) || value.stage === void 0 || typeof value.stage === "string");
   var isQueueItem = (value) => {
     return isObject(value) && typeof value.taskId === "string" && isQueueScope(value.scope) && isRunState(value.state) && typeof value.enqueuedAt === "number" && Number.isFinite(value.enqueuedAt);
   };
@@ -52,7 +67,10 @@
       return isObject(value.payload) && Array.isArray(value.payload.items) && value.payload.items.every(isQueueItem) && (value.payload.activeTaskId === null || typeof value.payload.activeTaskId === "string") && typeof value.payload.totalQueued === "number" && Number.isFinite(value.payload.totalQueued);
     }
     if (value.type === "LoadTaskEditor") {
-      return isObject(value.payload) && typeof value.payload.taskPath === "string" && typeof value.payload.taskId === "string" && isTask(value.payload.task);
+      return isObject(value.payload) && typeof value.payload.taskPath === "string" && typeof value.payload.taskId === "string" && isTask(value.payload.task) && (!("focusTargets" in value.payload) || value.payload.focusTargets === void 0 || Array.isArray(value.payload.focusTargets) && value.payload.focusTargets.every(isValidationFocusTarget));
+    }
+    if (value.type === "FocusTaskEditor") {
+      return isObject(value.payload) && Array.isArray(value.payload.focusTargets) && value.payload.focusTargets.every(isValidationFocusTarget);
     }
     return false;
   };

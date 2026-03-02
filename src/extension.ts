@@ -7,6 +7,7 @@ import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
 import { TaskService } from './services/task-service';
 import { SettingsService } from './services/settings-service';
 import { QueueService } from './services/queue-service';
+import type { ValidationFocusTarget } from './types/runner';
 
 export function activate(context: vscode.ExtensionContext): void {
   const scannerRuntime: TaskScannerRuntime = {
@@ -27,7 +28,10 @@ export function activate(context: vscode.ExtensionContext): void {
       if (firstError) {
         void vscode.window.showWarningMessage(firstError.message);
       }
-      await vscode.commands.executeCommand('kanban2code.openTaskEditor', taskPath);
+      await vscode.commands.executeCommand('kanban2code.openTaskEditor', {
+        taskId: taskPath,
+        focusTargets: validation.focusTargets
+      });
     }
   });
   const sidebarProvider = new SidebarProvider(context.extensionUri, taskScanner, queueService);
@@ -78,8 +82,15 @@ export function activate(context: vscode.ExtensionContext): void {
               typeof (arg as { taskId?: unknown }).taskId === 'string'
             ? (arg as { taskId: string }).taskId
             : undefined;
+      const focusTargets =
+        arg &&
+        typeof arg === 'object' &&
+        'focusTargets' in arg &&
+        Array.isArray((arg as { focusTargets?: unknown }).focusTargets)
+          ? ((arg as { focusTargets: ValidationFocusTarget[] }).focusTargets ?? [])
+          : undefined;
 
-      TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath);
+      TaskEditorPanel.createOrShow(context.extensionUri, taskService, taskPath, focusTargets);
     })
   );
 
