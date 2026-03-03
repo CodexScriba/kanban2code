@@ -1,5 +1,6 @@
 ---
 tags: [feature, p1]
+stage: completed
 agent: coder
 contexts: [skill-vscode]
 ---
