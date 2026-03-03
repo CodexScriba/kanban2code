@@ -1,8 +1,7 @@
 ---
 stage: completed
-agent: auditor
+agent: coder
 tags: [feature, p1]
-agent: implementer
 contexts: [skill-frontend-design]
 ---
 

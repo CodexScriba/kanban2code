@@ -1,5 +1,4 @@
 ---
-agent: auditor
 stage: completed
 agent: coder
 tags: [feature, p1]
