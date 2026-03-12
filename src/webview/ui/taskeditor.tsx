@@ -68,14 +68,11 @@ declare const acquireVsCodeApi: (() => VscodeApi) | undefined;
 
 const DEFAULT_ROLES = ['planner', 'coder', 'auditor', 'architect'];
 const DEFAULT_PROVIDER_MODELS: Record<string, string[]> = {
-  claude: ['yolo'],
-  codex: ['yolo'],
-  gemini: ['yolo'],
-  kimi: ['yolo']
+  alibaba: ['glm-5', 'qwen3-coder-plus', 'qwen3-max-2026-01-23']
 };
 const DEFAULT_PROFILES: Record<string, ProfileConfig> = {
-  default: { provider: 'claude', model: 'yolo' },
-  'coder-default': { provider: 'codex', model: 'yolo' }
+  default: { provider: 'alibaba', model: 'glm-5' },
+  'coder-default': { provider: 'alibaba', model: 'qwen3-coder-plus' }
 };
 
 
@@ -486,11 +483,11 @@ const STEP_ROLE_DEFAULTS: Record<string, string> = {
   completed: 'auditor'
 };
 const STEP_PROVIDER_DEFAULTS: Record<string, string> = {
-  capture: 'claude',
-  plan: 'claude',
-  code: 'codex',
-  audit: 'claude',
-  completed: 'claude'
+  capture: 'alibaba',
+  plan: 'alibaba',
+  code: 'alibaba',
+  audit: 'alibaba',
+  completed: 'alibaba'
 };
 
 const createEmptyState = (): TaskEditorFormState => ({
@@ -814,12 +811,12 @@ const toStepId = (): string => {
 const createPipelineStep = (name: string): PipelineStepConfig => {
   const normalizedName = normalizeStageName(name) || 'step';
   const defaultRole = STEP_ROLE_DEFAULTS[normalizedName] ?? (formState.role || 'planner');
-  const defaultProvider = STEP_PROVIDER_DEFAULTS[normalizedName] ?? (formState.provider || 'claude');
+  const defaultProvider = STEP_PROVIDER_DEFAULTS[normalizedName] ?? (formState.provider || 'alibaba');
   const models = getModelsForProvider(defaultProvider);
   const defaultModel =
     normalizedName === normalizeStageName(formState.stage)
-      ? formState.model || models[0] || 'yolo'
-      : models[0] || formState.model || 'yolo';
+      ? formState.model || models[0] || 'glm-5'
+      : models[0] || formState.model || 'glm-5';
 
   return {
     id: toStepId(),

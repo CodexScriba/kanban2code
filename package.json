@@ -56,7 +56,8 @@
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "typecheck": "tsc --noEmit",
-    "test": "tsc -p tsconfig.json && node --test dist/services/*.test.js"
+    "test": "tsc -p tsconfig.json && node --test dist/services/*.test.js",
+    "smoke:alibaba": "tsc -p tsconfig.json && node dist/services/smoke_test_alibaba.js"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

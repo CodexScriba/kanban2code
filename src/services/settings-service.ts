@@ -60,20 +60,25 @@ const DEFAULT_SETTINGS: Settings = {
     auditBounceCap: 2
   },
   stageRuntimeMapping: {
-    plan: { role: 'planner', provider: 'claude', model: 'yolo', profile: 'default' },
-    code: { role: 'coder', provider: 'codex', model: 'yolo', profile: 'coder-default' },
-    audit: { role: 'auditor', provider: 'claude', model: 'yolo', profile: 'default' }
+    plan: { role: 'planner', provider: 'alibaba', model: 'glm-5', profile: 'default' },
+    code: { role: 'coder', provider: 'alibaba', model: 'qwen3-coder-plus', profile: 'coder-default' },
+    audit: { role: 'auditor', provider: 'alibaba', model: 'glm-5', profile: 'default' }
   },
   providersAndModels: {
     providers: {
-      kimi: { enabled: true, models: ['yolo'] },
-      gemini: { enabled: true, models: ['yolo'] },
-      codex: { enabled: true, models: ['yolo'] },
-      claude: { enabled: true, models: ['yolo'] }
+      alibaba: {
+        enabled: true,
+        models: ['glm-5', 'qwen3-coder-plus', 'qwen3-max-2026-01-23'],
+        endpoint: 'https://coding-intl.dashscope.aliyuncs.com/v1'
+      }
     },
     profiles: {
-      default: { provider: 'claude', model: 'yolo', description: 'Default profile' },
-      'coder-default': { provider: 'codex', model: 'yolo', description: 'Default coder profile' }
+      default: { provider: 'alibaba', model: 'glm-5', description: 'Default Alibaba Coding Plan profile' },
+      'coder-default': {
+        provider: 'alibaba',
+        model: 'qwen3-coder-plus',
+        description: 'Alibaba Coding Plan coder profile'
+      }
     }
   },
   agentBehavior: {
@@ -252,7 +257,7 @@ export class SettingsService {
       return fromDefaults;
     }
 
-    return { role: 'planner', provider: 'claude', model: 'yolo', profile: 'default' };
+    return { role: 'planner', provider: 'alibaba', model: 'glm-5', profile: 'default' };
   }
 
   private getGlobalPath(): string {

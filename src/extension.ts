@@ -7,6 +7,7 @@ import { TaskScanner, type TaskScannerRuntime } from './services/task-scanner';
 import { TaskService } from './services/task-service';
 import { SettingsService } from './services/settings-service';
 import { QueueService } from './services/queue-service';
+import { AlibabaService } from './services/alibaba-service';
 import type { ValidationFocusTarget } from './types/runner';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -22,6 +23,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const taskService = new TaskService(workspaceRoot ?? '');
   const settingsService = new SettingsService(workspaceRoot ?? '');
+  const alibabaService = new AlibabaService(workspaceRoot ?? '', settingsService);
   const queueService = new QueueService(workspaceRoot ?? '', taskService, settingsService, {
     promptForValidation: async (taskPath, validation) => {
       const firstError = validation.errors[0];
@@ -34,7 +36,12 @@ export function activate(context: vscode.ExtensionContext): void {
       });
     }
   });
-  const sidebarProvider = new SidebarProvider(context.extensionUri, taskScanner, queueService);
+  const sidebarProvider = new SidebarProvider(
+    context.extensionUri,
+    taskScanner,
+    queueService,
+    alibabaService
+  );
 
   context.subscriptions.push(taskScanner, queueService, sidebarProvider);
 

@@ -69,7 +69,7 @@ test('merges with precedence project > global > fallback', async () => {
   await writeJson(workspaceRoot, '.kanban2code/settings.json', {
     taskDefaults: { priority: 'low', titleTemplate: 'global-template' },
     stageRuntimeMapping: {
-      plan: { role: 'planner', provider: 'codex', model: 'yolo', profile: 'default' }
+      plan: { role: 'planner', provider: 'alibaba', model: 'glm-5', profile: 'default' }
     }
   });
 
@@ -83,8 +83,8 @@ test('merges with precedence project > global > fallback', async () => {
   const settings = await service.getSettings('roadmap');
   assert.equal(settings.taskDefaults.priority, 'high');
   assert.equal(settings.taskDefaults.titleTemplate, 'global-template');
-  assert.equal(settings.stageRuntimeMapping.plan.provider, 'codex');
-  assert.equal(settings.stageRuntimeMapping.plan.model, 'yolo');
+  assert.equal(settings.stageRuntimeMapping.plan.provider, 'alibaba');
+  assert.equal(settings.stageRuntimeMapping.plan.model, 'glm-5');
   assert.equal(settings.stageRuntimeMapping.plan.profile, 'default');
 });
 
@@ -104,13 +104,13 @@ test('rejects invalid provider/model combinations during updates', async () => {
 
   const invalidUpdate: Partial<Settings> = {
     stageRuntimeMapping: {
-      code: { role: 'coder', provider: 'claude', model: 'not-a-model', profile: 'default' }
+      code: { role: 'coder', provider: 'alibaba', model: 'not-a-model', profile: 'default' }
     }
   };
 
   await assert.rejects(
     async () => service.updateSettings(invalidUpdate),
-    /Model 'not-a-model' not supported by provider 'claude'/
+    /Model 'not-a-model' not supported by provider 'alibaba'/
   );
 });
 

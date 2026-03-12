@@ -344,11 +344,7 @@
           <div class="section-content">
             <div class="provider-row">
               <select class="provider-select" id="providerSelect" title="LLM Provider">
-                <option selected>claude sonnet-4.6</option>
-                <option>claude haiku-4.5</option>
-                <option>claude opus-4.6</option>
-                <option>kimi k2</option>
-                <option>alibaba</option>
+                <option value="alibaba" selected>alibaba \xB7 glm-5</option>
               </select>
               <select class="provider-select" id="taskPicker" title="Task Scope">
                 <option value="">No task selected (general chat)</option>

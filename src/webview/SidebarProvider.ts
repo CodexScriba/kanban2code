@@ -10,6 +10,8 @@ import {
 import { TaskScanner } from '../services/task-scanner';
 import type { TaskSnapshotItem } from '../types/task';
 import { QueueService } from '../services/queue-service';
+import { AlibabaService } from '../services/alibaba-service';
+import { resolveSidebarChatResponse } from '../services/sidebar-chat-router';
 
 export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'kanban2code-sidebar';
@@ -19,7 +21,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly taskScanner: TaskScanner,
-    private readonly queueService: QueueService
+    private readonly queueService: QueueService,
+    private readonly alibabaService: AlibabaService
   ) {
     this.disposables.push(
       this.taskScanner.onDidRefresh(() => {
@@ -120,18 +123,34 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
       void this.webviewView.webview.postMessage(resetMessage);
     }
 
-    const scopeLabel = selectedTask
-      ? `${selectedTask.stage} • ${selectedTask.title}`
-      : 'general chat';
+    await this.postOrchestratorResponse(rawMessage.payload.provider, rawMessage.payload.message, selectedTask);
+
+    await this.postTaskSnapshot(allTasks);
+  }
+
+  private async postOrchestratorResponse(
+    provider: string,
+    message: string,
+    selectedTask: TaskSnapshotItem | null
+  ): Promise<void> {
+    if (!this.webviewView) {
+      return;
+    }
+
+    const responseText = await resolveSidebarChatResponse(
+      provider,
+      message,
+      selectedTask,
+      this.alibabaService
+    );
+
     const responseMessage: OrchestratorResponseMessage = {
       type: 'OrchestratorResponse',
       payload: {
-        message: `Context received (${scopeLabel}) via provider ${rawMessage.payload.provider}.`
+        message: responseText
       }
     };
     void this.webviewView.webview.postMessage(responseMessage);
-
-    await this.postTaskSnapshot(allTasks);
   }
 
   private async postTaskSnapshot(preloadedTasks?: TaskSnapshotItem[]): Promise<void> {

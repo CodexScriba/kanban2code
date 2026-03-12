@@ -10,7 +10,7 @@ Build a lightweight **Kanban2Code** VS Code extension that combines a kanban wor
 
 VS Code extension with sidebar webview support. Extension host registers a WebviewViewProvider that serves a bundled React-ready webview with CSP and theme integration.
 
-The current sidebar shell includes a compact chat layout with a persisted footer `Controls` toggle, empty-by-default chat history, and a provider selector that now includes `alibaba`.
+The current sidebar shell includes a compact chat layout with a persisted footer `Controls` toggle, empty-by-default chat history, and an Alibaba-only provider selector backed by the Coding Plan OpenAI-compatible endpoint.
 
 ## File Tree
 
