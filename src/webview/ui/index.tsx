@@ -57,66 +57,7 @@ root.innerHTML = `
         </div>
       </div>
 
-      <div class="chat-history" id="chatHistory">
-        <div class="message user">
-          <div class="message-author">You</div>
-          <div class="message-content">wants to build notifications — email on review submit, mobile push for iOS/Android</div>
-        </div>
-
-        <div class="message assistant">
-          <div class="message-author">Orchestrator</div>
-          <div class="message-content">Should we include retry logic and failure logging for the notification system? Also, do you want this to be async or would you prefer real-time websockets?</div>
-        </div>
-
-        <div class="message user">
-          <div class="message-author">You</div>
-          <div class="message-content">yes, retries and logs, keep async, no websockets</div>
-        </div>
-
-        <div class="message assistant">
-          <div class="message-author">Orchestrator</div>
-          <div class="message-content">Here's a task scoped to your pipeline:</div>
-        </div>
-
-        <div class="task-proposal">
-          <div class="task-header">
-            <div class="task-label">Task Proposal</div>
-            <div class="task-stage-pill">
-              <span class="stage-dot capture"></span>
-              <span>Capture</span>
-            </div>
-          </div>
-
-          <div class="task-title">Review System — Notification Delivery Pipeline</div>
-
-          <div class="task-row">
-            <div class="task-row-label">Agent</div>
-            <div class="task-row-value">architect</div>
-          </div>
-
-          <div class="task-row">
-            <div class="task-row-label">Skills</div>
-            <div class="task-row-value">
-              <span class="task-tag">nextjs-core</span>
-              <span class="task-tag">drizzle-orm</span>
-              <span class="task-tag">server-actions</span>
-            </div>
-          </div>
-
-          <div class="task-row">
-            <div class="task-row-label">Tags</div>
-            <div class="task-row-value">
-              <span class="task-tag">feature</span>
-              <span class="task-tag">api</span>
-            </div>
-          </div>
-
-          <div class="task-actions">
-            <button class="btn-secondary" type="button">Edit</button>
-            <button class="btn-primary" type="button">Capture Task</button>
-          </div>
-        </div>
-      </div>
+      <div class="chat-history" id="chatHistory"></div>
     </div>
 
     <div class="kanban-view" id="kanbanView">
@@ -249,91 +190,111 @@ root.innerHTML = `
     </div>
 
     <div class="footer">
-      <div class="footer-section" data-section="context">
-        <div class="section-header">
-          <span>Context</span>
-          <span class="count-badge">2</span>
-        </div>
-        <div class="chips-container">
-          <div class="chip">
-            <span>architecture.md</span>
-            <button class="chip-remove" type="button" aria-label="Remove context">×</button>
+      <div id="footerControls" class="footer-controls">
+        <div class="footer-section" data-section="context">
+          <div class="section-header">
+            <span>Context</span>
+            <span class="count-badge">2</span>
           </div>
-          <div class="chip">
-            <span>force-summary.md</span>
-            <button class="chip-remove" type="button" aria-label="Remove context">×</button>
-          </div>
-          <div class="dropdown-container">
-            <button class="btn-add" type="button" data-toggle-dropdown="contextDropdown">
-              <span>+</span>
-              <span>Add</span>
-            </button>
-            <div class="dropdown-menu" id="contextDropdown">
-              <button class="dropdown-item" type="button" data-add-context="review-system-arch.md">
-                <span>review-system-arch.md</span>
-                <span class="token-count">~2.1k</span>
-              </button>
-              <button class="dropdown-item" type="button" data-add-context="api-contracts.md">
-                <span>api-contracts.md</span>
-                <span class="token-count">~890</span>
-              </button>
+          <div class="section-content">
+            <div class="chips-container">
+              <div class="chip">
+                <span>architecture.md</span>
+                <button class="chip-remove" type="button" aria-label="Remove context">×</button>
+              </div>
+              <div class="chip">
+                <span>force-summary.md</span>
+                <button class="chip-remove" type="button" aria-label="Remove context">×</button>
+              </div>
+              <div class="dropdown-container">
+                <button class="btn-add" type="button" data-toggle-dropdown="contextDropdown">
+                  <span>+</span>
+                  <span>Add</span>
+                </button>
+                <div class="dropdown-menu" id="contextDropdown">
+                  <button class="dropdown-item" type="button" data-add-context="review-system-arch.md">
+                    <span>review-system-arch.md</span>
+                    <span class="token-count">~2.1k</span>
+                  </button>
+                  <button class="dropdown-item" type="button" data-add-context="api-contracts.md">
+                    <span>api-contracts.md</span>
+                    <span class="token-count">~890</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="footer-section" data-section="skills">
-        <div class="section-header">
-          <span>Skills</span>
-          <span class="count-badge">2</span>
-        </div>
-        <div class="chips-container">
-          <div class="chip auto">
-            <span>nextjs-core</span>
-            <span class="chip-auto-badge">auto</span>
-            <button class="chip-remove" type="button" aria-label="Remove skill">×</button>
+        <div class="footer-section" data-section="skills">
+          <div class="section-header">
+            <span>Skills</span>
+            <span class="count-badge">2</span>
           </div>
-          <div class="chip auto">
-            <span>drizzle-orm</span>
-            <span class="chip-auto-badge">auto</span>
-            <button class="chip-remove" type="button" aria-label="Remove skill">×</button>
-          </div>
-          <div class="dropdown-container">
-            <button class="btn-add" type="button" data-toggle-dropdown="skillsDropdown">
-              <span>+</span>
-              <span>Add</span>
-            </button>
-            <div class="dropdown-menu" id="skillsDropdown">
-              <button class="dropdown-item" type="button" data-add-skill="server-actions">
-                <span>server-actions</span>
-              </button>
-              <button class="dropdown-item" type="button" data-add-skill="react-query">
-                <span>react-query</span>
-              </button>
-              <button class="dropdown-item" type="button" data-add-skill="stripe">
-                <span>stripe</span>
-              </button>
+          <div class="section-content">
+            <div class="chips-container">
+              <div class="chip auto">
+                <span>nextjs-core</span>
+                <span class="chip-auto-badge">auto</span>
+                <button class="chip-remove" type="button" aria-label="Remove skill">×</button>
+              </div>
+              <div class="chip auto">
+                <span>drizzle-orm</span>
+                <span class="chip-auto-badge">auto</span>
+                <button class="chip-remove" type="button" aria-label="Remove skill">×</button>
+              </div>
+              <div class="dropdown-container">
+                <button class="btn-add" type="button" data-toggle-dropdown="skillsDropdown">
+                  <span>+</span>
+                  <span>Add</span>
+                </button>
+                <div class="dropdown-menu" id="skillsDropdown">
+                  <button class="dropdown-item" type="button" data-add-skill="server-actions">
+                    <span>server-actions</span>
+                  </button>
+                  <button class="dropdown-item" type="button" data-add-skill="react-query">
+                    <span>react-query</span>
+                  </button>
+                  <button class="dropdown-item" type="button" data-add-skill="stripe">
+                    <span>stripe</span>
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div class="footer-section" data-section="provider">
+          <div class="section-header">
+            <span>Provider & Task</span>
+          </div>
+          <div class="section-content">
+            <div class="provider-row">
+              <select class="provider-select" id="providerSelect" title="LLM Provider">
+                <option selected>claude sonnet-4.6</option>
+                <option>claude haiku-4.5</option>
+                <option>claude opus-4.6</option>
+                <option>kimi k2</option>
+                <option>alibaba</option>
+              </select>
+              <select class="provider-select" id="taskPicker" title="Task Scope">
+                <option value="">No task selected (general chat)</option>
+              </select>
+            </div>
+            <div class="task-picker-notice" id="taskPickerNotice" aria-live="polite"></div>
           </div>
         </div>
       </div>
 
       <div class="footer-section">
-        <div class="provider-row">
-          <select class="provider-select" id="providerSelect" title="LLM Provider">
-            <option selected>claude sonnet-4.6</option>
-            <option>claude haiku-4.5</option>
-            <option>claude opus-4.6</option>
-            <option>kimi k2</option>
-          </select>
-          <select class="provider-select" id="taskPicker" title="Task Scope">
-            <option value="">No task selected (general chat)</option>
-          </select>
+        <div class="compose-actions">
+          <button type="button" class="btn-toggle-controls" id="toggleControlsBtn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M14 7V9H2V7H14ZM14 3V5H2V3H14ZM14 11V13H2V11H14Z"/>
+            </svg>
+            <span>Controls</span>
+          </button>
         </div>
-        <div class="task-picker-notice" id="taskPickerNotice" aria-live="polite"></div>
-      </div>
-
-      <div class="footer-section">
         <div class="compose-row">
           <textarea class="compose-textarea" id="composeInput" placeholder="Message orchestrator..." rows="1"></textarea>
           <button type="button" class="btn-send" id="sendBtn" title="Send message" aria-label="Send message">
@@ -359,6 +320,8 @@ const providerSelect = root.querySelector<HTMLSelectElement>('#providerSelect');
 const taskPicker = root.querySelector<HTMLSelectElement>('#taskPicker');
 const taskPickerNotice = root.querySelector<HTMLElement>('#taskPickerNotice');
 const runnerIndicator = root.querySelector<HTMLElement>('#runnerIndicator');
+const toggleControlsBtn = root.querySelector<HTMLButtonElement>('#toggleControlsBtn');
+const footerControls = root.querySelector<HTMLElement>('#footerControls');
 
 if (
   !textarea ||
@@ -372,13 +335,16 @@ if (
   !providerSelect ||
   !taskPicker ||
   !taskPickerNotice ||
-  !runnerIndicator
+  !runnerIndicator ||
+  !toggleControlsBtn ||
+  !footerControls
 ) {
   throw new Error('Sidebar UI is missing required elements');
 }
 
 interface PersistedUiState {
   selectedTaskId: string | null;
+  showControls: boolean;
 }
 
 interface VsCodeApi<State> {
@@ -394,6 +360,7 @@ const vscodeApi =
 
 const savedState = vscodeApi?.getState();
 let selectedTaskId: string | null = savedState?.selectedTaskId ?? null;
+let showControls: boolean = savedState?.showControls ?? false;
 let knownTasks: TaskSnapshotItem[] = [];
 let activeDropdown: HTMLElement | null = null;
 let noticeTimer: number | null = null;
@@ -411,7 +378,23 @@ const truncateLabel = (value: string, maxLength: number): string => {
 };
 
 const updatePersistedState = (): void => {
-  vscodeApi?.setState({ selectedTaskId });
+  vscodeApi?.setState({ selectedTaskId, showControls });
+};
+
+const updateControlsVisibility = (): void => {
+  if (showControls) {
+    footerControls.classList.remove('hidden');
+    toggleControlsBtn.classList.add('active');
+  } else {
+    footerControls.classList.add('hidden');
+    toggleControlsBtn.classList.remove('active');
+  }
+};
+
+const toggleControls = (): void => {
+  showControls = !showControls;
+  updateControlsVisibility();
+  updatePersistedState();
 };
 
 const resolveTaskTitle = (taskIdentifier: string): string => {
@@ -594,6 +577,7 @@ textarea.addEventListener('keydown', (event) => {
 });
 
 sendBtn.addEventListener('click', sendMessage);
+toggleControlsBtn.addEventListener('click', toggleControls);
 captureBtn.addEventListener('click', () => textarea.focus());
 taskPicker.addEventListener('change', () => {
   selectedTaskId = taskPicker.value || null;
@@ -748,4 +732,5 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
 
 requestTaskSnapshot();
 renderRunnerIndicator();
+updateControlsVisibility();
 chatHistory.scrollTop = chatHistory.scrollHeight;

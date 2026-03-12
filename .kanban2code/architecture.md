@@ -10,6 +10,8 @@ Build a lightweight **Kanban2Code** VS Code extension that combines a kanban wor
 
 VS Code extension with sidebar webview support. Extension host registers a WebviewViewProvider that serves a bundled React-ready webview with CSP and theme integration.
 
+The current sidebar shell includes a compact chat layout with a persisted footer `Controls` toggle, empty-by-default chat history, and a provider selector that now includes `alibaba`.
+
 ## File Tree
 
 ```
@@ -25,8 +27,8 @@ kanban2code/
 │   └── webview/
 │       ├── SidebarProvider.ts            # WebviewViewProvider — CSP with nonce, asWebviewUri asset loading, HTML generation
 │       └── ui/
-│           ├── index.tsx                 # Webview entry point — stub, imports styles
-│           └── styles.css                # Base styles using VS Code theme variables (--vscode-*)
+│           ├── index.tsx                 # Sidebar webview shell with compact controls toggle, task-scoped chat, and provider selection
+│           └── styles.css                # Sidebar shell styling for chat layout, compact footer controls, and VS Code-themed surfaces
 ├── docs/
 │   └── design/                           # Design mockups directory (empty, future use)
 ├── kanbanboard-codex.html                # Design reference — kanban board mockup

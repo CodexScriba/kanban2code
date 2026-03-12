@@ -448,6 +448,55 @@ body {
   letter-spacing: 0.5px;
 }
 
+.footer-controls {
+  overflow: hidden;
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.footer-controls.hidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.btn-toggle-controls {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-toggle-controls:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+
+.btn-toggle-controls.active {
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary-hover);
+  border-color: var(--accent-primary);
+}
+
+.compose-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
 .count-badge {
   background: var(--bg-active);
   color: var(--text-secondary);

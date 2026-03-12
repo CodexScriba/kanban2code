@@ -15,6 +15,13 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 
 ## Accepted Task Updates
 
+- date: 2026-03-11
+  - task: `1773282923904-chat-fix-ui`
+  - files-updated:
+    - `src/webview/ui/index.tsx` (removed placeholder chat history messages, added persisted compact `Controls` toggle state, and added `alibaba` to the provider dropdown)
+    - `src/webview/ui/styles.css` (added compact footer controls styling for the sidebar shell)
+  - new-files-created: none
+
 - date: 2026-02-11
   - task: `task1.1-add-agent-and-attempts-fields-to-task-interface`
   - files-updated:
