@@ -14,7 +14,7 @@ Welcome to your new Kanban board!
 
 ## Alibaba Chat Setup
 
-- Put your Coding Plan API key in `/home/cynicus/code/kanban2code/.env` as `ALIBABA_API_KEY=sk-sp-...`
+- Put your Coding Plan API key in `/home/cynicus/code/kanban2code/.env` as `ALIBABA_API_KEY=sk-sp-...` or `ALIBABA_CLOUD_API_KEY=...`
 - The sidebar reads Alibaba endpoint and model overrides from `.kanban2code/settings.json` at `providersAndModels.providers.alibaba`
 - The default OpenAI-compatible base URL is `https://coding-intl.dashscope.aliyuncs.com/v1`
 - The extension now treats `alibaba` as the only configured chat provider in the UI

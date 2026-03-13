@@ -116,7 +116,7 @@ test('sendMessage posts to Alibaba chat completions endpoint and returns assista
   assert.match(body.messages[2]?.content ?? '', /Scoped task: code \| Demo task/);
 });
 
-test('sendMessage loads ALIBABA_API_KEY from workspace .env when process env is empty', async () => {
+test('sendMessage loads Alibaba API key aliases from workspace .env when process env is empty', async () => {
   const workspaceRoot = await createWorkspace();
   await writeJson(workspaceRoot, '.kanban2code/settings.json', {
     providersAndModels: {
@@ -129,7 +129,7 @@ test('sendMessage loads ALIBABA_API_KEY from workspace .env when process env is 
       }
     }
   });
-  await fs.writeFile(path.join(workspaceRoot, '.env'), 'ALIBABA_API_KEY=from-dotenv\n', 'utf8');
+  await fs.writeFile(path.join(workspaceRoot, '.env'), 'ALIBABA_CLOUD_API_KEY=from-dotenv\n', 'utf8');
 
   const env: NodeJS.ProcessEnv = {};
   const service = new AlibabaService(workspaceRoot, createSettingsService(workspaceRoot), {
@@ -155,9 +155,58 @@ test('sendMessage loads ALIBABA_API_KEY from workspace .env when process env is 
 
   assert.equal(result, 'Loaded from .env');
   assert.equal(env.ALIBABA_API_KEY, 'from-dotenv');
+  assert.equal(env.ALIBABA_CLOUD_API_KEY, 'from-dotenv');
 });
 
-test('sendMessage rejects when ALIBABA_API_KEY is missing', async () => {
+test('sendMessage loads Alibaba API key from fallback env search roots', async () => {
+  const workspaceRoot = await createWorkspace();
+  const fallbackRoot = await createWorkspace();
+  await writeJson(workspaceRoot, '.kanban2code/settings.json', {
+    providersAndModels: {
+      providers: {
+        alibaba: {
+          enabled: true,
+          models: ['glm-5'],
+          endpoint: 'https://coding-intl.dashscope.aliyuncs.com/v1'
+        }
+      }
+    }
+  });
+  await fs.writeFile(path.join(fallbackRoot, '.env'), 'ALIBABA_CLOUD_API_KEY=fallback-dotenv\n', 'utf8');
+
+  const env: NodeJS.ProcessEnv = {};
+  const service = new AlibabaService(
+    workspaceRoot,
+    createSettingsService(workspaceRoot),
+    {
+      env,
+      readFile: (filePath) => fs.readFile(filePath, 'utf8'),
+      fetch: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: 'Loaded from fallback .env'
+              }
+            }
+          ]
+        }),
+        text: async () => ''
+      })
+    },
+    { envSearchRoots: [fallbackRoot] }
+  );
+
+  const result = await service.sendMessage({ message: 'Ping Alibaba.' });
+
+  assert.equal(result, 'Loaded from fallback .env');
+  assert.equal(env.ALIBABA_API_KEY, 'fallback-dotenv');
+  assert.equal(env.ALIBABA_CLOUD_API_KEY, 'fallback-dotenv');
+});
+
+test('sendMessage rejects when no supported Alibaba API key variable is present', async () => {
   const workspaceRoot = await createWorkspace();
   const service = new AlibabaService(workspaceRoot, createSettingsService(workspaceRoot), {
     env: {},
@@ -174,7 +223,7 @@ test('sendMessage rejects when ALIBABA_API_KEY is missing', async () => {
       service.sendMessage({
         message: 'Hello'
       }),
-    /ALIBABA_API_KEY/
+    /ALIBABA_(API_KEY|CLOUD_API_KEY)/
   );
 });
 

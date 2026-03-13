@@ -284,11 +284,20 @@ root.innerHTML = `
 
       <div class="footer-section">
         <div class="compose-actions">
-          <button type="button" class="btn-toggle-controls" id="toggleControlsBtn">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M14 7V9H2V7H14ZM14 3V5H2V3H14ZM14 11V13H2V11H14Z"/>
+          <button
+            type="button"
+            class="btn-toggle-controls"
+            id="toggleControlsBtn"
+            aria-controls="footerControls"
+            aria-expanded="false"
+          >
+            <svg class="controls-gear-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M9.1 0L9.9 1.7L11.9 1.3L12.3 3.3L14.3 3.7L13.9 5.7L15.6 6.5L14.6 8.3L16 9.7L14.3 10.9L14.9 12.8L13 13.4L12.8 15.4L11 14.8L9.7 16L8.5 14.3L6.6 14.9L6 13L4 12.8L4.6 11L3 10.3L4 8.5L2.7 7.1L4.4 6.3L3.8 4.4L5.7 3.8L5.9 1.8L7.7 2.4L9.1 0ZM8 5C6.3 5 5 6.3 5 8C5 9.7 6.3 11 8 11C9.7 11 11 9.7 11 8C11 6.3 9.7 5 8 5Z"/>
             </svg>
             <span>Controls</span>
+            <svg class="controls-chevron-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M5.2 2.8L10.4 8L5.2 13.2L4 12L8 8L4 4L5.2 2.8Z"/>
+            </svg>
           </button>
         </div>
         <div class="compose-row">
@@ -378,6 +387,7 @@ const updatePersistedState = (): void => {
 };
 
 const updateControlsVisibility = (): void => {
+  toggleControlsBtn.setAttribute('aria-expanded', showControls ? 'true' : 'false');
   if (showControls) {
     footerControls.classList.remove('hidden');
     toggleControlsBtn.classList.add('active');

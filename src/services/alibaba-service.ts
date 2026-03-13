@@ -19,6 +19,10 @@ interface AlibabaServiceDeps {
   readFile: (filePath: string) => Promise<string>;
 }
 
+interface AlibabaServiceOptions {
+  envSearchRoots?: string[];
+}
+
 export interface AlibabaChatRequest {
   message: string;
   selectedTask?: TaskSnapshotItem | null;
@@ -117,6 +121,11 @@ const buildUserPrompt = (request: AlibabaChatRequest): string => {
 const getProviderConfig = (settings: Settings): ProviderConfig | undefined =>
   settings.providersAndModels.providers.alibaba;
 
+const getConfiguredApiKey = (env: NodeJS.ProcessEnv): string | undefined => {
+  const candidates = [env.ALIBABA_API_KEY?.trim(), env.ALIBABA_CLOUD_API_KEY?.trim()];
+  return candidates.find((candidate) => typeof candidate === 'string' && candidate.length > 0);
+};
+
 const getErrorMessage = (payload: unknown): string | undefined => {
   if (!isRecord(payload)) {
     return undefined;
@@ -159,11 +168,16 @@ const getAssistantMessage = (payload: unknown): string | undefined => {
 };
 
 export class AlibabaService {
+  private readonly envSearchRoots: string[];
+
   constructor(
     private readonly workspaceRoot: string,
     private readonly settingsService: SettingsService,
-    private readonly deps: AlibabaServiceDeps = createDefaultDeps()
-  ) {}
+    private readonly deps: AlibabaServiceDeps = createDefaultDeps(),
+    options: AlibabaServiceOptions = {}
+  ) {
+    this.envSearchRoots = this.buildEnvSearchRoots(options.envSearchRoots ?? []);
+  }
 
   async sendMessage(request: AlibabaChatRequest, projectSlug?: string): Promise<string> {
     const settings = await this.settingsService.getSettings(projectSlug);
@@ -180,7 +194,7 @@ export class AlibabaService {
     const apiKey = await this.getApiKey();
     if (!apiKey) {
       throw new Error(
-        'Alibaba chat is not configured. Set `ALIBABA_API_KEY` in your environment or workspace `.env` file.'
+        'Alibaba chat is not configured. Set `ALIBABA_API_KEY` or `ALIBABA_CLOUD_API_KEY` in your environment or workspace `.env` file.'
       );
     }
 
@@ -230,24 +244,50 @@ export class AlibabaService {
   }
 
   private async getApiKey(): Promise<string | undefined> {
-    const existing = this.deps.env.ALIBABA_API_KEY?.trim();
+    const existing = getConfiguredApiKey(this.deps.env);
     if (existing) {
       return existing;
     }
 
-    const envFilePath = path.join(this.workspaceRoot, '.env');
-    try {
-      const parsed = parseDotEnv(await this.deps.readFile(envFilePath));
-      const fileValue = parsed.ALIBABA_API_KEY?.trim();
-      if (fileValue) {
-        this.deps.env.ALIBABA_API_KEY = fileValue;
-        return fileValue;
+    for (const root of this.envSearchRoots) {
+      const envFilePath = path.join(root, '.env');
+      try {
+        const parsed = parseDotEnv(await this.deps.readFile(envFilePath));
+        const fileValue = parsed.ALIBABA_API_KEY?.trim() || parsed.ALIBABA_CLOUD_API_KEY?.trim();
+        if (fileValue) {
+          this.deps.env.ALIBABA_API_KEY = fileValue;
+          this.deps.env.ALIBABA_CLOUD_API_KEY = fileValue;
+          return fileValue;
+        }
+      } catch {
+        continue;
       }
-    } catch {
-      return undefined;
     }
 
     return undefined;
+  }
+
+  private buildEnvSearchRoots(extraRoots: string[]): string[] {
+    const candidates = [this.workspaceRoot, ...extraRoots, process.cwd()];
+    const uniqueRoots: string[] = [];
+    const seen = new Set<string>();
+
+    for (const candidate of candidates) {
+      const trimmed = candidate.trim();
+      if (!trimmed) {
+        continue;
+      }
+
+      const normalized = path.resolve(trimmed);
+      if (seen.has(normalized)) {
+        continue;
+      }
+
+      seen.add(normalized);
+      uniqueRoots.push(normalized);
+    }
+
+    return uniqueRoots;
   }
 
   private async safeReadJson(response: {

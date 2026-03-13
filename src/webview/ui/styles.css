@@ -477,6 +477,15 @@ body {
   gap: 4px;
 }
 
+.controls-gear-icon {
+  color: var(--accent-cyan);
+}
+
+.controls-chevron-icon {
+  opacity: 0.85;
+  transition: transform 0.2s ease;
+}
+
 .btn-toggle-controls:hover {
   background: var(--bg-hover);
   color: var(--text-secondary);
@@ -487,6 +496,10 @@ body {
   background: var(--accent-primary-muted);
   color: var(--accent-primary-hover);
   border-color: var(--accent-primary);
+}
+
+.btn-toggle-controls.active .controls-chevron-icon {
+  transform: rotate(90deg);
 }
 
 .compose-actions {

@@ -353,3 +353,19 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/services/frontmatter-service.test.ts` - Node test coverage for parse/serialize, malformed input handling, round-trip behavior, default-array safety, and Unicode escapes
     - `src/types/task.ts` - Shared task domain types (`TaskStage`, `Priority`, `TaskFrontmatter`, `Task`)
     - `src/types/gray-matter.d.ts` - Local module typings for `gray-matter` import and stringify usage
+
+- date: 2026-03-12
+  - task: `1773285152789-link-alibaba-api-to-chat`
+  - description: Wired the sidebar chat flow to the Alibaba Coding Plan API provider for real-time orchestrator responses.
+  - files-updated:
+    - `src/extension.ts` (injects `AlibabaService` into `SidebarProvider` with env search roots)
+    - `src/webview/SidebarProvider.ts` (calls `resolveSidebarChatResponse` for Alibaba requests)
+    - `src/services/settings-service.ts` (default provider is now `alibaba` with `glm-5`, `qwen3-coder-plus`, `qwen3-max-2026-01-23` models)
+    - `src/webview/ui/index.tsx` (provider dropdown now shows only `alibaba · glm-5`)
+    - `.kanban2code/how-it-works.md` (added Alibaba Chat Setup documentation)
+  - new-files-created:
+    - `src/services/alibaba-service.ts` - Service for Alibaba Coding Plan API communication via OpenAI-compatible endpoint
+    - `src/services/alibaba-service.test.ts` - Tests for AlibabaService (endpoint routing, .env key loading, error handling)
+    - `src/services/sidebar-chat-router.ts` - Router that dispatches chat requests to AlibabaService or mock fallback
+    - `src/services/sidebar-chat-router.test.ts` - Tests for sidebar chat routing logic
+    - `src/services/smoke_test_alibaba.ts` - Standalone smoke test script for verifying Alibaba API connectivity

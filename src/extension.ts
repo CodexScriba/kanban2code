@@ -20,10 +20,13 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const taskScanner = new TaskScanner(scannerRuntime);
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+  const workspaceRoot = workspaceFolders[0]?.uri.fsPath;
   const taskService = new TaskService(workspaceRoot ?? '');
   const settingsService = new SettingsService(workspaceRoot ?? '');
-  const alibabaService = new AlibabaService(workspaceRoot ?? '', settingsService);
+  const alibabaService = new AlibabaService(workspaceRoot ?? '', settingsService, undefined, {
+    envSearchRoots: [context.extensionUri.fsPath, ...workspaceFolders.map((folder) => folder.uri.fsPath)]
+  });
   const queueService = new QueueService(workspaceRoot ?? '', taskService, settingsService, {
     promptForValidation: async (taskPath, validation) => {
       const firstError = validation.errors[0];
