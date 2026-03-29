@@ -13,3 +13,17 @@
 - The orchestrator should keep context and maintain its own memory.
 - OpenClaw integration idea: connect OpenClaw so the OpenClaw agent can learn how to prompt against or use the orchestration files.
 - This may happen through a skill or through deeper native integration with the orchestrator layer.
+- Screen 1 concept: sidebar with 4 primary buttons:
+  - Connect OpenClaw
+  - Open Chat
+  - Open Sidebar
+  - New Project
+- Naming should be cleaner and more productized than "Use Chat" / "Use Sidebar".
+- New Project should scaffold a fresh project with a better naming convention.
+- Sidebar/home refinement:
+  - Keep: New Task, Project Context, New Agent
+  - Keep: View Kanban button with Settings
+  - Add to top: Connect OpenClaw, Open Chat, Open Sidebar
+  - Remove current section groupings
+  - Show list of tasks and projects with filter options instead
+  - Rename New Project to Create Kanban
