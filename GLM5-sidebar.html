@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban2Code v2 — Home</title>
+<style>
+  /* ──────────────────────────────────────────────
+     RESET & BASE
+     ────────────────────────────────────────────── */
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    /* ── Palette ── */
+    --bg-base:         #0e1017;
+    --bg-surface:      #14161e;
+    --bg-card:         #181b24;
+    --bg-card-hover:   #1d2030;
+    --border-subtle:   rgba(255, 255, 255, 0.055);
+    --border-glow:     rgba(120, 140, 255, 0.12);
+    --text-primary:    #e4e7f1;
+    --text-secondary:  #7a7f96;
+    --text-tertiary:   #4e5269;
+    --accent-blue:     #6b82f7;
+    --accent-blue-dim: rgba(107, 130, 247, 0.10);
+    --accent-cyan:     #5ec4d4;
+    --accent-violet:   #a78bfa;
+    --accent-amber:    #f0a862;
+    --accent-green:    #5ad8a0;
+    --shadow-card:     0 2px 12px rgba(0,0,0,0.35), 0 0.5px 1px rgba(0,0,0,0.25);
+    --shadow-card-hover: 0 6px 28px rgba(0,0,0,0.45), 0 0.5px 1px rgba(0,0,0,0.30);
+    --radius-lg:  12px;
+    --radius-md:  10px;
+    --radius-sm:   8px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
+                 "Helvetica Neue", Arial, sans-serif;
+    background: #090a0f;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ──────────────────────────────────────────────
+     FRAME — simulate the VS Code sidebar
+     ────────────────────────────────────────────── */
+  .sidebar-frame {
+    width: 300px;               /* VS Code default sidebar width */
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--bg-base);
+    border-left: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* subtle top-down radial glow — gives the page "air" */
+  .sidebar-frame::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    height: 200px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(107, 130, 247, 0.06) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ──────────────────────────────────────────────
+     LAYOUT CONTAINER
+     ────────────────────────────────────────────── */
+  .home {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px 24px;
+    gap: 0;
+    min-height: 100%;
+  }
+
+  /* ──────────────────────────────────────────────
+     BRAND SECTION
+     ────────────────────────────────────────────── */
+  .brand {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .brand-logo {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 14px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-violet) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 4px 16px rgba(107, 130, 247, 0.20),
+      0 0 0 1px rgba(107, 130, 247, 0.12);
+    position: relative;
+  }
+
+  /* Logo icon — pure CSS kanban-ish grid */
+  .brand-logo svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .brand-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .brand-subtitle {
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    letter-spacing: 0.15px;
+  }
+
+  /* ──────────────────────────────────────────────
+     DIVIDER LINE
+     ────────────────────────────────────────────── */
+  .divider {
+    width: 36px;
+    height: 1px;
+    margin: 0 auto 26px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--border-subtle) 50%,
+      transparent 100%
+    );
+    border: none;
+  }
+
+  /* ──────────────────────────────────────────────
+     ACTION CARDS — the core interaction layer
+     ────────────────────────────────────────────── */
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.25s ease,
+      transform 0.18s ease;
+    box-shadow: var(--shadow-card);
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+  }
+
+  /* inner top-edge highlight */
+  .action-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0.06) 50%,
+      transparent 100%
+    );
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+  .action-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(255,255,255,0.08);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-1px);
+  }
+
+  .action-card:active {
+    transform: translateY(0.5px) scale(0.995);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    transition-duration: 0.06s;
+  }
+
+  /* ── Card icon container ── */
+  .action-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .action-icon svg {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Per-card accent tints ── */
+  .action-card[data-accent="blue"] .action-icon {
+    background: rgba(107, 130, 247, 0.12);
+    color: var(--accent-blue);
+    box-shadow: inset 0 0 0 1px rgba(107, 130, 247, 0.08);
+  }
+  .action-card[data-accent="cyan"] .action-icon {
+    background: rgba(94, 196, 212, 0.10);
+    color: var(--accent-cyan);
+    box-shadow: inset 0 0 0 1px rgba(94, 196, 212, 0.07);
+  }
+  .action-card[data-accent="violet"] .action-icon {
+    background: rgba(167, 139, 250, 0.12);
+    color: var(--accent-violet);
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.08);
+  }
+  .action-card[data-accent="amber"] .action-icon {
+    background: rgba(240, 168, 98, 0.11);
+    color: var(--accent-amber);
+    box-shadow: inset 0 0 0 1px rgba(240, 168, 98, 0.07);
+  }
+
+  /* ── Card text ── */
+  .action-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .action-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .action-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+  }
+
+  /* ── Chevron indicator ── */
+  .action-chevron {
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    color: var(--text-tertiary);
+  }
+
+  .action-card:hover .action-chevron {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ──────────────────────────────────────────────
+     STATUS CARD — lightweight context area
+     ────────────────────────────────────────────── */
+  .status-area {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+
+  .status-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 6px rgba(90, 216, 160, 0.30);
+    flex-shrink: 0;
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+  }
+
+  .status-text {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+  }
+
+  .status-text strong {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* ──────────────────────────────────────────────
+     FOOTER
+     ────────────────────────────────────────────── */
+  .sidebar-footer {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.1px;
+    padding-bottom: 4px;
+  }
+
+  /* ──────────────────────────────────────────────
+     RESPONSIVE / WIDE PREVIEW
+     ────────────────────────────────────────────── */
+  @media (min-width: 640px) {
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .sidebar-frame {
+      min-height: 640px;
+      height: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border-subtle);
+      box-shadow:
+        0 24px 80px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,255,255,0.03);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar-frame">
+  <div class="home">
+
+    <!-- ═══════════ BRAND ═══════════ -->
+    <div class="brand">
+      <div class="brand-logo">
+        <!-- minimal kanban icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="3" width="7" height="4" rx="1.5"/>
+          <rect x="14" y="10" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="13" width="7" height="7" rx="1.5"/>
+        </svg>
+      </div>
+      <div class="brand-title">Kanban2Code</div>
+      <div class="brand-subtitle">AI-native developer workspace · v2</div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- ═══════════ ACTION CARDS ═══════════ -->
+    <div class="actions">
+
+      <!-- 1 · Connect OpenClaw -->
+      <div class="action-card" data-accent="blue" tabindex="0">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/>
+            <path d="M22 12c0-1.66-.5-3.2-1.36-4.5"/>
+            <circle cx="12" cy="12" r="3"/>
+            <line x1="12" y1="2" x2="12" y2="5"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <span class="action-label">Connect OpenClaw</span>
+          <span class="action-desc">Link your project board</span>
+        </div>
+        <svg class="action-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </div>
+
+      <!-- 2 · Open Chat -->
+      <div class="action-card" data-accent="cyan" tabindex="0">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            <line x1="8" y1="9" x2="13" y2="9"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <span class="action-label">Open Chat</span>
+          <span class="action-desc">AI-powered coding assistant</span>
+        </div>
+        <svg class="action-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </div>
+
+      <!-- 3 · Open Sidebar -->
+      <div class="action-card" data-accent="violet" tabindex="0">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <span class="action-label">Open Sidebar</span>
+          <span class="action-desc">Kanban board explorer</span>
+        </div>
+        <svg class="action-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </div>
+
+      <!-- 4 · Create Kanban -->
+      <div class="action-card" data-accent="amber" tabindex="0">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <span class="action-label">Create Kanban</span>
+          <span class="action-desc">New board from scratch</span>
+        </div>
+        <svg class="action-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </div>
+
+    </div><!-- /actions -->
+
+    <!-- ═══════════ STATUS ═══════════ -->
+    <div class="status-area">
+      <div class="status-card">
+        <div class="status-dot"></div>
+        <div class="status-text"><strong>3 boards</strong> synced · last update 2m ago</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <div class="sidebar-footer">Kanban2Code v2.0 · by OpenClaw</div>
+
+  </div><!-- /home -->
+</div><!-- /sidebar-frame -->
+
+</body>
+</html>
