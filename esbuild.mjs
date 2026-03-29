@@ -1,53 +1,22 @@
-import esbuild from 'esbuild';
+import * as esbuild from 'esbuild';
 
 const watch = process.argv.includes('--watch');
 
-const extensionConfig = {
+const ctx = await esbuild.context({
   entryPoints: ['src/extension.ts'],
+  bundle: true,
   outfile: 'dist/extension.js',
-  bundle: true,
-  platform: 'node',
-  format: 'cjs',
-  target: 'node20',
   external: ['vscode'],
+  format: 'cjs',
+  platform: 'node',
   sourcemap: true,
-  logLevel: 'info'
-};
-
-const webviewConfig = {
-  entryPoints: {
-    webview: 'src/webview/ui/index.tsx',
-    board: 'src/webview/ui/board.tsx',
-    taskeditor: 'src/webview/ui/taskeditor.tsx',
-    settings: 'src/webview/ui/settings.tsx'
-  },
-  outdir: 'dist',
-  bundle: true,
-  platform: 'browser',
-  format: 'iife',
-  target: 'es2020',
-  sourcemap: true,
-  entryNames: '[name]',
-  assetNames: 'assets/[name]-[hash]',
-  logLevel: 'info'
-};
-
-async function runBuild() {
-  if (watch) {
-    const [extensionCtx, webviewCtx] = await Promise.all([
-      esbuild.context(extensionConfig),
-      esbuild.context(webviewConfig)
-    ]);
-
-    await Promise.all([extensionCtx.watch(), webviewCtx.watch()]);
-    console.log('Watching extension and webview bundles...');
-    return;
-  }
-
-  await Promise.all([esbuild.build(extensionConfig), esbuild.build(webviewConfig)]);
-}
-
-runBuild().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  minify: false,
 });
+
+if (watch) {
+  await ctx.watch();
+  console.log('Watching for changes...');
+} else {
+  await ctx.rebuild();
+  await ctx.dispose();
+}

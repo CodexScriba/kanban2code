@@ -1,13 +1,8 @@
 .vscode/**
+.vscode-test/**
 src/**
 node_modules/**
-.eslint*
-.git/**
 .gitignore
-.kanban2code/**
-docs/**
-esbuild.mjs
-tsconfig.json
-*.ts
-*.tsx
 *.map
+tsconfig.json
+esbuild.mjs

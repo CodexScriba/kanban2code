@@ -1,21 +1,15 @@
 {
   "compilerOptions": {
+    "module": "Node16",
     "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "lib": ["ES2020", "DOM"],
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "sourceMap": true,
-    "rootDir": "src",
     "outDir": "dist",
-    "jsx": "react-jsx",
-    "types": ["node", "vscode"],
-    "skipLibCheck": true,
+    "rootDir": "src",
+    "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "esbuild.mjs"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

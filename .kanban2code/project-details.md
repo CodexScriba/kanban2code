@@ -1,4 +1,0 @@
-# Project Details
-
-- **Name:**
-- **Goal:**

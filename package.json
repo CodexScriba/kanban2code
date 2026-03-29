@@ -1,71 +1,28 @@
 {
   "name": "kanban2code",
   "displayName": "Kanban2Code",
-  "description": "Kanban2Code VS Code extension",
+  "description": "Kanban task management inside VS Code",
   "version": "0.0.1",
   "publisher": "kanban2code",
   "license": "UNLICENSED",
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onView:kanban2code-sidebar",
-    "onCommand:kanban2code.openBoard",
-    "onCommand:kanban2code.openTaskEditor",
-    "onCommand:kanban2code.openSettings"
-  ],
+  "categories": ["Other"],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "kanban2code.openBoard",
-        "title": "Kanban2Code: Open Board"
-      },
-      {
-        "command": "kanban2code.openTaskEditor",
-        "title": "Kanban2Code: Open Task Editor"
-      },
-      {
-        "command": "kanban2code.openSettings",
-        "title": "Kanban2Code: Open Settings"
-      }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "kanban2code",
-          "title": "Kanban2Code",
-          "icon": "media/kanban2code.svg"
-        }
-      ]
-    },
-    "views": {
-      "kanban2code": [
-        {
-          "id": "kanban2code-sidebar",
-          "name": "Kanban2Code",
-          "type": "webview"
-        }
-      ]
-    }
+    "commands": []
   },
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "typecheck": "tsc --noEmit",
-    "test": "tsc -p tsconfig.json && node --test dist/services/*.test.js",
-    "smoke:alibaba": "tsc -p tsconfig.json && node dist/services/smoke_test_alibaba.js"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^22.0.0",
     "@types/vscode": "^1.90.0",
-    "esbuild": "^0.25.10",
-    "typescript": "^5.9.2"
-  },
-  "dependencies": {
-    "gray-matter": "^4.0.3"
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
   }
 }
