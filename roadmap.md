@@ -27,3 +27,19 @@
   - Remove current section groupings
   - Show list of tasks and projects with filter options instead
   - Rename New Project to Create Kanban
+- Bootstrapped Kanban2Code v2 with copied seed files for the design-memory + orchestrator pattern from WorkforceMaster so they can go live immediately while the final project structure is still being designed.
+- Seeded files copied for now (temporary structure, subject to future refinement):
+  - docs/design/ui-implementation-system.md
+  - docs/design/ui-components-index.json
+  - docs/design/navbar-porting-map.md
+  - .kanban2code/_context/skills/skill-ui-system-planning-mode.md
+  - .kanban2code/orchestrator/README.md
+  - .kanban2code/orchestrator/run-request.json
+- Intention: preserve the proven workflow of UI shell -> primitive extraction -> planner-readable design memory -> orchestrated plan/code/audit, while Kanban2Code v2 structure is explored in more detail.
+- Separate future task needed: define in detail how task files/workflow should function in Kanban2Code v2.
+- Imported the new architecture-documentation pattern from QueCarGan into Kanban2Code v2 as a seed:
+  - `docs/architecture/architecture-index.json` as the architecture entry point
+  - `docs/architecture/architecture-contract.md` to define how architecture docs are consumed and maintained
+  - architect agent copied from QueCarGan because it already understands the architecture-index workflow
+- Going forward, architecture docs should live under `docs/architecture/`, with `architecture-index.json` as the first file agents/tools read before selecting focused domain docs.
+- This is a temporary imported seed for immediate use while the final Kanban2Code v2 architecture structure is still being refined.

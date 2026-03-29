@@ -1,0 +1,157 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-27",
+  "source_of_truth": {
+    "ui_shell_root": "ui-shell/src/components",
+    "design_system_doc": "docs/design/ui-implementation-system.md"
+  },
+  "shared_components": [
+    {
+      "name": "AppHeader",
+      "kind": "shell",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#appheader"
+    },
+    {
+      "name": "BrandCluster",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#brandcluster"
+    },
+    {
+      "name": "WorkspaceSelector",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#workspaceselector"
+    },
+    {
+      "name": "TeamsFilterPill",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#teamsfilterpill"
+    },
+    {
+      "name": "WorkspaceTabs",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#workspacetabs"
+    },
+    {
+      "name": "DateNavigator",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#datenavigator"
+    },
+    {
+      "name": "ThemeToggleButton",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#themetogglebutton"
+    },
+    {
+      "name": "LoginActionButton",
+      "kind": "shell-subcomponent",
+      "status": "shared",
+      "source_refs": [
+        "ui-shell/src/components/CommandCenterNavbar.jsx"
+      ],
+      "used_by": [
+        "historical",
+        "forecast",
+        "agent"
+      ],
+      "target_files": [
+        "frontend/src/components/shared/AppHeader.jsx"
+      ],
+      "do_not_generalize": false,
+      "notes_doc": "docs/design/navbar-porting-map.md#loginactionbutton"
+    }
+  ],
+  "screen_specific_components": [],
+  "naming_rules": {
+    "shared_prefix": "Use stable semantic names instead of screen-specific names when the visual pattern is truly shared.",
+    "do_not_duplicate": "If a component name already appears in shared_components, reuse or extend it instead of inventing a second version."
+  }
+}
