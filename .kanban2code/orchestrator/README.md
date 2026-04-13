@@ -1,40 +1,44 @@
-# WorkforceMaster Orchestrator
+# Kanban2Code Orchestrator
 
-This is the workspace-level orchestration entrypoint for Kody.
+This folder contains the queue runner that executes Kanban2Code task files through the `planner -> coder -> auditor` pipeline.
 
-## What this does
-
-- runs Kanban2Code task queues through `plan -> code -> audit`
-- uses the workspace agents in `.kanban2code/_agents/`
-- uses the workspace providers in `.kanban2code/_providers/`
-- persists run state, summaries, and logs under `.kanban2code/orchestrator/`
-
-## Why this exists
-
-The imported orchestrator implementation lives in [`agent/orchestrator`](C:\code\workforcemaster\agent\orchestrator), but the active queue runner for this repo should execute against the workspace-owned `.kanban2code/` tree.
+## Files
+- `runner.py` - CLI entry point for `run`, `status`, and `continue`
+- `config.json` - default provider routing, timeouts, retry policy, and CLI detection
+- `run-request.json` - request file that the `orchestrator` agent prepares before a run
+- `run-orchestrator.sh` - small wrapper so the runner can be launched with a stable repo-local command
 
 ## Commands
-
-```powershell
-py .kanban2code/orchestrator/runner.py run --request-file .kanban2code/orchestrator/run-request.json
-py .kanban2code/orchestrator/runner.py status --latest
-py .kanban2code/orchestrator/runner.py continue --latest
+```bash
+python .kanban2code/orchestrator/runner.py run --request-file .kanban2code/orchestrator/run-request.json
+python .kanban2code/orchestrator/runner.py status --latest
+python .kanban2code/orchestrator/runner.py continue --latest
+bash .kanban2code/orchestrator/run-orchestrator.sh run --request-file .kanban2code/orchestrator/run-request.json
+bash .kanban2code/orchestrator/run-orchestrator.sh status --latest
+bash .kanban2code/orchestrator/run-orchestrator.sh continue --latest
 ```
 
-## Current routing
+## Request file
+`run-request.json` can contain explicit task files, folders, or both.
 
-- planner: `gpt-5.4-mini`
-- coder: `gpt-5.4`
-- auditor: `gpt-5.4`
-- escalated auditor: `gpt-5.4`
+- `ordered_tasks` preserves an exact queue if you already know the order
+- `targets` lets the orchestrator expand folders into sorted task lists
+- `provider_selection` can only override a stage's provider if it still matches the configured model usage rules
+- `timeout_overrides` can override `plan`, `code`, or `audit` timeouts
 
-## Runtime model
+Model usage is controlled in `config.json` under `providers`. Each stage entry
+defines the provider alias, model, and required reasoning effort, and the
+runner rejects request-file overrides that would violate those rules.
 
-This runner already gives Kody the core event-driven handoff behavior we want for staged execution:
+If `ordered_tasks` is empty, the runner will derive the queue from `targets`.
 
-- Kody starts a planner/coder/auditor child process
-- Kody waits for the child process to finish
-- Kody parses the task result
-- Kody advances the task and immediately triggers the next stage
+## Runtime outputs
+The runner creates these at execution time:
+- `.kanban2code/orchestrator/logs/YYYY-MM-DD/<run-id>.jsonl`
+- `.kanban2code/orchestrator/logs/YYYY-MM-DD/<run-id>.md`
+- `.kanban2code/orchestrator/logs/YYYY-MM-DD/<run-id>-human-readme.md` when the queue stops for a human
+- `.kanban2code/orchestrator/runs/<run-id>.json`
+- `.kanban2code/orchestrator/state.json`
 
-That means the parent orchestrator keeps context while the stage agent does focused work.
+## Agent entry
+Use `.kanban2code/_agents/10-orchestrator.md` when you want an agent to prepare the queue request and launch the runner.

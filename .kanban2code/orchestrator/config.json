@@ -1,0 +1,110 @@
+{
+  "providers": {
+    "planner": {
+      "alias": "zai-glm5",
+      "model": "zai-coding-plan/glm-5",
+      "config_overrides": {},
+      "rules": {
+        "require_exact_alias": true,
+        "require_exact_model": true,
+        "required_config_overrides": {}
+      }
+    },
+    "coder": {
+      "alias": "zai-glm51",
+      "model": "zai-coding-plan/glm-5.1",
+      "config_overrides": {},
+      "rules": {
+        "require_exact_alias": true,
+        "require_exact_model": true,
+        "required_config_overrides": {}
+      }
+    },
+    "auditor": {
+      "alias": "zai-glm51",
+      "model": "zai-coding-plan/glm-5.1",
+      "config_overrides": {},
+      "rules": {
+        "require_exact_alias": true,
+        "require_exact_model": true,
+        "required_config_overrides": {}
+      }
+    },
+    "auditor_escalation": {
+      "alias": "zai-glm51",
+      "model": "zai-coding-plan/glm-5.1",
+      "config_overrides": {},
+      "rules": {
+        "require_exact_alias": true,
+        "require_exact_model": true,
+        "required_config_overrides": {}
+      }
+    }
+  },
+  "stage_routing": {
+    "plan": {
+      "agent": "planner",
+      "success_stage": "code",
+      "success_agent": "coder",
+      "required_sections": [
+        "## Refined Prompt",
+        "## Context"
+      ]
+    },
+    "code": {
+      "agent": "coder",
+      "success_stage": "audit",
+      "success_agent": "auditor",
+      "required_sections": [
+        "## Audit"
+      ]
+    },
+    "audit": {
+      "agent": "auditor",
+      "accepted_stage": "completed",
+      "accepted_agent": "auditor",
+      "rework_stage": "code",
+      "rework_agent": "coder",
+      "required_sections": [
+        "## Review"
+      ],
+      "accepted_rating": 8
+    }
+  },
+  "timeouts": {
+    "plan": {
+      "wall_seconds": 600,
+      "idle_seconds": 120
+    },
+    "code": {
+      "wall_seconds": 1800,
+      "idle_seconds": 300
+    },
+    "audit": {
+      "wall_seconds": 1200,
+      "idle_seconds": 180
+    }
+  },
+  "retry_policy": {
+    "transport_max_attempts": 3,
+    "audit_failure_cycles_before_handoff": 2
+  },
+  "logging": {
+    "date_folder_format": "%Y-%m-%d",
+    "retain_recent_events": 20
+  },
+  "cli_detection": {
+    "command": [
+      "opencode"
+    ],
+    "subcommand": "run",
+    "unattended_flag_preference": [
+      "--pure",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "--full-auto",
+      "--yolo"
+    ],
+    "json_flag": "--format",
+    "output_last_message_flag": "-o"
+  }
+}

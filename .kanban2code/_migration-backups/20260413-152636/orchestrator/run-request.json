@@ -1,0 +1,46 @@
+{
+  "run_id": "frontend-roadmap-phase2-20260326",
+  "created_at": "2026-03-26T00:00:00.000Z",
+  "repo_root": ".",
+  "targets": [
+    {
+      "type": "folder",
+      "path": ".kanban2code/projects/roadmap-frontend/phase2-historical-workspace-delivery"
+    }
+  ],
+  "ordered_tasks": [
+    ".kanban2code/projects/roadmap-frontend/phase2-historical-workspace-delivery/task2.1-unified-historical-workspace-delivery.md"
+  ],
+  "selected_stages": [
+    "plan",
+    "code",
+    "audit"
+  ],
+  "resume_mode": "from-task-state",
+  "logging_mode": "json-and-markdown",
+  "stop_policy": {
+    "transport_failures": "abort-run",
+    "planner_questions": "handoff-stop",
+    "third_audit_cycle": "handoff-stop"
+  },
+  "provider_selection": {
+    "planner": {
+      "alias": "codex-low",
+      "model": "gpt-5.4-mini"
+    },
+    "coder": {
+      "alias": "codex",
+      "model": "gpt-5.4"
+    },
+    "auditor": {
+      "alias": "codex-high",
+      "model": "gpt-5.4"
+    },
+    "auditor_escalation": {
+      "alias": "codex-xhigh",
+      "model": "gpt-5.4"
+    }
+  },
+  "timeout_overrides": {},
+  "retry_counters": {}
+}
