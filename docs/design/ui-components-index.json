@@ -1,157 +1,57 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-03-27",
+  "version": "2.0.0",
+  "last_updated": "2026-04-12",
   "source_of_truth": {
-    "ui_shell_root": "ui-shell/src/components",
-    "design_system_doc": "docs/design/ui-implementation-system.md"
+    "visual_baseline": "GLM5-sidebar.html",
+    "design_system_doc": "docs/design/design-system.md",
+    "token_file": "src/styles/tokens.css",
+    "component_root": "src/webviews/components/ui"
   },
   "shared_components": [
     {
-      "name": "AppHeader",
-      "kind": "shell",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#appheader"
+      "name": "ActionCard",
+      "kind": "ui-primitive",
+      "status": "active",
+      "source_refs": ["src/webviews/components/ui/ActionCard.tsx"],
+      "used_by": ["home"],
+      "notes": "Card with icon, label, description, chevron. Accent tinting via data-accent prop."
     },
     {
-      "name": "BrandCluster",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#brandcluster"
+      "name": "ActionIcon",
+      "kind": "ui-primitive",
+      "status": "active",
+      "source_refs": ["src/webviews/components/ui/ActionIcon.tsx"],
+      "used_by": ["ActionCard"],
+      "notes": "36x36 icon container. Accent background tint. Accepts any SVG children."
     },
     {
-      "name": "WorkspaceSelector",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#workspaceselector"
+      "name": "BrandLogo",
+      "kind": "ui-primitive",
+      "status": "active",
+      "source_refs": ["src/webviews/components/ui/BrandLogo.tsx"],
+      "used_by": ["home"],
+      "notes": "42x42 gradient logo tile with kanban grid SVG icon."
     },
     {
-      "name": "TeamsFilterPill",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#teamsfilterpill"
+      "name": "StatusCard",
+      "kind": "ui-primitive",
+      "status": "active",
+      "source_refs": ["src/webviews/components/ui/StatusCard.tsx"],
+      "used_by": ["home"],
+      "notes": "Ambient status strip with animated dot and text. Lives at bottom of home view."
     },
     {
-      "name": "WorkspaceTabs",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#workspacetabs"
-    },
-    {
-      "name": "DateNavigator",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#datenavigator"
-    },
-    {
-      "name": "ThemeToggleButton",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#themetogglebutton"
-    },
-    {
-      "name": "LoginActionButton",
-      "kind": "shell-subcomponent",
-      "status": "shared",
-      "source_refs": [
-        "ui-shell/src/components/CommandCenterNavbar.jsx"
-      ],
-      "used_by": [
-        "historical",
-        "forecast",
-        "agent"
-      ],
-      "target_files": [
-        "frontend/src/components/shared/AppHeader.jsx"
-      ],
-      "do_not_generalize": false,
-      "notes_doc": "docs/design/navbar-porting-map.md#loginactionbutton"
+      "name": "Divider",
+      "kind": "ui-primitive",
+      "status": "active",
+      "source_refs": ["src/webviews/components/ui/Divider.tsx"],
+      "used_by": ["home"],
+      "notes": "Centered 36px fade-edge horizontal rule."
     }
   ],
-  "screen_specific_components": [],
   "naming_rules": {
-    "shared_prefix": "Use stable semantic names instead of screen-specific names when the visual pattern is truly shared.",
-    "do_not_duplicate": "If a component name already appears in shared_components, reuse or extend it instead of inventing a second version."
+    "no_duplicates": "If a component name already exists in shared_components, reuse or extend it via props instead of creating a second version.",
+    "no_per_screen_variants": "Do not create HomeActionCard, SidebarActionCard, etc. Use props to vary behavior.",
+    "accent_pattern": "Color variation on components is handled by the data-accent prop, not by creating accent-specific subcomponents."
   }
 }

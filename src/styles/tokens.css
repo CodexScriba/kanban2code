@@ -1,0 +1,102 @@
+/* ============================================================
+   KANBAN2CODE DESIGN TOKENS
+   src/styles/tokens.css
+
+   Three-layer architecture:
+     Layer 1 — VS Code ambient (defers to editor theme)
+     Layer 2 — Brand constants (always K2C, never overridden)
+     Layer 3 — Component tokens (composed from layers 1 + 2)
+
+   Import this file once at the webview root. All components
+   consume layer-3 tokens only — never raw layer 1 or 2.
+   ============================================================ */
+
+:root {
+
+  /* ──────────────────────────────────────────────────────────
+     LAYER 1 — VS Code ambient
+     Falls back to the approved dark values from GLM5-sidebar.
+     On light/hc themes the VS Code vars take effect automatically.
+     ────────────────────────────────────────────────────────── */
+
+  --k2c-vscode-bg-base:        var(--vscode-sideBar-background,          #0e1017);
+  --k2c-vscode-bg-surface:     var(--vscode-editor-background,           #14161e);
+  --k2c-vscode-bg-card:        var(--vscode-editorWidget-background,     #181b24);
+  --k2c-vscode-text-primary:   var(--vscode-foreground,                  #e4e7f1);
+  --k2c-vscode-text-secondary: var(--vscode-descriptionForeground,       #7a7f96);
+  --k2c-vscode-text-tertiary:  var(--vscode-disabledForeground,          #4e5269);
+  --k2c-vscode-border:         var(--vscode-sideBar-border,              rgba(255,255,255,0.055));
+  --k2c-vscode-focus-ring:     var(--vscode-focusBorder,                 #6b82f7);
+
+  /* ──────────────────────────────────────────────────────────
+     LAYER 2 — Brand constants
+     These never change regardless of VS Code theme.
+     ────────────────────────────────────────────────────────── */
+
+  --k2c-accent-blue:   #6b82f7;
+  --k2c-accent-cyan:   #5ec4d4;
+  --k2c-accent-violet: #a78bfa;
+  --k2c-accent-amber:  #f0a862;
+  --k2c-accent-green:  #5ad8a0;
+  --k2c-accent-red:    #f06464;
+
+  --k2c-accent-blue-dim:   rgba(107, 130, 247, 0.10);
+  --k2c-accent-cyan-dim:   rgba(94,  196, 212, 0.10);
+  --k2c-accent-violet-dim: rgba(167, 139, 250, 0.12);
+  --k2c-accent-amber-dim:  rgba(240, 168,  98, 0.11);
+  --k2c-accent-green-dim:  rgba(90,  216, 160, 0.12);
+  --k2c-accent-red-dim:    rgba(240, 100, 100, 0.12);
+
+  --k2c-gradient-brand: linear-gradient(135deg, var(--k2c-accent-blue) 0%, var(--k2c-accent-violet) 100%);
+
+  --k2c-radius-lg: 12px;
+  --k2c-radius-md: 10px;
+  --k2c-radius-sm:  8px;
+
+  /* ──────────────────────────────────────────────────────────
+     LAYER 3 — Component tokens
+     Components consume only these. This is the public API
+     of the design system.
+     ────────────────────────────────────────────────────────── */
+
+  /* Surfaces */
+  --k2c-bg-base:        var(--k2c-vscode-bg-base);
+  --k2c-bg-surface:     var(--k2c-vscode-bg-surface);
+  --k2c-bg-card:        var(--k2c-vscode-bg-card);
+  --k2c-bg-card-hover:  #1d2030;
+
+  /* Text */
+  --k2c-text-primary:   var(--k2c-vscode-text-primary);
+  --k2c-text-secondary: var(--k2c-vscode-text-secondary);
+  --k2c-text-tertiary:  var(--k2c-vscode-text-tertiary);
+
+  /* Borders */
+  --k2c-border-subtle:  var(--k2c-vscode-border);
+  --k2c-border-glow:    rgba(120, 140, 255, 0.12);
+
+  /* Focus */
+  --k2c-focus-ring:     var(--k2c-vscode-focus-ring);
+
+  /* Shadows */
+  --k2c-shadow-card:    0 2px 12px rgba(0,0,0,0.35), 0 0.5px 1px rgba(0,0,0,0.25);
+  --k2c-shadow-raised:  0 6px 28px rgba(0,0,0,0.45), 0 0.5px 1px rgba(0,0,0,0.30);
+  --k2c-shadow-pressed: 0 1px  6px rgba(0,0,0,0.35);
+
+  /* Logo */
+  --k2c-logo-shadow:
+    0 4px 16px rgba(107, 130, 247, 0.20),
+    0 0 0 1px rgba(107, 130, 247, 0.12);
+
+  /* Status dot */
+  --k2c-status-dot-glow: 0 0 6px rgba(90, 216, 160, 0.30);
+
+  /* Transitions — shorthand for use in `transition:` declarations */
+  --k2c-transition-fast:    60ms ease;
+  --k2c-transition-normal:  200ms ease;
+  --k2c-transition-shadow:  250ms ease;
+  --k2c-transition-move:    180ms ease;
+
+  /* Durations — bare time values for use in `transition-duration:` overrides */
+  --k2c-duration-fast:      60ms;
+  --k2c-duration-normal:    200ms;
+}

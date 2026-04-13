@@ -12,6 +12,24 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kanban2code",
+          "title": "Kanban2Code",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "kanban2code": [
+        {
+          "type": "webview",
+          "id": "kanban2code.homeView",
+          "name": "Home"
+        }
+      ]
+    },
     "commands": []
   },
   "scripts": {
@@ -21,8 +39,14 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   }
 }

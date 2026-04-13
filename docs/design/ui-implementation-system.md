@@ -2,88 +2,44 @@
 
 ## Purpose
 
-This folder is the durable UI-system memory for WorkforceMaster frontend planning.
+This folder is the design-system memory for Kanban2Code. It exists so every webview, panel, and UI surface shares the same visual language and components are never reinvented under different names.
 
-It exists so future planner tasks can:
+## Source of Truth
 
-- reuse already-identified shared UI components
-- avoid duplicating shell patterns under new names
-- preserve `ui-shell` fidelity while still building clean production code
-- know when something must stay screen-specific instead of being forced into a generic abstraction
+- Visual baseline: `GLM5-sidebar.html`
+- Design rules: `docs/design/design-system.md`
+- Component inventory: `docs/design/ui-components-index.json`
+- Token file: `src/styles/tokens.css`
+- Component library: `src/webviews/components/ui/`
 
-## Source Of Truth
+## Before Building Any UI
 
-- Approved visual source: `ui-shell/src/components/`
-- Machine-readable reuse map: `docs/design/ui-components-index.json`
-- Screen-specific mapping docs in this folder
+Read `docs/design/design-system.md` first. Answer:
 
-## Planner Rule
-
-When a frontend planning task touches approved UI, read this folder before deciding component structure.
-
-The planner must answer:
-
-1. Does this visual pattern already exist in the mapping
-2. Should the task reuse it, extend it, or create something new
-3. Is the visible pattern truly shared, or only superficially similar
+1. Does a component already exist in `ui-components-index.json` that covers this visual pattern?
+2. Should the task reuse it, extend it via props, or create something genuinely new?
+3. Is the new surface using tokens from `tokens.css`, not hardcoded values?
 
 ## Reuse Rules
 
-### Reuse existing
+**Reuse** when the approved pattern matches in layout, spacing rhythm, typography hierarchy, and interaction model.
 
-Reuse an existing shared component when the approved pattern is visually identical in:
+**Extend via props** when the base component fits but needs a variant (different accent, different label, optional slot).
 
-- layout
-- spacing rhythm
-- typography hierarchy
-- shell treatment
-- interaction model
+**Create new** when the visual identity or behavior is distinct enough that forcing it into an existing component would require messy conditionals or misrepresent what the component is.
 
-### Extend existing
+**Never** create `HomeActionCard` and `SidebarActionCard` as two names for the same thing.
 
-Extend an existing shared component only when the approved pattern stays part of the same visual system and the change does not create a second disguised component.
+## Current Component Set
 
-### Create new
+See `docs/design/ui-components-index.json` for the full inventory.
 
-Create a new component when the approved UI shows a distinct visual identity or behavior that would become awkward, conditional, or misleading if forced into an existing shared component.
-
-### Do not generalize
-
-If a section is unique enough that forced reuse would create fidelity drift, keep it screen-specific.
-
-## Current Shared Seed
-
-The first mapped shared system is the navbar from `ui-shell/src/components/CommandCenterNavbar.jsx`.
-
-Current shared navbar components:
-
-- `AppHeader`
-- `BrandCluster`
-- `WorkspaceSelector`
-- `TeamsFilterPill`
-- `WorkspaceTabs`
-- `DateNavigator`
-- `ThemeToggleButton`
-- `LoginActionButton`
-
-## Current Limits
-
-- This system is seeded from the navbar only.
-- KPI rails, context views, right rails, tables, and screen-specific cards are not mapped yet.
-- Until those are mapped, planners should avoid inventing broad shared abstractions prematurely.
+Primitives currently available: `ActionCard`, `ActionIcon`, `BrandLogo`, `StatusCard`, `Divider`.
 
 ## Update Rule
 
-When a planner identifies a new reusable approved UI pattern:
+When a new reusable component is built:
 
-1. confirm it is actually shared across screens or slices
-2. add it to `docs/design/ui-components-index.json`
-3. document its visual contract in the relevant porting map
-4. tell the coder to reuse that named component in future tasks
-
-## Failure Modes To Avoid
-
-- creating `AppNavbar`, `CommandNavbar`, and `ShellHeader` as three names for the same thing
-- flattening unique UI into one generic card because it feels cleaner in code
-- reusing a component that is only superficially similar and then drifting from `ui-shell`
-- letting each task invent its own shared component list independently
+1. Confirm it is genuinely shared across more than one surface.
+2. Add it to `ui-components-index.json`.
+3. Document its props and visual contract in `design-system.md`.

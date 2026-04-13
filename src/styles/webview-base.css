@@ -1,0 +1,35 @@
+/* ============================================================
+   KANBAN2CODE WEBVIEW BASE
+   src/styles/webview-base.css
+
+   Reset + body defaults + shared keyframes.
+   Loaded as a <link> from the extension HTML template.
+   Never import this from JS — it would require unsafe-inline CSP.
+   ============================================================ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
+               "Helvetica Neue", Arial, sans-serif;
+  background: var(--k2c-bg-base);
+  color: var(--k2c-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ── Shared animations ── */
+
+@keyframes k2c-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}

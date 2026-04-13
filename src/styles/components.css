@@ -1,0 +1,288 @@
+/* ============================================================
+   KANBAN2CODE COMPONENT STYLES
+   src/styles/components.css
+
+   All component visual rules live here. React components use
+   className only — no inline style props. Tokens come from
+   tokens.css, which must be loaded before this file.
+   ============================================================ */
+
+/* ──────────────────────────────────────────────
+   HOME LAYOUT
+   ────────────────────────────────────────────── */
+
+.k2c-home {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 24px;
+  min-height: 100%;
+  gap: 0;
+}
+
+.k2c-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.k2c-brand-logo-wrap {
+  margin-bottom: 14px;
+}
+
+.k2c-brand-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--k2c-text-primary);
+  line-height: 1;
+}
+
+.k2c-brand-subtitle {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--k2c-text-tertiary);
+  margin-top: 6px;
+  letter-spacing: 0.15px;
+}
+
+.k2c-divider-wrap {
+  margin-bottom: 26px;
+}
+
+.k2c-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.k2c-status-area {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.k2c-footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--k2c-text-tertiary);
+  letter-spacing: 0.1px;
+  padding-bottom: 4px;
+}
+
+/* ──────────────────────────────────────────────
+   DIVIDER
+   ────────────────────────────────────────────── */
+
+.k2c-divider {
+  width: 36px;
+  height: 1px;
+  margin: 0 auto;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--k2c-border-subtle) 50%,
+    transparent 100%
+  );
+  border: none;
+}
+
+/* ──────────────────────────────────────────────
+   BRAND LOGO
+   ────────────────────────────────────────────── */
+
+.k2c-brand-logo {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto;
+  border-radius: var(--k2c-radius-md);
+  background: var(--k2c-gradient-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--k2c-logo-shadow);
+}
+
+/* ──────────────────────────────────────────────
+   ACTION CARD
+   ────────────────────────────────────────────── */
+
+.k2c-action-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--k2c-bg-card);
+  border: 1px solid var(--k2c-border-subtle);
+  border-radius: var(--k2c-radius-lg);
+  cursor: pointer;
+  box-shadow: var(--k2c-shadow-card);
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+  transition:
+    background     var(--k2c-transition-normal),
+    border-color   var(--k2c-transition-normal),
+    box-shadow     var(--k2c-transition-shadow),
+    transform      var(--k2c-transition-move);
+}
+
+/* top-edge inner highlight */
+.k2c-action-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.k2c-action-card:hover {
+  background: var(--k2c-bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--k2c-shadow-raised);
+  transform: translateY(-1px);
+}
+
+.k2c-action-card:active {
+  transform: translateY(0.5px) scale(0.995);
+  box-shadow: var(--k2c-shadow-pressed);
+  transition-duration: var(--k2c-duration-fast);
+}
+
+.k2c-action-card:focus-visible {
+  outline: 2px solid var(--k2c-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── Card text ── */
+
+.k2c-action-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.k2c-action-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--k2c-text-primary);
+  line-height: 1.3;
+}
+
+.k2c-action-desc {
+  font-size: 11px;
+  color: var(--k2c-text-secondary);
+  line-height: 1.35;
+}
+
+/* ── Chevron ── */
+
+.k2c-action-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-4px);
+  color: var(--k2c-text-tertiary);
+  transition:
+    opacity   var(--k2c-transition-normal),
+    transform var(--k2c-transition-normal);
+}
+
+.k2c-action-card:hover .k2c-action-chevron {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ──────────────────────────────────────────────
+   ACTION ICON
+   ────────────────────────────────────────────── */
+
+.k2c-action-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--k2c-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.k2c-action-icon[data-accent="blue"] {
+  background: rgba(107, 130, 247, 0.12);
+  color: var(--k2c-accent-blue);
+  box-shadow: inset 0 0 0 1px rgba(107, 130, 247, 0.08);
+}
+
+.k2c-action-icon[data-accent="cyan"] {
+  background: rgba(94, 196, 212, 0.10);
+  color: var(--k2c-accent-cyan);
+  box-shadow: inset 0 0 0 1px rgba(94, 196, 212, 0.07);
+}
+
+.k2c-action-icon[data-accent="violet"] {
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--k2c-accent-violet);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.08);
+}
+
+.k2c-action-icon[data-accent="amber"] {
+  background: rgba(240, 168, 98, 0.11);
+  color: var(--k2c-accent-amber);
+  box-shadow: inset 0 0 0 1px rgba(240, 168, 98, 0.07);
+}
+
+.k2c-action-icon[data-accent="green"] {
+  background: rgba(90, 216, 160, 0.12);
+  color: var(--k2c-accent-green);
+  box-shadow: inset 0 0 0 1px rgba(90, 216, 160, 0.08);
+}
+
+.k2c-action-icon[data-accent="red"] {
+  background: rgba(240, 100, 100, 0.12);
+  color: var(--k2c-accent-red);
+  box-shadow: inset 0 0 0 1px rgba(240, 100, 100, 0.08);
+}
+
+/* ──────────────────────────────────────────────
+   STATUS CARD
+   ────────────────────────────────────────────── */
+
+.k2c-status-card {
+  background: var(--k2c-bg-surface);
+  border: 1px solid var(--k2c-border-subtle);
+  border-radius: var(--k2c-radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.k2c-status-text {
+  font-size: 11.5px;
+  color: var(--k2c-text-secondary);
+  line-height: 1.35;
+}
+
+.k2c-status-text strong {
+  color: var(--k2c-text-primary);
+  font-weight: 500;
+}
+
+.k2c-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--k2c-accent-green);
+  box-shadow: var(--k2c-status-dot-glow);
+  flex-shrink: 0;
+  animation: k2c-pulse 2.5s ease-in-out infinite;
+}
