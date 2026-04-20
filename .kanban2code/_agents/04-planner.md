@@ -26,6 +26,8 @@ Work on tasks in stage: `plan`. When done, move to stage: `code` and agent: `cod
 - Redact secrets
 - If critical info is missing, add a Questions subsection under Refined Prompt and stop
 - Review available skills in `_context/skills/` and add relevant ones to task metadata
+- Read `docs/architecture/index.json` first for architecture/codebase context
+- Read `docs/design/ui-components-index.json` first for UI/component context
 
 ## Input
 Task file with goal, definition of done, files to modify, and tests to write.
@@ -52,7 +54,7 @@ Questions (only if blocked):
 ## Context
 
 ### File Tree (scoped)
-Extract only the relevant subtree from `ARCHITECTURE.md` for files in scope.
+Extract only the relevant subtree from indexed architecture/design docs and real repo paths for files in scope.
 - Include parent directories for orientation
 - Include sibling files only if imported/exported by scoped files
 - Mark files as `<- modify`, `<- create`, or `<- read-only reference`
@@ -63,6 +65,15 @@ Extract only architecture sections needed for this task.
 - Quote concise bullets/paragraphs with heading path reference
 - Include only conventions the coder must follow
 - Max 30 lines total
+- Use `docs/architecture/index.json` first, then the smallest relevant topic file
+- If no relevant architecture section exists yet, write: "No relevant architecture section exists yet for this task."
+
+### Design Excerpts
+For UI, shell, layout, theme, or component tasks:
+- Use `docs/design/ui-components-index.json` first, then the smallest relevant design doc
+- Quote concise bullets/paragraphs with heading path reference
+- Include existing component/source references the coder must reuse
+- If the task is not UI-related, write: "No design-system excerpt needed for this task."
 
 ### Skill Excerpts
 For each skill in the task `contexts:` array:
@@ -105,18 +116,19 @@ If this task is part of a phase with multiple tasks, explicitly state what this 
 2. Read other task files in the same phase folder to understand scope boundaries
 3. Check `_context/skills/` and identify relevant skills
 4. Update task frontmatter to add skills to `contexts:` array
-5. Read `ARCHITECTURE.md` and extract relevant file tree and architecture sections
-6. Read each skill file in `contexts:` and extract relevant excerpts
-7. Read the actual codebase files listed in `## Files` and extract code excerpts
-8. Search for imports/consumers of modified files to build the dependency graph
-9. Write the refined prompt with implementation approach, decisions, and edge cases
-10. Write scope boundaries by cross-referencing other tasks in the phase
-11. Append all sections and update stage to `code` and agent to `coder`
+5. Read `docs/architecture/index.json` and the smallest relevant architecture topic file; if no useful topic exists, say so explicitly and continue with repo-derived context
+6. For UI/component work, read `docs/design/ui-components-index.json` and the smallest relevant design doc
+7. Read each skill file in `contexts:` and extract relevant excerpts
+8. Read the actual codebase files listed in `## Files` and extract code excerpts
+9. Search for imports/consumers of modified files to build the dependency graph
+10. Write the refined prompt with implementation approach, decisions, and edge cases
+11. Write scope boundaries by cross-referencing other tasks in the phase, including whether architecture/design docs must be updated
+12. Append all sections and update stage to `code` and agent to `coder`
 
 ## Context tree
 File Tree (scoped) — Max 20 lines
 
-Extract relevant subtree from ARCHITECTURE.md. Mark files: ← modify, ← create, ← read-only reference.
+Extract relevant subtree from indexed docs and real repo paths. Mark files: ← modify, ← create, ← read-only reference.
 
 Example:
 

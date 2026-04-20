@@ -37,9 +37,10 @@
   - .kanban2code/orchestrator/run-request.json
 - Intention: preserve the proven workflow of UI shell -> primitive extraction -> planner-readable design memory -> orchestrated plan/code/audit, while Kanban2Code v2 structure is explored in more detail.
 - Separate future task needed: define in detail how task files/workflow should function in Kanban2Code v2.
-- Imported the new architecture-documentation pattern from QueCarGan into Kanban2Code v2 as a seed:
-  - `docs/architecture/architecture-index.json` as the architecture entry point
-  - `docs/architecture/architecture-contract.md` to define how architecture docs are consumed and maintained
-  - architect agent copied from QueCarGan because it already understands the architecture-index workflow
-- Going forward, architecture docs should live under `docs/architecture/`, with `architecture-index.json` as the first file agents/tools read before selecting focused domain docs.
-- This is a temporary imported seed for immediate use while the final Kanban2Code v2 architecture structure is still being refined.
+- Normalized the architecture-documentation pattern for Kanban2Code v2:
+  - `docs/architecture/index.json` is the architecture entry point
+  - `docs/architecture.md` is a landing page only
+  - focused topic files live under `docs/architecture/`
+  - design/component lookup starts from `docs/design/ui-components-index.json`
+- Going forward, architecture docs should live under `docs/architecture/`, with `index.json` as the first file agents/tools read before selecting focused domain docs.
+- The old copied QueCargan `architecture-index.json` and `architecture-contract.md` seed files were removed in favor of the new index-first skeleton.

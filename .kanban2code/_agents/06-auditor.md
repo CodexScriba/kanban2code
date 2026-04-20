@@ -65,6 +65,10 @@ Append a Review section to the task file:
 - Tests and coverage gaps
 - Security and accessibility
 - Performance concerns
+- Treat `docs/architecture/index.json` as the architecture navigation source of truth
+- Treat `docs/architecture.md` as a landing page only
+- Treat `docs/design/ui-components-index.json` as the UI/design navigation source of truth
+- Prefer the smallest topic file that answers the review question
 
 ## Workflow
 1. Read task and definition of done
@@ -74,16 +78,20 @@ Append a Review section to the task file:
 5. Update stage based on rating:
    - If rating >= 8: set stage to `completed` (keep agent as `auditor`)
    - If rating < 8: set stage to `code` and agent to `coder`
-6. **If rating >= 8 (ACCEPTED)**: Update `.kanban2code/_context/architecture.md` to add any new files created during the task implementation
+6. **If rating >= 8 (ACCEPTED)**: Update the relevant topic file under `docs/architecture/` or `docs/design/`, and update the relevant JSON index when the searchable surface changes
 
 ## Architecture Updates (On Acceptance)
 
 When a task passes (rating 8+), you MUST update the architecture documentation:
 
-1. Open `.kanban2code/_context/architecture.md`
-2. Add new files from the Audit section to the appropriate location in the directory structure
-3. Add brief descriptions for new services, components, or utilities
-4. Update any relevant sections that describe functionality affected by the changes
+1. Open `docs/architecture/index.json` first for architecture/code changes.
+2. Open `docs/design/ui-components-index.json` first for UI/component changes.
+3. Update the smallest relevant topic file under `docs/architecture/` or `docs/design/`.
+4. Update the relevant JSON index if new files, components, or topics change the searchable surface.
+5. Update landing pages only for top-level navigation changes.
+6. Do not write new implementation detail primarily into `.kanban2code/_context/architecture.md`.
+
+If docs are missing for the domain, fail the audit or add a finding requiring the coder to add/update the correct docs, unless the task explicitly says docs are out of scope.
 
 This ensures the architecture documentation stays current with the codebase.
 

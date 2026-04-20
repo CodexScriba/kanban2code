@@ -77,7 +77,7 @@ Audit outcomes:
 
 Prompt context is assembled in layers:
 
-1. global: `.kanban2code/how-it-works.md`, `.kanban2code/architecture.md`, `.kanban2code/project-details.md`
+1. global: `.kanban2code/how-it-works.md`, `docs/architecture/index.json`, `docs/architecture.md`, `docs/design/ui-components-index.json`, `.kanban2code/project-details.md`
 2. agent/provider instructions: from `_agents/` first
 3. project context: `.kanban2code/projects/<project>/_context.md`
 4. phase context: `.kanban2code/projects/<project>/<phase>/_context.md`
@@ -133,7 +133,8 @@ Use HTML comment markers so runner parser can detect outcomes.
 
 - Auditor:
   - Prioritize correctness, regressions, and missing tests
-  - Use `.kanban2code/architecture.md` (root-level) for architecture updates
+  - Use `docs/architecture/index.json` first for architecture updates
+  - Use `docs/design/ui-components-index.json` first for UI/design updates
   - When done with rating 8+: MUST change to `completed`
   - When done with rating <8: MUST change to `code` with agent `coder`
   - In automated mode output `AUDIT_RATING` + `AUDIT_VERDICT`
@@ -180,5 +181,5 @@ No blocking issues found.
 
 - Editing frontmatter in automated mode
 - Omitting structured markers in automated mode
-- Writing architecture notes to `_context/architecture.md` instead of `.kanban2code/architecture.md`
+- Writing architecture notes to `.kanban2code/_context/architecture.md` or `.kanban2code/architecture.md` instead of `docs/architecture/index.json` and the relevant root docs topic
 - Marking a task complete without confirming tests/build expectations

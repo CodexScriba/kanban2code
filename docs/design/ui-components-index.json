@@ -1,11 +1,21 @@
 {
-  "version": "2.0.0",
-  "last_updated": "2026-04-12",
+  "version": "2.1.0",
+  "last_updated": "2026-04-20",
   "source_of_truth": {
     "visual_baseline": "GLM5-sidebar.html",
+    "ui_primitives_root": "src/webviews/components/ui",
     "design_system_doc": "docs/design/design-system.md",
+    "design_memory_doc": "docs/design/ui-implementation-system.md",
     "token_file": "src/styles/tokens.css",
     "component_root": "src/webviews/components/ui"
+  },
+  "reading_rules": {
+    "goal": "Find existing UI primitives and approved shell patterns before creating new components.",
+    "preferred_flow": [
+      "Open this index first for UI/component questions.",
+      "Open docs/design/design-system.md for token and visual rules.",
+      "Inspect source_refs and target_files only after selecting the relevant entry."
+    ]
   },
   "shared_components": [
     {
@@ -13,7 +23,9 @@
       "kind": "ui-primitive",
       "status": "active",
       "source_refs": ["src/webviews/components/ui/ActionCard.tsx"],
+      "target_files": ["src/webviews/components/ui/ActionCard.tsx"],
       "used_by": ["home"],
+      "notes_doc": "docs/design/design-system.md#component-inventory",
       "notes": "Card with icon, label, description, chevron. Accent tinting via data-accent prop."
     },
     {
@@ -21,7 +33,9 @@
       "kind": "ui-primitive",
       "status": "active",
       "source_refs": ["src/webviews/components/ui/ActionIcon.tsx"],
+      "target_files": ["src/webviews/components/ui/ActionIcon.tsx"],
       "used_by": ["ActionCard"],
+      "notes_doc": "docs/design/design-system.md#component-inventory",
       "notes": "36x36 icon container. Accent background tint. Accepts any SVG children."
     },
     {
@@ -29,7 +43,9 @@
       "kind": "ui-primitive",
       "status": "active",
       "source_refs": ["src/webviews/components/ui/BrandLogo.tsx"],
+      "target_files": ["src/webviews/components/ui/BrandLogo.tsx"],
       "used_by": ["home"],
+      "notes_doc": "docs/design/design-system.md#component-inventory",
       "notes": "42x42 gradient logo tile with kanban grid SVG icon."
     },
     {
@@ -37,7 +53,9 @@
       "kind": "ui-primitive",
       "status": "active",
       "source_refs": ["src/webviews/components/ui/StatusCard.tsx"],
+      "target_files": ["src/webviews/components/ui/StatusCard.tsx"],
       "used_by": ["home"],
+      "notes_doc": "docs/design/design-system.md#component-inventory",
       "notes": "Ambient status strip with animated dot and text. Lives at bottom of home view."
     },
     {
@@ -45,10 +63,13 @@
       "kind": "ui-primitive",
       "status": "active",
       "source_refs": ["src/webviews/components/ui/Divider.tsx"],
+      "target_files": ["src/webviews/components/ui/Divider.tsx"],
       "used_by": ["home"],
+      "notes_doc": "docs/design/design-system.md#component-inventory",
       "notes": "Centered 36px fade-edge horizontal rule."
     }
   ],
+  "screen_specific_components": [],
   "naming_rules": {
     "no_duplicates": "If a component name already exists in shared_components, reuse or extend it via props instead of creating a second version.",
     "no_per_screen_variants": "Do not create HomeActionCard, SidebarActionCard, etc. Use props to vary behavior.",

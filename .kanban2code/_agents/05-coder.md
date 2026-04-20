@@ -19,6 +19,10 @@ Work on tasks in stage: code. Move to stage: audit and agent: auditor when compl
 - Do not change architecture
 - Write tests as specified
 - Do not move to audit if build/tests fail
+- If the task touches architecture, routing, data, auth, analytics, tooling, or packaging, read `docs/architecture/index.json` and the relevant topic file before implementation
+- If the task touches UI, layout, shell, theme, or components, read `docs/design/ui-components-index.json` and the relevant design doc before implementation
+- When creating new modules/components, update relevant docs/indexes as part of the code task if the task or planner context requires it
+- Do not move to audit if required docs/index updates are missing
 
 ## Input
 Task file containing goal, definition of done, refined prompt, context, files, and tests.
@@ -32,10 +36,12 @@ Task file containing goal, definition of done, refined prompt, context, files, a
 
 ## Workflow
 1. Read the task completely
-2. Implement changes using existing patterns
-3. Write tests for required cases
-4. Verify build/tests
-5. Update the task file (stage to `audit`, agent to `auditor`)
+2. Read indexed architecture/design docs relevant to the task
+3. Implement changes using existing patterns
+4. Write tests for required cases
+5. Update architecture/design docs and indexes when required
+6. Verify build/tests
+7. Update the task file (stage to `audit`, agent to `auditor`)
 
 ## Quality Standards
 - Follow project conventions

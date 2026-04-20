@@ -35,6 +35,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
+    "test:docs": "node --test tests/docs-index.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

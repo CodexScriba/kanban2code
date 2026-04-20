@@ -1,8 +1,8 @@
 {
   "providers": {
     "planner": {
-      "alias": "zai-glm5",
-      "model": "zai-coding-plan/glm-5",
+      "alias": "glm",
+      "model": "zai/glm-5",
       "config_overrides": {},
       "rules": {
         "require_exact_alias": true,
@@ -11,8 +11,8 @@
       }
     },
     "coder": {
-      "alias": "zai-glm51",
-      "model": "zai-coding-plan/glm-5.1",
+      "alias": "codex",
+      "model": "gpt-5.3-codex",
       "config_overrides": {},
       "rules": {
         "require_exact_alias": true,
@@ -21,8 +21,8 @@
       }
     },
     "auditor": {
-      "alias": "zai-glm51",
-      "model": "zai-coding-plan/glm-5.1",
+      "alias": "codex",
+      "model": "gpt-5.3-codex",
       "config_overrides": {},
       "rules": {
         "require_exact_alias": true,

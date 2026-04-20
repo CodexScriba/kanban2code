@@ -1,0 +1,129 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-20",
+  "source_of_truth": {
+    "architecture_landing_page": "docs/architecture.md",
+    "index_path": "docs/architecture/index.json"
+  },
+  "reading_rules": {
+    "goal": "Make the smallest possible architecture read before widening out.",
+    "preferred_flow": [
+      "Open this index first.",
+      "Open the most specific topic file next.",
+      "Use docs/architecture.md only as the landing page."
+    ],
+    "avoid": [
+      "Treating copied app-specific architecture indexes as canonical",
+      "Reading unrelated files when a topic file exists",
+      "Storing implementation architecture primarily in .kanban2code context files"
+    ]
+  },
+  "sections": [
+    {
+      "title": "Project overview",
+      "file": "docs/architecture/project-overview.md",
+      "summary": "Product direction, durable truth, current stack, and near-term architectural goals.",
+      "search_terms": [
+        "Kanban2Code",
+        "VS Code extension",
+        "chat interface",
+        "files are the heart",
+        "OpenClaw",
+        "manual orchestration"
+      ]
+    },
+    {
+      "title": "Repository map",
+      "file": "docs/architecture/repository-map.md",
+      "summary": "Compact map of source, docs, scaffold data, media, dist output, and packaging files.",
+      "search_terms": [
+        "src",
+        "docs",
+        ".kanban2code",
+        "dist",
+        "media",
+        "package.json",
+        "esbuild.mjs"
+      ]
+    },
+    {
+      "title": "Extension shell",
+      "file": "docs/architecture/extension-shell.md",
+      "summary": "VS Code activation, home webview provider, webview security boundary, and current entry points.",
+      "search_terms": [
+        "src/extension.ts",
+        "WebviewViewProvider",
+        "HomeViewProvider",
+        "CSP",
+        "webview",
+        "activitybar"
+      ]
+    },
+    {
+      "title": "File-backed workspace",
+      "file": "docs/architecture/file-backed-workspace.md",
+      "summary": ".kanban2code workspace scaffold, agents, providers, contexts, inbox, and project state.",
+      "search_terms": [
+        ".kanban2code",
+        "_agents",
+        "_providers",
+        "_context",
+        "inbox",
+        "project-details",
+        "how-it-works"
+      ]
+    },
+    {
+      "title": "Orchestrator workflow",
+      "file": "docs/architecture/orchestrator-workflow.md",
+      "summary": "Kanban2Code orchestrator scaffold, runner files, logs, state, and run-request conventions.",
+      "search_terms": [
+        "orchestrator",
+        "runner.py",
+        "run-orchestrator.sh",
+        "config.json",
+        "logs",
+        "runs",
+        "state"
+      ]
+    },
+    {
+      "title": "Design memory",
+      "file": "docs/architecture/design-memory.md",
+      "summary": "Relationship between architecture docs, design docs, UI component index, tokens, and webview components.",
+      "search_terms": [
+        "docs/design",
+        "ui-components-index",
+        "tokens.css",
+        "design-system",
+        "ActionCard",
+        "BrandLogo"
+      ]
+    },
+    {
+      "title": "Build and packaging",
+      "file": "docs/architecture/build-packaging.md",
+      "summary": "esbuild bundles, copied webview styles, scaffold asset copy, and VSIX packaging boundaries.",
+      "search_terms": [
+        "esbuild.mjs",
+        "dist/extension.js",
+        "dist/webviews",
+        "dist/scaffold",
+        ".vscodeignore",
+        "build"
+      ]
+    },
+    {
+      "title": "Testing strategy",
+      "file": "docs/architecture/testing-strategy.md",
+      "summary": "Current typecheck/build checks and lightweight docs-index validation.",
+      "search_terms": [
+        "typecheck",
+        "node --test",
+        "tests/docs-index.test.mjs",
+        "npm run build",
+        "npm run test:docs"
+      ]
+    }
+  ]
+}

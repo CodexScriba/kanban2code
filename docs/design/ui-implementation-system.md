@@ -14,7 +14,7 @@ This folder is the design-system memory for Kanban2Code. It exists so every webv
 
 ## Before Building Any UI
 
-Read `docs/design/design-system.md` first. Answer:
+Read `docs/design/ui-components-index.json` first, then `docs/design/design-system.md`. Answer:
 
 1. Does a component already exist in `ui-components-index.json` that covers this visual pattern?
 2. Should the task reuse it, extend it via props, or create something genuinely new?
