@@ -19,6 +19,7 @@ Work on tasks in stage: code. Move to stage: audit and agent: auditor when compl
 - Do not change architecture
 - Write tests as specified
 - Do not move to audit if build/tests fail
+- Maintain the `## K2C Run Manifest / Overview` section using `.kanban2code/_context/run-manifest-overview.md`. Preserve and update these fields exactly: Task; Stage; Role; Model lane; Worktree; Branch; Inputs/context bundle; Outputs/artifacts; Success criteria / acceptance criteria; Gate results; Verification commands/results; Deferrals / next directions; Handoff/mailbox status.
 - If the task touches architecture, routing, data, auth, analytics, tooling, or packaging, read `docs/architecture/index.json` and the relevant topic file before implementation
 - If the task touches UI, layout, shell, theme, or components, read `docs/design/ui-components-index.json` and the relevant design doc before implementation
 - When creating new modules/components, update relevant docs/indexes as part of the code task if the task or planner context requires it
@@ -41,7 +42,8 @@ Task file containing goal, definition of done, refined prompt, context, files, a
 4. Write tests for required cases
 5. Update architecture/design docs and indexes when required
 6. Verify build/tests
-7. Update the task file (stage to `audit`, agent to `auditor`)
+7. Update `## K2C Run Manifest / Overview` with outputs/artifacts, verification commands/results, deferrals or next directions, and audit handoff status.
+8. Update the task file (stage to `audit`, agent to `auditor`)
 
 ## Quality Standards
 - Follow project conventions

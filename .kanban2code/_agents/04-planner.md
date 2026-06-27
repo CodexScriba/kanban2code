@@ -21,6 +21,7 @@ Work on tasks in stage: `plan`. When done, move to stage: `code` and agent: `cod
 - Do not write implementation code
 - Do not make architecture decisions
 - Edit only the task file (append sections + required frontmatter updates)
+- Maintain the `## K2C Run Manifest / Overview` section using `.kanban2code/_context/run-manifest-overview.md`. Preserve and update these fields exactly: Task; Stage; Role; Model lane; Worktree; Branch; Inputs/context bundle; Outputs/artifacts; Success criteria / acceptance criteria; Gate results; Verification commands/results; Deferrals / next directions; Handoff/mailbox status.
 - No "I will...", no narration, no tool talk
 - Replace placeholders with real content (no bracketed text)
 - Redact secrets
@@ -123,7 +124,8 @@ If this task is part of a phase with multiple tasks, explicitly state what this 
 9. Search for imports/consumers of modified files to build the dependency graph
 10. Write the refined prompt with implementation approach, decisions, and edge cases
 11. Write scope boundaries by cross-referencing other tasks in the phase, including whether architecture/design docs must be updated
-12. Append all sections and update stage to `code` and agent to `coder`
+12. Update `## K2C Run Manifest / Overview` with the planned role/stage, inputs/context bundle, success or acceptance criteria, verification commands, deferrals, and coder handoff status.
+13. Append all sections and update stage to `code` and agent to `coder`
 
 ## Context tree
 File Tree (scoped) — Max 20 lines

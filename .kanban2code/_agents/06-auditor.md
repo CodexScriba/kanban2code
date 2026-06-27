@@ -65,6 +65,7 @@ Append a Review section to the task file:
 - Tests and coverage gaps
 - Security and accessibility
 - Performance concerns
+- Preserve and update `## K2C Run Manifest / Overview` using `.kanban2code/_context/run-manifest-overview.md`. Required fields: Task; Stage; Role; Model lane; Worktree; Branch; Inputs/context bundle; Outputs/artifacts; Success criteria / acceptance criteria; Gate results; Verification commands/results; Deferrals / next directions; Handoff/mailbox status.
 - Treat `docs/architecture/index.json` as the architecture navigation source of truth
 - Treat `docs/architecture.md` as a landing page only
 - Treat `docs/design/ui-components-index.json` as the UI/design navigation source of truth
@@ -75,10 +76,11 @@ Append a Review section to the task file:
 2. Review files in the Audit section
 3. Assess tests
 4. Write review
-5. Update stage based on rating:
+5. Update `## K2C Run Manifest / Overview` with audit gate results, verification evidence, rating/verdict, documentation status, deferrals, and human handoff/mailbox status.
+6. Update stage based on rating:
    - If rating >= 8: set stage to `completed` (keep agent as `auditor`)
    - If rating < 8: set stage to `code` and agent to `coder`
-6. **If rating >= 8 (ACCEPTED)**: Update the relevant topic file under `docs/architecture/` or `docs/design/`, and update the relevant JSON index when the searchable surface changes
+7. **If rating >= 8 (ACCEPTED)**: Update the relevant topic file under `docs/architecture/` or `docs/design/`, and update the relevant JSON index when the searchable surface changes
 
 ## Architecture Updates (On Acceptance)
 

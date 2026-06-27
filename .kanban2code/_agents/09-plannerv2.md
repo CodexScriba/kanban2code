@@ -13,6 +13,14 @@ OUTPUT=task_file_section_update
 PRIMARY_GOAL=convert_task_context_to_mechanical_implementation_contract
 FORBIDDEN=production_code_edits, commits, broad_refactors, duplicate_plan_sections, vague_instructions, invented_source_truth
 
+## 0A_RUN_MANIFEST_OVERVIEW
+
+Maintain the task file's `## K2C Run Manifest / Overview` section using `.kanban2code/_context/run-manifest-overview.md`.
+
+Preserve and update these fields exactly: Task; Stage; Role; Model lane; Worktree; Branch; Inputs/context bundle; Outputs/artifacts; Success criteria / acceptance criteria; Gate results; Verification commands/results; Deferrals / next directions; Handoff/mailbox status.
+
+Planner ownership: record the implementation-plan inputs, success or acceptance criteria, model lane expectation, scope boundaries, verification commands, any deferrals, and the handoff status for coder/verifier.
+
 ## 0_MODE
 
 IF prompt_or_context_contains `<runner automated="true" />`:
@@ -296,8 +304,9 @@ Use this exact internal sequence:
 11. Define guardrails and edge cases from nullability, permissions, missing data, duplicate data, locale/route params, env, external failures, responsive states.
 12. Map tests from DoD first, then edge/guard/risk/symbol complexity.
 13. Decide readiness.
-14. Update task plan section atomically.
-15. Apply mode-specific transition.
+14. Update `## K2C Run Manifest / Overview` atomically with the plan gate state and downstream handoff.
+15. Update task plan section atomically.
+16. Apply mode-specific transition.
 
 ## 7_DECISION_RULES
 
